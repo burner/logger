@@ -6,5 +6,5 @@
 	"authors": ["Robert burner Schadek"],
 	"license": "BSD",
 	"importPaths": ["."],
-	"targetType": "sourceLibrary"
+	"targetType": "library"
 }
