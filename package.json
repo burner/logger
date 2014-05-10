@@ -7,5 +7,10 @@
 	"license": "BSD",
 	"importPaths": ["."],
 	"sourcePaths": ["std"],
-	"targetType": "staticLibrary"
+	"configurations" : [
+		{
+			"targetType": "staticLibrary",
+			"name" : "library"
+		}
+	]
 }
