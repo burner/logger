@@ -9,7 +9,7 @@
 	"sourcePaths": ["std", "."],
 	"configurations" : [
 		{
-			"targetType": "staticLibrary",
+			"targetType": "sourceLibrary",
 			"name" : "library"
 		}
 	]
