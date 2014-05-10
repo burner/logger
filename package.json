@@ -1,10 +1,10 @@
 {
 	"name": "logger",
 	"description": "Phobos logger proposal",
-	"homepage": "https://github.com/D-Programming-Language/phobos/pull/1500"
+	"homepage": "https://github.com/D-Programming-Language/phobos/pull/1500",
 	"copyright": "Copyright © 2014, burner",
 	"authors": ["Robert burner Schadek"],
-	"license": "BSG",
+	"license": "BSD",
 	"importPaths": ["."],
 	"targetType": "sourceLibrary"
 }
