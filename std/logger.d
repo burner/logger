@@ -768,9 +768,8 @@ $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
 */
 class StdIOLogger : Logger
 {
-    static @trusted this()
+    @trusted static this()
     {
-        super("", LogLevel.info);
         StdIOLogger.stdioMutex = new Mutex();
     }
 
