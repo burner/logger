@@ -338,7 +338,7 @@ private string buildLogFunction(const bool asMemberFunction,
     {
         ret ~= q{int line = __LINE__, string file = __FILE__, string funcName
             = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__, 
-            A...)(};
+            string moduleName = __MODULE__, A...)(};
 
         ret ~= specificLogLevel ? "const LogLevel logLevel, " : "";
 
@@ -358,7 +358,7 @@ private string buildLogFunction(const bool asMemberFunction,
         }
         ret ~= q{string msg = "", int line = __LINE__, string file =
             __FILE__, string funcName = __FUNCTION__, string prettyFuncName
-             = __PRETTY_FUNCTION__};
+             = __PRETTY_FUNCTION__, string moduleName = __MODULE__};
     }
 
     ret ~= ") @trusted {\n";
@@ -399,7 +399,8 @@ private string buildLogFunction(const bool asMemberFunction,
             ret ~= "\tif(logLevel >= this.logLevel && logLevel >= " ~
                 "LogManager.globalLogLevel) {\n\t";
         }
-        ret ~= "\tthis.logMessage(file, line, funcName, prettyFuncName, ";
+        ret ~= "\tthis.logMessage(file, line, funcName, prettyFuncName, " ~
+            "moduleName, ";
         if (specificLogLevel) 
         {
             ret ~= "logLevel, ";
@@ -461,7 +462,7 @@ private string buildLogFunction(const bool asMemberFunction,
 
         ret ~= asConditional ? "cond, " : "true, ";
         ret ~= asPrintf ? "format(msg, a), " : "msg, ";
-        ret ~= "line, file, funcName, prettyFuncName);\n";
+        ret ~= "line, file, funcName, prettyFuncName, moduleName);\n";
 
         if (asConditional || lv != LogLevel.unspecific || specificLogLevel) 
         {
@@ -618,6 +619,8 @@ abstract class Logger
         LogLevel logLevel;
         /// the time the message was logged.
         SysTime timestamp;
+        /// the name of the module
+        string moduleName;
         /// thread id
         Tid threadId;
         /// the message
@@ -625,8 +628,8 @@ abstract class Logger
 
         // Helper
         static LoggerPayload opCall(string file, int line, string funcName,
-                string prettyFuncName, LogLevel logLevel, SysTime timestamp,
-                Tid threadId, string msg) @trusted
+                string prettyFuncName, string moduleName, LogLevel logLevel, 
+                SysTime timestamp, Tid threadId, string msg) @trusted
         {
             LoggerPayload ret;
             ret.file = file;
@@ -635,6 +638,7 @@ abstract class Logger
             ret.prettyFuncName = prettyFuncName;
             ret.logLevel = logLevel;
             ret.timestamp = timestamp;
+            ret.moduleName = moduleName;
             ret.threadId = threadId;
             ret.msg = msg;
             return ret;
@@ -670,7 +674,8 @@ abstract class Logger
     $(D writeLogMsg).
     */
     public void logMessage(string file, int line, string funcName,
-            string prettyFuncName, LogLevel logLevel, bool cond, string msg)
+            string prettyFuncName, string moduleName, LogLevel logLevel, 
+            bool cond, string msg)
         @trusted
     {
         version(DisableLogging)
@@ -683,7 +688,7 @@ abstract class Logger
             if (ll && gll)
             {
                 writeLogMsg(LoggerPayload(file, line, funcName, prettyFuncName,
-                    logLevel, Clock.currTime, thisTid, msg));
+                    moduleName, logLevel, Clock.currTime, thisTid, msg));
             }
         }
     }
@@ -1059,6 +1064,51 @@ class MultiLogger : Logger
             }
         }
     }
+}
+
+/** The $(D NullLogger) will not process any log messages.
+
+In case of a log message with $(D LogLevel.fatal) nothing will happen.
+*/
+class NullLogger : Logger {
+    /** The default constructor for the $(D NullLogger).
+
+    Independend of the parameter this Logger will never log a message.
+    
+    Params:
+      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
+      for $(D MultiLogger) is $(D LogLevel.info).
+    */
+    public this(const LogLevel lv = LogLevel.info) @safe
+    {
+        super("", lv);
+        this.setFatalHandler = delegate() {};
+    }
+
+    /** A constructor for the $(D NullLogger).
+
+    Independend of the parameter this Logger will never log a message.
+    
+    Params:
+      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
+      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
+      for $(D MultiLogger) is $(D LogLevel.info).
+    */
+    public this(string name, const LogLevel lv = LogLevel.info) @safe
+    {
+        super(name, lv);
+        this.setFatalHandler = delegate() {};
+    }
+
+    public override void writeLogMsg(LoggerPayload payload) @safe {
+    }
+}
+
+unittest {
+    auto nl1 = new NullLogger(LogLevel.all);
+    auto nl2 = new NullLogger("NULL", LogLevel.all);
+    nl1.info("You should never read this.");
+    nl2.fatal("You should never read this, either.");
 }
 
 ///
