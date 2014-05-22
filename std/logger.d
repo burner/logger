@@ -16,11 +16,11 @@ Authors:   $(WEB http://www.svs.informatik.uni-oldenburg.de/60865.html, Robert b
 
 -------------
 log("Logging to the defaultLogger with its default LogLevel");
-logF("%s to the defaultLogger with its default LogLevel", "Logging");
+logf("%s to the defaultLogger with its default LogLevel", "Logging");
 info("Logging to the defaultLogger with its info LogLevel");
 warning(5 < 6, "Logging to the defaultLogger with its LogLevel.warning if 5 is less than 6");
 error("Logging to the defaultLogger with its error LogLevel");
-errorF("Logging %s the defaultLogger %s its error LogLevel", "to", "with");
+errorf("Logging %s the defaultLogger %s its error LogLevel", "to", "with");
 critical("Logging to the defaultLogger with its error LogLevel");
 fatal("Logging to the defaultLogger with its fatal LogLevel");
 
@@ -28,7 +28,7 @@ auto fileLogger = new FileLogger("NameOfTheLogFile");
 fileLogger.log("Logging to the fileLogger with its default LogLevel");
 fileLogger.info("Logging to the fileLogger with its default LogLevel");
 fileLogger.warning(5 < 6, "Logging to the fileLogger with its LogLevel.warning if 5 is less than 6");
-fileLogger.warningF(5 < 6, "Logging to the fileLogger with its LogLevel.warning if %s is %s than 6", 5, "less");
+fileLogger.warningf(5 < 6, "Logging to the fileLogger with its LogLevel.warning if %s is %s than 6", 5, "less");
 fileLogger.critical("Logging to the fileLogger with its info LogLevel");
 fileLogger.log(5 < 6, "Logging to the fileLogger with its default LogLevel if 5 is less than 6");
 fileLogger.fatal("Logging to the fileLogger with its warning LogLevel");
@@ -62,7 +62,7 @@ The following EBNF describes how to construct log statements:
  </tr>
  <tr>
  <tr>
-  <td> LOG_FORMAT </td> <td> : </td> <td> logF(LOG_TYPE_PARAMS_A) </td>
+  <td> LOG_FORMAT </td> <td> : </td> <td> logf(LOG_TYPE_PARAMS_A) </td>
  </tr>
  <tr>
   <td/> <td> | </td> <td> LOG_LEVELF(LOG_PARAMS_A) ;</td>
@@ -130,7 +130,7 @@ In order to disable logging at compile time, pass $(D DisableLogger) as a
 version argument to the $(D D) compiler.
 */
 
-module std.logger;
+module std.logger.logger;
 
 import std.array : empty;
 import std.stdio;
@@ -140,6 +140,11 @@ import std.string;
 import std.exception;
 import std.concurrency;
 import core.sync.mutex : Mutex;
+
+import std.logger.stdiologger;
+import std.logger.multilogger;
+import std.logger.filelogger;
+import std.logger.nulllogger;
 
 private pure string logLevelToParameterString(const LogLevel lv)
 {
@@ -302,7 +307,7 @@ private string genDocComment(const bool asMemberFunction,
     }
 
     ret ~= logLevelToFuncNameString(lv);
-    ret ~= asPrintf ? "F(" : "(";
+    ret ~= asPrintf ? "f(" : "(";
     ret ~= specificLogLevel ? "someLogLevel, " : "";
     ret ~= asConditional ? "someBoolValue, " : "";
     ret ~= asPrintf ? "Hello %s, \"World\"" : "Hello World";
@@ -332,7 +337,7 @@ private string buildLogFunction(const bool asMemberFunction,
         ret ~= "log";
     }
 
-    ret ~= asPrintf ? "F(" : "(";
+    ret ~= asPrintf ? "f(" : "(";
 
     if (asPrintf) 
     {
@@ -767,366 +772,6 @@ abstract class Logger
     private void delegate() fatalLogger;
 }
 
-/** This $(D Logger) implementation writes log messages to the systems
-standard output. The format of the output is:
-$(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-*/
-class StdIOLogger : Logger
-{
-    @trusted static this()
-    {
-        StdIOLogger.stdioMutex = new Mutex();
-    }
-
-    /** Default constructor for the $(D StdIOLogger) Logger.
-    
-    Params:
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
-      for $(D StdIOLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new StdIOLogger;
-    auto l2 = new StdIOLogger(LogLevel.fatal);
-    -------------
-    */
-    public @safe this(const LogLevel lv = LogLevel.info)
-    {
-        super("", lv);
-    }
-
-    /** A constructor for the $(D StdIOLogger) Logger.
-    
-    Params:
-      name = The name of the logger. Compare to $(D MultiLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
-      for $(D StdIOLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new StdIOLogger("someName");
-    auto l2 = new StdIOLogger("someName", LogLevel.fatal);
-    -------------
-    */
-    public @safe this(string name, const LogLevel lv = LogLevel.info)
-    {
-        super(name, lv);
-    }
-
-    /** The messages written to $(D stdio) has the format of:
-    $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    */
-    public override void writeLogMsg(LoggerPayload payload) @trusted
-    {
-        version(DisableStdIOLogging)
-        {
-        }
-        else
-        {
-            size_t fnIdx = payload.file.lastIndexOf('/');
-            fnIdx = fnIdx == -1 ? 0 : fnIdx+1;
-            size_t funIdx = payload.funcName.lastIndexOf('.');
-            funIdx = funIdx == -1 ? 0 : funIdx+1;
-            synchronized(stdioMutex)
-            {
-                writefln("%s:%s:%s:%u %s",payload.timestamp.toISOExtString(),
-                    payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
-                    payload.line, payload.msg);
-            }
-        }
-    }
-
-    private static __gshared Mutex stdioMutex;
-}
-
-unittest
-{
-    version(std_logger_stdouttest)
-    {
-        auto s = new StdIOLogger();
-        s.log();
-    }
-}
-
-/** This $(D Logger) implementation writes log messages to the associated
-file. The name of the file has to be passed on construction time. If the file
-is already present new log messages will be append at its end.
-*/
-class FileLogger : Logger
-{
-    /** Default constructor for the $(D StdIOLogger) Logger.
-    
-    Params:
-      fn = The filename of the output file of the $(D FileLogger).
-      lv = The $(D LogLevel) for the $(D FileLogger). By default the $(D LogLevel)
-      for $(D FileLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new FileLogger;
-    auto l2 = new FileLogger("logFile", LogLevel.fatal);
-    -------------
-    */
-    public @trusted this(const string fn, const LogLevel lv = LogLevel.info)
-    {
-        this(fn, "", lv);
-    }
-
-    /** A constructor for the $(D FileLogger) Logger.
-    
-    Params:
-      fn = The filename of the output file of the $(D FileLogger).
-      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D FileLogger). By default the $(D LogLevel)
-      for $(D FileLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new FileLogger("logFile", "loggerName");
-    auto l2 = new FileLogger("logFile", "loggerName", LogLevel.fatal);
-    -------------
-    */
-    public @trusted this(const string fn, string name, const LogLevel lv = LogLevel.info)
-    {
-        super(name, lv);
-        this.filename = fn;
-        this.file_.open(this.filename, "a");
-        this.fileMutex = new Mutex();
-    }
-
-    /** The messages written to file has the format of:
-    $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    */
-    public override void writeLogMsg(LoggerPayload payload) @trusted
-    {
-        version(DisableFileLogging)
-        {
-        }
-        else
-        {
-            size_t fnIdx = payload.file.lastIndexOf('/');
-            fnIdx = fnIdx == -1 ? 0 : fnIdx+1;
-            size_t funIdx = payload.funcName.lastIndexOf('.');
-            funIdx = funIdx == -1 ? 0 : funIdx+1;
-            synchronized(fileMutex)
-            {
-                this.file_.writefln("%s:%s:%s:%u %s",payload.timestamp.toISOExtString(),
-                    payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
-                    payload.line, payload.msg);
-            }
-        }
-    }
-
-    /** The file written to is accessible by this method.*/
-    public @property ref File file() @trusted
-    {
-        return this.file_;
-    }
-
-    private __gshared File file_;
-    private __gshared Mutex fileMutex;
-    private string filename;
-}
-
-/** MultiLogger logs to multiple logger.
-
-It can be used to construct arbitrary, tree like structures. Basically a $(D
-MultiLogger) is a map. It maps $(D string)s to $(D Logger). By adding $(D
-MultiLogger) into another $(D MultiLogger) non leaf nodes are added. The 
-*/
-
-class MultiLogger : Logger
-{
-    /** Default constructor for the $(D MultiLogger) Logger.
-    
-    Params:
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
-      for $(D MultiLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new MultiLogger;
-    auto l2 = new MultiLogger(LogLevel.fatal);
-    -------------
-    */
-    public this(const LogLevel lv = LogLevel.info) @safe
-    {
-        super("", lv);
-    }
-
-    /** A constructor for the $(D MultiLogger) Logger.
-    
-    Params:
-      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
-      for $(D MultiLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new MultiLogger("loggerName");
-    auto l2 = new MultiLogger("loggerName", LogLevel.fatal);
-    -------------
-    */
-    public this(string name, const LogLevel lv = LogLevel.info) @safe
-    {
-        super(name, lv);
-    }
-
-    private Logger[string] logger;
-
-    /** This method inserts a new Logger into the Multilogger.
-    */
-    public void insertLogger(Logger newLogger) @safe
-    {
-        if (newLogger.name.empty)
-        {
-            throw new Exception("A Logger must have a name to be inserted " ~ 
-                "into the MulitLogger");
-        }
-        else if (newLogger.name in logger)
-        {
-            throw new Exception("This MultiLogger instance already holds a"
-                ~ " Logger named '%s'".format(newLogger.name));
-        }
-        else
-        {
-            logger[newLogger.name] = newLogger;
-        }
-    }
-
-    ///
-    unittest
-    {
-        auto l1 = new MultiLogger;
-        auto l2 = new StdIOLogger("some_logger");
-
-        l1.insertLogger(l2);
-
-        assert(l1.removeLogger("some_logger") is l2);
-    }
-
-    /** This method removes a Logger from the Multilogger.
-
-    See_Also: std.logger.MultiLogger.insertLogger
-    */
-    public Logger removeLogger(string loggerName) @safe
-    {
-        if (loggerName !in logger)
-        {
-            throw new Exception("This MultiLogger instance does not hold a"
-                ~ " Logger named '%s'".format(loggerName));
-        }
-        else
-        {
-            Logger ret = logger[loggerName];
-            logger.remove(loggerName);
-            return ret;
-        }
-    }
-
-    /** This method returns a $(D Logger) if it is present in the $(D
-    MultiLogger), otherwise a $(D RangeError) will be thrown.
-    */
-    public Logger opIndex(string key) @safe
-    {
-        return logger[key];
-    }
-
-    ///
-    unittest
-    {
-        auto ml = new MultiLogger();
-        auto sl = new StdIOLogger("some_name");
-
-        ml.insertLogger(sl);
-
-        assert(ml["some_name"] is sl);
-    }
-
-    public override void writeLogMsg(LoggerPayload payload) @trusted {
-        version(DisableFileLogging)
-        {
-        }
-        else
-        {
-            foreach (it; logger)
-            {
-                /* The LogLevel of the Logger must be >= than the LogLevel of
-                the payload. Usally this is handled by the log functions. As
-                they are not called in this case, we have to handle it by hand
-                here.
-                */
-                const bool ll = payload.logLevel >= it.logLevel_;
-                if (ll)
-                {
-                    it.writeLogMsg(payload);
-                }
-            }
-        }
-    }
-}
-
-/** The $(D NullLogger) will not process any log messages.
-
-In case of a log message with $(D LogLevel.fatal) nothing will happen.
-*/
-class NullLogger : Logger {
-    /** The default constructor for the $(D NullLogger).
-
-    Independend of the parameter this Logger will never log a message.
-    
-    Params:
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
-      for $(D MultiLogger) is $(D LogLevel.info).
-    */
-    public this(const LogLevel lv = LogLevel.info) @safe
-    {
-        super("", lv);
-        this.setFatalHandler = delegate() {};
-    }
-
-    /** A constructor for the $(D NullLogger).
-
-    Independend of the parameter this Logger will never log a message.
-    
-    Params:
-      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
-      for $(D MultiLogger) is $(D LogLevel.info).
-    */
-    public this(string name, const LogLevel lv = LogLevel.info) @safe
-    {
-        super(name, lv);
-        this.setFatalHandler = delegate() {};
-    }
-
-    public override void writeLogMsg(LoggerPayload payload) @safe {
-    }
-}
-
-unittest {
-    auto nl1 = new NullLogger(LogLevel.all);
-    auto nl2 = new NullLogger("NULL", LogLevel.all);
-    nl1.info("You should never read this.");
-    nl2.fatal("You should never read this, either.");
-}
-
-///
-unittest
-{
-    auto ml1 = new MultiLogger();
-    auto ml2 = new MultiLogger("TestLogger2");
-    auto tl1 = new TestLogger("testlogger");
-
-    ml1.insertLogger(ml2);
-    ml2.insertLogger(tl1);
-    
-    ml1.log("Some Msg");
-
-    assert(tl1.msg == "Some Msg");
-
-}
-
 /** The static $(D LogManager) handles the creation, and the release of
 instances of the $(D Logger) class. It also handels the $(I defaultLogger)
 which is used if no logger is manually selected. Additionally the
@@ -1261,9 +906,9 @@ unittest
 {
     auto tl1 = new TestLogger("one");
     testFuncNames(tl1);
-    assert(tl1.func == "std.logger.testFuncNames", tl1.func);
-    assert(tl1.prettyFunc == "void std.logger.testFuncNames(Logger logger)", 
-        tl1.prettyFunc);
+    assert(tl1.func == "std.logger.logger.testFuncNames", tl1.func);
+    assert(tl1.prettyFunc == 
+		"void std.logger.logger.testFuncNames(Logger logger)", tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
@@ -1341,37 +986,37 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     msg = "%s Another message";
-    l.logF(msg, "Yet");
+    l.logf(msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logF(true, msg, "Yet");
+    l.logf(true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logF(false, msg, "Yet");
+    l.logf(false, msg, "Yet");
     int nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logF(LogLevel.fatal, msg, "Yet");
+    l.logf(LogLevel.fatal, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logF(LogLevel.fatal, true, msg, "Yet");
+    l.logf(LogLevel.fatal, true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logF(LogLevel.fatal, false, msg, "Yet");
+    l.logf(LogLevel.fatal, false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1415,38 +1060,38 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     msg = "%s Another message";
-    logF(msg, "Yet");
+    logf(msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logF(true, msg, "Yet");
+    logf(true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logF(false, msg, "Yet");
+    logf(false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
     msg = "%s Another message";
-    logF(LogLevel.fatal, msg, "Yet");
+    logf(LogLevel.fatal, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logF(LogLevel.fatal, true, msg, "Yet");
+    logf(LogLevel.fatal, true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logF(LogLevel.fatal, false, msg, "Yet");
+    logf(LogLevel.fatal, false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1467,53 +1112,6 @@ version(unittest)
         return app.data;
     }
 }
-
-unittest // file logger test
-{
-    import std.file;
-    import std.stdio;
-    Mt19937 gen;
-    string name = randomString(32);
-    string filename = randomString(32) ~ ".tempLogFile";
-    auto l = new FileLogger(filename);
-
-    scope(exit)
-    {
-        remove(filename);
-    }
-
-    string notWritten = "this should not be written to file";
-    string written = "this should be written to file";
-
-    l.logLevel = LogLevel.critical;
-    l.log(LogLevel.warning, notWritten);
-    l.log(LogLevel.critical, written);
-
-    l.file.flush();
-    l.file.close();
-
-    auto file = File(filename, "r");
-    assert(!file.eof);
-
-    string readLine = file.readln();
-    assert(readLine.indexOf(written) != -1);
-    assert(readLine.indexOf(notWritten) == -1);
-    file.close();
-
-    l = new FileLogger(filename);
-    l.log(LogLevel.critical, false, notWritten);
-    l.log(LogLevel.fatal, true, written);
-    l.file.close();
-
-    file = File(filename, "r");
-    file.readln();
-    readLine = file.readln();
-    string nextFile = file.readln();
-    assert(nextFile.empty, nextFile);
-    assert(readLine.indexOf(written) != -1);
-    assert(readLine.indexOf(notWritten) == -1);
-}
-
 
 @trusted unittest // default logger
 {
