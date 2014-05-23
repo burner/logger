@@ -53,7 +53,7 @@ class FileLogger : Logger
     /** The messages written to file has the format of:
     $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
     */
-    public override void writeLogMsg(LoggerPayload payload) @trusted
+    public override void writeLogMsg(ref LoggerPayload payload) @trusted
     {
         version(DisableFileLogging)
         {

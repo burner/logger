@@ -60,8 +60,8 @@ class MultiLogger : Logger
         else if (newLogger.name in logger)
         {
             throw new Exception(
-				"This MultiLogger instance already holds a  Logger named '" ~
-			   	newLogger.name ~ "'");
+                "This MultiLogger instance already holds a  Logger named '" ~
+                   newLogger.name ~ "'");
         }
         else
         {
@@ -89,8 +89,8 @@ class MultiLogger : Logger
         if (loggerName !in logger)
         {
             throw new Exception(
-				"This MultiLogger instance does not hold a Logger named '" ~
-				loggerName ~ "'");
+                "This MultiLogger instance does not hold a Logger named '" ~
+                loggerName ~ "'");
         }
         else
         {
@@ -119,8 +119,8 @@ class MultiLogger : Logger
         assert(ml["some_name"] is sl);
     }
 
-    public override void writeLogMsg(LoggerPayload payload) @trusted {
-        version(DisableFileLogging)
+    public override void writeLogMsg(ref LoggerPayload payload) @trusted {
+        version(DisableMultiLogging)
         {
         }
         else

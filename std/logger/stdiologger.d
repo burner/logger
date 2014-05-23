@@ -54,7 +54,7 @@ class StdIOLogger : Logger
     /** The messages written to $(D stdio) has the format of:
     $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
     */
-    public override void writeLogMsg(LoggerPayload payload) @trusted
+    public override void writeLogMsg(ref LoggerPayload payload) @trusted
     {
         version(DisableStdIOLogging)
         {

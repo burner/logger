@@ -36,7 +36,7 @@ class NullLogger : Logger {
         this.setFatalHandler = delegate() {};
     }
 
-    public override void writeLogMsg(LoggerPayload payload) @safe {
+    public override void writeLogMsg(ref LoggerPayload payload) @safe {
     }
 }
 

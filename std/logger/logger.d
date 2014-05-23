@@ -116,7 +116,7 @@ To customize the logger behaviour, create a new $(D class) that inherits from
 the abstract $(D Logger) $(D class), and implements the $(D writeLogMsg) method.
 -------------
 class MyCustomLogger : Logger {
-    override void writeLogMsg(LoggerPayload payload))
+    override void writeLogMsg(ref LoggerPayload payload))
     {
         // log message in my custom way
     }
@@ -320,6 +320,7 @@ private string genDocComment(const bool asMemberFunction,
 //pragma(msg, genDocComment(false, true, true, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(true, false, true, LogLevel.info));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
+//pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
 private string buildLogFunction(const bool asMemberFunction,
         const bool asConditional, const bool asPrintf, const LogLevel lv,
@@ -385,8 +386,8 @@ private string buildLogFunction(const bool asMemberFunction,
         else if (asConditional && lv != LogLevel.unspecific) 
         {
             ret ~= "\tif(cond && " ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ " >= " ~
-                "LogManager.globalLogLevel) {\n\t";
+                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ 
+                " >= LogManager.globalLogLevel) {\n\t";
         } 
         else if (asConditional && specificLogLevel) 
         {
@@ -396,8 +397,8 @@ private string buildLogFunction(const bool asMemberFunction,
         else if (!asConditional && lv != LogLevel.unspecific) 
         {
             ret ~= "\tif(" ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ " >= " ~
-                "LogManager.globalLogLevel) {\n\t";
+                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ 
+                " >= LogManager.globalLogLevel) {\n\t";
         } 
         else if (!asConditional && specificLogLevel) 
         {
@@ -670,7 +671,7 @@ abstract class Logger
     Params:
         payload = All information associated with call to log function.
     */
-    public void writeLogMsg(LoggerPayload payload);
+    public void writeLogMsg(ref LoggerPayload payload);
 
     /** This method is the entry point into each logger. It compares the given
     $(D LogLevel) with the $(D LogLevel) of the $(D Logger), and the global
@@ -688,13 +689,9 @@ abstract class Logger
         }
         else
         {
-            const bool ll = logLevel >= this.logLevel_;
-            const bool gll = logLevel >= LogManager.globalLogLevel;
-            if (ll && gll)
-            {
-                writeLogMsg(LoggerPayload(file, line, funcName, prettyFuncName,
-                    moduleName, logLevel, Clock.currTime, thisTid, msg));
-            }
+            auto lp = LoggerPayload(file, line, funcName, prettyFuncName,
+                moduleName, logLevel, Clock.currTime, thisTid, msg);
+            this.writeLogMsg(lp);
         }
     }
 
@@ -782,7 +779,7 @@ static class LogManager {
     private @trusted static this()
     {
         LogManager.defaultLogger_ = new StdIOLogger();
-        LogManager.defaultLogger.logLevel = LogLevel.info;
+        LogManager.defaultLogger.logLevel = LogLevel.all;
         LogManager.globalLogLevel_ = LogLevel.all;
     }
 
@@ -813,7 +810,7 @@ static class LogManager {
 
     /** This method sets the global $(D LogLevel). 
     
-     Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
+    Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
     will be discarded before it reaches $(D writeLogMessage) method.      
     */
     public static @property void globalLogLevel(LogLevel ll) @trusted
@@ -886,7 +883,7 @@ version(unittest)
             super(n, lv);
         }
 
-        public override void writeLogMsg(LoggerPayload payload) @safe
+        public override void writeLogMsg(ref LoggerPayload payload) @safe
         {
             this.line = payload.line;
             this.file = payload.file;
@@ -908,7 +905,7 @@ unittest
     testFuncNames(tl1);
     assert(tl1.func == "std.logger.logger.testFuncNames", tl1.func);
     assert(tl1.prettyFunc == 
-		"void std.logger.logger.testFuncNames(Logger logger)", tl1.prettyFunc);
+        "void std.logger.logger.testFuncNames(Logger logger)", tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
@@ -1127,12 +1124,13 @@ version(unittest)
     {
         remove(filename);
         LogManager.defaultLogger = oldunspecificLogger;
+        LogManager.globalLogLevel = LogLevel.all;
     }
 
     string notWritten = "this should not be written to file";
     string written = "this should be written to file";
 
-    l.logLevel = LogLevel.critical;
+    LogManager.globalLogLevel = LogLevel.critical;
     log(LogLevel.warning, notWritten);
     log(LogLevel.critical, written);
 
