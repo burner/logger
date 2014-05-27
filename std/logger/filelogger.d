@@ -2,7 +2,7 @@ module std.logger.filelogger;
 
 import std.stdio;
 import std.string;
-import std.logger.logger;
+import std.logger.core;
 
 /** This $(D Logger) implementation writes log messages to the associated
 file. The name of the file has to be passed on construction time. If the file
@@ -11,7 +11,7 @@ is already present new log messages will be append at its end.
 class FileLogger : Logger
 {
     /** Default constructor for the $(D StdIOLogger) Logger.
-    
+
     Params:
       fn = The filename of the output file of the $(D FileLogger).
       lv = The $(D LogLevel) for the $(D FileLogger). By default the $(D LogLevel)
@@ -29,7 +29,7 @@ class FileLogger : Logger
     }
 
     /** A constructor for the $(D FileLogger) Logger.
-    
+
     Params:
       fn = The filename of the output file of the $(D FileLogger).
       name = The name of the logger. Compare to $(D FileLogger.insertLogger).

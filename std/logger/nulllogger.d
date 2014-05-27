@@ -1,6 +1,6 @@
 module std.logger.nulllogger;
 
-import std.logger.logger;
+import std.logger.core;
 
 /** The $(D NullLogger) will not process any log messages.
 
@@ -10,7 +10,7 @@ class NullLogger : Logger {
     /** The default constructor for the $(D NullLogger).
 
     Independend of the parameter this Logger will never log a message.
-    
+
     Params:
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
       for $(D MultiLogger) is $(D LogLevel.info).
@@ -24,7 +24,7 @@ class NullLogger : Logger {
     /** A constructor for the $(D NullLogger).
 
     Independend of the parameter this Logger will never log a message.
-    
+
     Params:
       name = The name of the logger. Compare to $(D FileLogger.insertLogger).
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
