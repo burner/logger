@@ -2,12 +2,12 @@
 Implements logging facilities.
 
 Message logging is a common approach to expose runtime information of a
-program. Logging should be easy, but also flexible and powerful, therefore $(D D) 
+program. Logging should be easy, but also flexible and powerful, therefore $(D D)
 provides a standard interface for logging.
 
-The easiest way to create a log message is to write 
-$(D import std.logger; log("I am here");) this will print a message to the 
-stdio device.  The message will contain the filename, the linenumber, the name 
+The easiest way to create a log message is to write
+$(D import std.logger; log("I am here");) this will print a message to the
+stdio device.  The message will contain the filename, the linenumber, the name
 of the surrounding function, and the message.
 
 Copyright: Copyright Robert burner Schadek 2013.
@@ -69,11 +69,11 @@ The following EBNF describes how to construct log statements:
  </tr>
  <tr>
   <td> LOG_LEVEL </td> <td> : </td> <td> trace | info | warning | error |
-  critical | fatal ; </td> 
+  critical | fatal ; </td>
  </tr>
  <tr>
   <td> LOG_LEVELF </td> <td> : </td> <td> traceF | infoF | warningF | errorF |
-  criticalF | fatalF ; </td> 
+  criticalF | fatalF ; </td>
  </tr>
  <tr>
   <td> LOG_TYPE_PARAMS </td> <td> : </td> <td> EPSILON | bool | LOG_LEVEL |
@@ -81,7 +81,7 @@ The following EBNF describes how to construct log statements:
     string ; </td>
  <tr>
  <tr>
-  <td> LOG_PARAMS </td> <td> : </td> <td> EPSILON | bool | 
+  <td> LOG_PARAMS </td> <td> : </td> <td> EPSILON | bool |
     bool, string | string ; </td>
  <tr>
  <tr>
@@ -89,13 +89,13 @@ The following EBNF describes how to construct log statements:
     string | string, A... | bool, LOG_LEVEL | bool, string | bool, string,
     A... ; </td>
   <tr>
-  <td/> 
+  <td/>
     <td> | </td> <td> LOG_LEVEL, string | LOG_LEVEL, string, A... | bool, LOG_LEVEL,
       string | bool, LOG_LEVEL, string, A... ;
     </td>
   <tr>
  <tr>
-  <td> LOG_PARAMS_A </td> <td> : </td> <td> EPSILON | bool | 
+  <td> LOG_PARAMS_A </td> <td> : </td> <td> EPSILON | bool |
     bool, string | bool, string, A... | string | string, A... ; </td>
  <tr>
 </table>
@@ -130,7 +130,7 @@ In order to disable logging at compile time, pass $(D DisableLogger) as a
 version argument to the $(D D) compiler.
 */
 
-module std.logger.logger;
+module std.logger.core;
 
 import std.array : empty;
 import std.stdio;
@@ -340,25 +340,25 @@ private string buildLogFunction(const bool asMemberFunction,
 
     ret ~= asPrintf ? "f(" : "(";
 
-    if (asPrintf) 
+    if (asPrintf)
     {
         ret ~= q{int line = __LINE__, string file = __FILE__, string funcName
-            = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__, 
+            = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(};
 
         ret ~= specificLogLevel ? "const LogLevel logLevel, " : "";
 
-        if (asConditional) 
+        if (asConditional)
         {
             ret ~= "bool cond, ";
         }
         ret ~= "string msg, lazy A a";
-    } 
-    else 
+    }
+    else
     {
         ret ~= specificLogLevel ? "const LogLevel logLevel, " : "";
 
-        if (asConditional) 
+        if (asConditional)
         {
             ret ~= "bool cond, ";
         }
@@ -373,45 +373,45 @@ private string buildLogFunction(const bool asMemberFunction,
             lv == LogLevel.warning || lv == LogLevel.critical || lv ==
             LogLevel.fatal))
     {
-        ret ~= "\tversion(" ~ logLevelToDisable(lv) ~ 
+        ret ~= "\tversion(" ~ logLevelToDisable(lv) ~
             ")\n\t{\n\t}\n\telse\n\t{\n";
     }
 
-    if (asMemberFunction) 
+    if (asMemberFunction)
     {
-        if (asConditional && lv == LogLevel.unspecific) 
+        if (asConditional && lv == LogLevel.unspecific)
         {
             ret ~= "\tif(cond) {\n\t";
-        } 
-        else if (asConditional && lv != LogLevel.unspecific) 
+        }
+        else if (asConditional && lv != LogLevel.unspecific)
         {
             ret ~= "\tif(cond && " ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ 
+                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~
                 " >= LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (asConditional && specificLogLevel) 
+        }
+        else if (asConditional && specificLogLevel)
         {
             ret ~= "\tif(cond && logLevel >= this.logLevel && logLevel >= " ~
                 "LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (!asConditional && lv != LogLevel.unspecific) 
+        }
+        else if (!asConditional && lv != LogLevel.unspecific)
         {
             ret ~= "\tif(" ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~ 
+                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~
                 " >= LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (!asConditional && specificLogLevel) 
+        }
+        else if (!asConditional && specificLogLevel)
         {
             ret ~= "\tif(logLevel >= this.logLevel && logLevel >= " ~
                 "LogManager.globalLogLevel) {\n\t";
         }
         ret ~= "\tthis.logMessage(file, line, funcName, prettyFuncName, " ~
             "moduleName, ";
-        if (specificLogLevel) 
+        if (specificLogLevel)
         {
             ret ~= "logLevel, ";
-        } 
-        else 
+        }
+        else
         {
             ret ~= lv == LogLevel.unspecific ? "this.logLevel_, " :
                 logLevelToParameterString(lv) ~ ", ";
@@ -419,49 +419,49 @@ private string buildLogFunction(const bool asMemberFunction,
 
         ret ~= asConditional ? "cond, " : "true, ";
         ret ~= asPrintf ? "format(msg, a));\n" : "msg);\n";
-        if (asConditional || lv != LogLevel.unspecific || specificLogLevel) 
+        if (asConditional || lv != LogLevel.unspecific || specificLogLevel)
         {
-            if (lv == LogLevel.fatal) 
+            if (lv == LogLevel.fatal)
             {
                 ret ~= "\t\tthis.fatalLogger();\n";
             }
             ret ~= "\t}\n";
         }
-    } 
+    }
     else // !asMemberFunction
     {
-        if (asConditional && lv == LogLevel.unspecific) 
+        if (asConditional && lv == LogLevel.unspecific)
         {
             ret ~= "\tif (cond) {\n\t";
-        } 
-        else if (asConditional && lv != LogLevel.unspecific) 
+        }
+        else if (asConditional && lv != LogLevel.unspecific)
         {
             ret ~= "\tif (cond && " ~ logLevelToParameterString(lv) ~ " >= " ~
                 "LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (asConditional && specificLogLevel) 
+        }
+        else if (asConditional && specificLogLevel)
         {
             ret ~= "\tif (cond && logLevel >= LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (!asConditional && lv != LogLevel.unspecific) 
+        }
+        else if (!asConditional && lv != LogLevel.unspecific)
         {
             ret ~= "\tif (" ~ logLevelToParameterString(lv) ~ " >= " ~
                 "LogManager.globalLogLevel) {\n\t";
-        } 
-        else if (!asConditional && specificLogLevel) 
+        }
+        else if (!asConditional && specificLogLevel)
         {
             ret ~= "\tif (logLevel >= LogManager.globalLogLevel) {\n\t";
         }
 
         ret ~= "\tLogManager.defaultLogger.log(";
 
-        if (specificLogLevel) 
+        if (specificLogLevel)
         {
             ret ~= "logLevel, ";
-        } 
-        else 
+        }
+        else
         {
-            ret ~= lv == LogLevel.unspecific ? 
+            ret ~= lv == LogLevel.unspecific ?
                 "LogManager.defaultLogger.logLevel, " :
                 logLevelToParameterString(lv) ~ ", ";
         }
@@ -470,9 +470,9 @@ private string buildLogFunction(const bool asMemberFunction,
         ret ~= asPrintf ? "format(msg, a), " : "msg, ";
         ret ~= "line, file, funcName, prettyFuncName, moduleName);\n";
 
-        if (asConditional || lv != LogLevel.unspecific || specificLogLevel) 
+        if (asConditional || lv != LogLevel.unspecific || specificLogLevel)
         {
-            if (lv == LogLevel.fatal) 
+            if (lv == LogLevel.fatal)
             {
                 ret ~= "\t\tLogManager.defaultLogger.fatalLogger();\n";
             }
@@ -482,18 +482,18 @@ private string buildLogFunction(const bool asMemberFunction,
 
     if (!specificLogLevel && (
             lv == LogLevel.trace || lv == LogLevel.info ||
-            lv == LogLevel.warning || lv == LogLevel.critical || 
+            lv == LogLevel.warning || lv == LogLevel.critical ||
             lv == LogLevel.fatal))
     {
         ret ~= "\t}\n";
     }
 
-    if (asMemberFunction) 
+    if (asMemberFunction)
     {
         ret ~= "\treturn this;";
         ret ~= "\n}\n";
-    } 
-    else 
+    }
+    else
     {
         ret ~= "\treturn LogManager.defaultLogger;";
         ret ~= "\n}\n";
@@ -506,13 +506,13 @@ unittest
 {
     import std.algorithm : balancedParens;
 
-    foreach(mem; [true, false]) 
+    foreach(mem; [true, false])
     {
-        foreach(con; [true, false]) 
+        foreach(con; [true, false])
         {
-            foreach(pf; [true, false]) 
+            foreach(pf; [true, false])
             {
-                foreach(ll; [LogLevel.unspecific, LogLevel.trace, LogLevel.info, 
+                foreach(ll; [LogLevel.unspecific, LogLevel.trace, LogLevel.info,
                         LogLevel.warning, LogLevel.error, LogLevel.critical,
                         LogLevel.fatal])
                 {
@@ -558,7 +558,7 @@ struct Tracer {
     Returns: A new $(D Tracer)
     */
     static Tracer opCall(Logger l, int line = __LINE__, string file = __FILE__,
-           string funcName = __FUNCTION__, 
+           string funcName = __FUNCTION__,
            string prettyFuncName = __PRETTY_FUNCTION__) @trusted
     {
         Tracer ret;
@@ -634,7 +634,7 @@ abstract class Logger
 
         // Helper
         static LoggerPayload opCall(string file, int line, string funcName,
-                string prettyFuncName, string moduleName, LogLevel logLevel, 
+                string prettyFuncName, string moduleName, LogLevel logLevel,
                 SysTime timestamp, Tid threadId, string msg) @trusted
         {
             LoggerPayload ret;
@@ -680,7 +680,7 @@ abstract class Logger
     $(D writeLogMsg).
     */
     public void logMessage(string file, int line, string funcName,
-            string prettyFuncName, string moduleName, LogLevel logLevel, 
+            string prettyFuncName, string moduleName, LogLevel logLevel,
             bool cond, string msg)
         @trusted
     {
@@ -786,10 +786,10 @@ static class LogManager {
     // You must not instantiate a LogManager
     @disable private this() {}
 
-    /** This method returns the default $(D Logger). 
-   
+    /** This method returns the default $(D Logger).
+
     The Logger is returned as a reference that means it can be assigend,
-    thus changing the defaultLogger.      
+    thus changing the defaultLogger.
 
     Example:
     -------------
@@ -808,10 +808,10 @@ static class LogManager {
         return LogManager.globalLogLevel_;
     }
 
-    /** This method sets the global $(D LogLevel). 
-    
+    /** This method sets the global $(D LogLevel).
+
     Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
-    will be discarded before it reaches $(D writeLogMessage) method.      
+    will be discarded before it reaches $(D writeLogMessage) method.
     */
     public static @property void globalLogLevel(LogLevel ll) @trusted
     {
@@ -904,7 +904,7 @@ unittest
     auto tl1 = new TestLogger("one");
     testFuncNames(tl1);
     assert(tl1.func == "std.logger.logger.testFuncNames", tl1.func);
-    assert(tl1.prettyFunc == 
+    assert(tl1.prettyFunc ==
         "void std.logger.logger.testFuncNames(Logger logger)", tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }

@@ -1,18 +1,18 @@
 module std.logger.multilogger;
 
-import std.logger.logger;
+import std.logger.core;
 import std.logger.stdiologger;
 
 /** MultiLogger logs to multiple logger.
 
 It can be used to construct arbitrary, tree like structures. Basically a $(D
 MultiLogger) is a map. It maps $(D string)s to $(D Logger). By adding $(D
-MultiLogger) into another $(D MultiLogger) non leaf nodes are added. The 
+MultiLogger) into another $(D MultiLogger) non leaf nodes are added. The
 */
 class MultiLogger : Logger
 {
     /** Default constructor for the $(D MultiLogger) Logger.
-    
+
     Params:
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
       for $(D MultiLogger) is $(D LogLevel.info).
@@ -29,7 +29,7 @@ class MultiLogger : Logger
     }
 
     /** A constructor for the $(D MultiLogger) Logger.
-    
+
     Params:
       name = The name of the logger. Compare to $(D FileLogger.insertLogger).
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
@@ -54,7 +54,7 @@ class MultiLogger : Logger
     {
         if (newLogger.name.empty)
         {
-            throw new Exception("A Logger must have a name to be inserted " ~ 
+            throw new Exception("A Logger must have a name to be inserted " ~
                 "into the MulitLogger");
         }
         else if (newLogger.name in logger)

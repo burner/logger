@@ -2,7 +2,7 @@ module std.logger.stdiologger;
 
 import std.stdio;
 import std.string;
-import std.logger.logger;
+import std.logger.core;
 
 /** This $(D Logger) implementation writes log messages to the systems
 standard output. The format of the output is:
@@ -17,7 +17,7 @@ class StdIOLogger : Logger
     }
 
     /** Default constructor for the $(D StdIOLogger) Logger.
-    
+
     Params:
       lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
       for $(D StdIOLogger) is $(D LogLevel.info).
@@ -34,7 +34,7 @@ class StdIOLogger : Logger
     }
 
     /** A constructor for the $(D StdIOLogger) Logger.
-    
+
     Params:
       name = The name of the logger. Compare to $(D MultiLogger.insertLogger).
       lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
