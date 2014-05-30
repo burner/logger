@@ -319,7 +319,9 @@ private string genDocComment(const bool asMemberFunction,
 
 //pragma(msg, genDocComment(false, true, true, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(true, false, true, LogLevel.info));
+//pragma(msg, buildLogFunction(false, true, true, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
+pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
 //pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
 private string buildLogFunction(const bool asMemberFunction,
@@ -430,14 +432,16 @@ private string buildLogFunction(const bool asMemberFunction,
     }
     else // !asMemberFunction
     {
-        if (asConditional && lv == LogLevel.unspecific)
+        /*if (asConditional && lv == LogLevel.unspecific)
         {
             ret ~= "\tif (cond) {\n\t";
         }
         else if (asConditional && lv != LogLevel.unspecific)
         {
             ret ~= "\tif (cond && " ~ logLevelToParameterString(lv) ~ " >= " ~
-                "LogManager.globalLogLevel) {\n\t";
+                "LogManager.globalLogLevel && " ~
+				logLevelToParameterString(lv) ~ 
+				">= LogManager.defaultLogger.logLevel) {\n\t";
         }
         else if (asConditional && specificLogLevel)
         {
@@ -451,7 +455,38 @@ private string buildLogFunction(const bool asMemberFunction,
         else if (!asConditional && specificLogLevel)
         {
             ret ~= "\tif (logLevel >= LogManager.globalLogLevel) {\n\t";
-        }
+        }*/
+
+		bool firstBool;
+
+		if (asConditional)
+		{
+			ret ~= "\tif (cond";
+			firstBool = true;
+		}
+
+		if (specificLogLevel)
+		{
+			ret ~= (firstBool ? " && " : "\tif (") ~ 
+				"logLevel >= LogManager.globalLogLevel && " ~
+				"logLevel >= LogManager.defaultLogger.logLevel";
+			
+
+			firstBool = true;
+		}
+
+		if (lv != LogLevel.unspecific)
+		{
+			ret ~= (firstBool ? " && " : "\tif (") ~ 
+				logLevelToParameterString(lv) ~ 
+				" >= LogManager.globalLogLevel && " ~
+				logLevelToParameterString(lv) ~ 
+				" >= LogManager.defaultLogger.logLevel";
+
+			firstBool = true;
+		}
+
+		ret ~= firstBool ? ") {\n" : "";
 
         ret ~= "\tLogManager.defaultLogger.log(";
 
@@ -903,9 +938,9 @@ unittest
 {
     auto tl1 = new TestLogger("one");
     testFuncNames(tl1);
-    assert(tl1.func == "std.logger.logger.testFuncNames", tl1.func);
+    assert(tl1.func == "std.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
-        "void std.logger.logger.testFuncNames(Logger logger)", tl1.prettyFunc);
+        "void std.logger.core.testFuncNames(Logger logger)", tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
