@@ -526,9 +526,9 @@ unittest
         {
             foreach(pf; [true, false])
             {
-                foreach(ll; [LogLevel.unspecific, LogLevel.trace, LogLevel.info,
-                        LogLevel.warning, LogLevel.error, LogLevel.critical,
-                        LogLevel.fatal])
+                foreach(ll; [LogLevel.unspecific, LogLevel.trace, 
+						LogLevel.info, LogLevel.warning, LogLevel.error, 
+						LogLevel.critical, LogLevel.fatal])
                 {
                     string s = buildLogFunction(mem, con, pf, ll);
                     assert(s.balancedParens('(', ')'));
