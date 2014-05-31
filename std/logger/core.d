@@ -321,7 +321,7 @@ private string genDocComment(const bool asMemberFunction,
 //pragma(msg, buildLogFunction(true, false, true, LogLevel.info));
 //pragma(msg, buildLogFunction(false, true, true, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
-pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
+//pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
 //pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
 private string buildLogFunction(const bool asMemberFunction,
@@ -381,32 +381,36 @@ private string buildLogFunction(const bool asMemberFunction,
 
     if (asMemberFunction)
     {
-        if (asConditional && lv == LogLevel.unspecific)
-        {
-            ret ~= "\tif(cond) {\n\t";
-        }
-        else if (asConditional && lv != LogLevel.unspecific)
-        {
-            ret ~= "\tif(cond && " ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~
-                " >= LogManager.globalLogLevel) {\n\t";
-        }
-        else if (asConditional && specificLogLevel)
-        {
-            ret ~= "\tif(cond && logLevel >= this.logLevel && logLevel >= " ~
-                "LogManager.globalLogLevel) {\n\t";
-        }
-        else if (!asConditional && lv != LogLevel.unspecific)
-        {
-            ret ~= "\tif(" ~ logLevelToParameterString(lv) ~
-                " >= this.logLevel && " ~ logLevelToParameterString(lv) ~
-                " >= LogManager.globalLogLevel) {\n\t";
-        }
-        else if (!asConditional && specificLogLevel)
-        {
-            ret ~= "\tif(logLevel >= this.logLevel && logLevel >= " ~
-                "LogManager.globalLogLevel) {\n\t";
-        }
+		bool firstBool;
+
+		if (asConditional)
+		{
+			ret ~= "\tif (cond";
+			firstBool = true;
+		}
+
+		if (specificLogLevel)
+		{
+			ret ~= (firstBool ? " && " : "\tif (") ~ 
+				"logLevel >= this.logLevel && " ~
+				"logLevel >= LogManager.globalLogLevel";
+			
+
+			firstBool = true;
+		}
+
+		if (lv != LogLevel.unspecific)
+		{
+			ret ~= (firstBool ? " && " : "\tif (") ~ 
+				logLevelToParameterString(lv) ~ " >= this.logLevel && " ~
+				logLevelToParameterString(lv) ~ 
+				" >= LogManager.globalLogLevel";
+
+			firstBool = true;
+		}
+
+		ret ~= firstBool ? ") {\n" : "";
+
         ret ~= "\tthis.logMessage(file, line, funcName, prettyFuncName, " ~
             "moduleName, ";
         if (specificLogLevel)
@@ -432,31 +436,6 @@ private string buildLogFunction(const bool asMemberFunction,
     }
     else // !asMemberFunction
     {
-        /*if (asConditional && lv == LogLevel.unspecific)
-        {
-            ret ~= "\tif (cond) {\n\t";
-        }
-        else if (asConditional && lv != LogLevel.unspecific)
-        {
-            ret ~= "\tif (cond && " ~ logLevelToParameterString(lv) ~ " >= " ~
-                "LogManager.globalLogLevel && " ~
-				logLevelToParameterString(lv) ~ 
-				">= LogManager.defaultLogger.logLevel) {\n\t";
-        }
-        else if (asConditional && specificLogLevel)
-        {
-            ret ~= "\tif (cond && logLevel >= LogManager.globalLogLevel) {\n\t";
-        }
-        else if (!asConditional && lv != LogLevel.unspecific)
-        {
-            ret ~= "\tif (" ~ logLevelToParameterString(lv) ~ " >= " ~
-                "LogManager.globalLogLevel) {\n\t";
-        }
-        else if (!asConditional && specificLogLevel)
-        {
-            ret ~= "\tif (logLevel >= LogManager.globalLogLevel) {\n\t";
-        }*/
-
 		bool firstBool;
 
 		if (asConditional)
@@ -946,6 +925,23 @@ unittest
 
 unittest
 {
+    auto oldunspecificLogger = LogManager.defaultLogger;
+	LogLevel oldLogLevel = LogManager.globalLogLevel;
+	scope(exit)
+	{
+		LogManager.defaultLogger = oldunspecificLogger;
+		LogManager.globalLogLevel = oldLogLevel;
+	}
+
+	LogManager.defaultLogger = new TestLogger("testlogger");
+
+	auto ll = [LogLevel.trace, LogLevel.info, LogLevel.warning, 
+		 LogLevel.error, LogLevel.critical, LogLevel.fatal, LogLevel.off];
+
+}
+
+unittest
+{
     auto tl1 = new TestLogger("one");
     auto tl2 = new TestLogger("two");
 
@@ -1148,7 +1144,6 @@ version(unittest)
 @trusted unittest // default logger
 {
     import std.file;
-    Mt19937 gen;
     string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
     FileLogger l = new FileLogger(filename);
@@ -1166,6 +1161,8 @@ version(unittest)
     string written = "this should be written to file";
 
     LogManager.globalLogLevel = LogLevel.critical;
+	assert(l.logLevel == LogLevel.critical);
+
     log(LogLevel.warning, notWritten);
     log(LogLevel.critical, written);
 
@@ -1179,17 +1176,35 @@ version(unittest)
     assert(readLine.indexOf(written) != -1, readLine);
     assert(readLine.indexOf(notWritten) == -1, readLine);
     file.close();
+}
 
-    l = new FileLogger(filename);
+unittest
+{
+    import std.file;
+    string name = randomString(32);
+    string filename = randomString(32) ~ ".tempLogFile";
+    auto oldunspecificLogger = LogManager.defaultLogger;
+
+    scope(exit)
+    {
+        remove(filename);
+        LogManager.defaultLogger = oldunspecificLogger;
+        LogManager.globalLogLevel = LogLevel.all;
+    }
+
+    string notWritten = "this should not be written to file";
+    string written = "this should be written to file";
+
+    auto l = new FileLogger(filename);
     LogManager.defaultLogger = l;
     log.logLevel = LogLevel.fatal;
+
     log(LogLevel.critical, false, notWritten);
     log(LogLevel.fatal, true, written);
     l.file.close();
 
-    file = File(filename, "r");
-    file.readln();
-    readLine = file.readln();
+    auto file = File(filename, "r");
+    auto readLine = file.readln();
     string nextFile = file.readln();
     assert(!nextFile.empty, nextFile);
     assert(nextFile.indexOf(written) != -1);
