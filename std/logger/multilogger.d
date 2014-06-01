@@ -32,8 +32,8 @@ class MultiLogger : Logger
 
     Params:
       name = The name of the logger. Compare to $(D FileLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
-      for $(D MultiLogger) is $(D LogLevel.info).
+      lv = The $(D LogLevel) for the $(D MultiLogger). By default the 
+	  $(D LogLevel) for $(D MultiLogger) is $(D LogLevel.info).
 
     Example:
     -------------
@@ -46,7 +46,12 @@ class MultiLogger : Logger
         super(name, lv);
     }
 
-    private Logger[string] logger;
+	/** This member holds all important data of the $(D MultiLogger).
+	
+	As mentioned earlier a $(D MultiLogger) is map, this associative array is
+	the mapping.
+	*/
+    public Logger[string] logger;
 
     /** This method inserts a new Logger into the Multilogger.
     */

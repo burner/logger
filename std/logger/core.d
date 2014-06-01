@@ -1231,8 +1231,9 @@ unittest
     assert(tl.line == l+1, to!string(tl.line));
 }
 
-pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
+//pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
 
+// testing possible log conditions
 @trusted unittest
 {
     auto oldunspecificLogger = LogManager.defaultLogger;
@@ -1373,4 +1374,49 @@ pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
 			}
 		}
 	}
+}
+
+// Issue #5
+unittest
+{
+    auto oldunspecificLogger = LogManager.defaultLogger;
+
+    scope(exit)
+    {
+        LogManager.defaultLogger = oldunspecificLogger;
+        LogManager.globalLogLevel = LogLevel.all;
+    }
+
+	auto tl = new TestLogger("required name", LogLevel.info);
+    LogManager.defaultLogger = tl;
+
+    trace("trace");
+	assert(tl.msg.indexOf("trace") == -1);
+    info("info");
+	assert(tl.msg.indexOf("info") == 0);
+}
+
+// Issue #5
+unittest
+{
+    auto oldunspecificLogger = LogManager.defaultLogger;
+
+    scope(exit)
+    {
+        LogManager.defaultLogger = oldunspecificLogger;
+        LogManager.globalLogLevel = LogLevel.all;
+    }
+
+    auto logger = new MultiLogger(LogLevel.error);
+
+	auto tl = new TestLogger("required name", LogLevel.info);
+    logger.insertLogger(tl);
+    LogManager.defaultLogger = logger;
+
+    trace("trace");
+	assert(tl.msg.indexOf("trace") == -1);
+    info("info");
+	assert(tl.msg.indexOf("info") == -1);
+	error("error");
+	assert(tl.msg.indexOf("error") == 0);
 }
