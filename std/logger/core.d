@@ -318,7 +318,6 @@ private string genDocComment(const bool asMemberFunction,
 }
 
 //pragma(msg, genDocComment(false, true, true, LogLevel.unspecific, true));
-//pragma(msg, buildLogFunction(true, false, true, LogLevel.info));
 //pragma(msg, buildLogFunction(false, true, true, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
@@ -393,7 +392,9 @@ private string buildLogFunction(const bool asMemberFunction,
 		{
 			ret ~= (firstBool ? " && " : "\tif (") ~ 
 				"logLevel >= this.logLevel && " ~
-				"logLevel >= LogManager.globalLogLevel";
+				"logLevel >= LogManager.globalLogLevel && " ~
+				"this.logLevel != LogLevel.off && " ~
+				"LogManager.globalLogLevel != LogLevel.off";
 			
 
 			firstBool = true;
@@ -404,7 +405,8 @@ private string buildLogFunction(const bool asMemberFunction,
 			ret ~= (firstBool ? " && " : "\tif (") ~ 
 				logLevelToParameterString(lv) ~ " >= this.logLevel && " ~
 				logLevelToParameterString(lv) ~ 
-				" >= LogManager.globalLogLevel";
+				" >= LogManager.globalLogLevel && LogManager.globalLogLevel " ~
+				"!= LogLevel.off";
 
 			firstBool = true;
 		}
@@ -448,7 +450,9 @@ private string buildLogFunction(const bool asMemberFunction,
 		{
 			ret ~= (firstBool ? " && " : "\tif (") ~ 
 				"logLevel >= LogManager.globalLogLevel && " ~
-				"logLevel >= LogManager.defaultLogger.logLevel";
+				"logLevel >= LogManager.defaultLogger.logLevel &&" ~
+				"LogManager.globalLogLevel != LogLevel.off && " ~
+				"LogManager.defaultLogger.logLevel != LogLevel.off ";
 			
 
 			firstBool = true;
@@ -460,7 +464,8 @@ private string buildLogFunction(const bool asMemberFunction,
 				logLevelToParameterString(lv) ~ 
 				" >= LogManager.globalLogLevel && " ~
 				logLevelToParameterString(lv) ~ 
-				" >= LogManager.defaultLogger.logLevel";
+				" >= LogManager.defaultLogger.logLevel && " ~
+				"LogManager.globalLogLevel != LogLevel.off"; 
 
 			firstBool = true;
 		}
@@ -1224,4 +1229,148 @@ unittest
     tl.trace("b");
     assert(tl.msg == "b", tl.msg);
     assert(tl.line == l+1, to!string(tl.line));
+}
+
+pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
+
+@trusted unittest
+{
+    auto oldunspecificLogger = LogManager.defaultLogger;
+
+	auto mem = new TestLogger("tl");
+	LogManager.defaultLogger = mem;
+
+    scope(exit)
+    {
+        LogManager.defaultLogger = oldunspecificLogger;
+        LogManager.globalLogLevel = LogLevel.all;
+    }
+
+	int value = 0;
+    foreach(gll; [LogLevel.all, LogLevel.trace, 
+			LogLevel.info, LogLevel.warning, LogLevel.error, 
+			LogLevel.critical, LogLevel.fatal, LogLevel.off])
+    {
+		
+		LogManager.globalLogLevel = gll;
+
+    	foreach(ll; [LogLevel.all, LogLevel.trace, 
+				LogLevel.info, LogLevel.warning, LogLevel.error, 
+				LogLevel.critical, LogLevel.fatal, LogLevel.off])
+    	{
+
+			mem.logLevel = ll;
+
+			foreach(cond; [true, false])
+			{
+				foreach(condValue; [true, false])
+				{
+					foreach(memOrG; [true, false])
+					{
+						foreach(prntf; [true, false])
+						{
+    						foreach(ll2; [LogLevel.all, LogLevel.trace, 
+									LogLevel.info, LogLevel.warning, 
+									LogLevel.error, LogLevel.critical, 
+									LogLevel.fatal, LogLevel.off])
+    						{
+								if (memOrG)
+								{
+									if (prntf)
+									{
+										if (cond)
+										{
+											mem.logf(ll2, condValue, "%s", 
+												value);
+										}
+										else
+										{
+											mem.logf(ll2, "%s", value);
+										}
+									}
+									else
+									{
+										if (cond)
+										{
+											mem.log(ll2, condValue,
+												to!string(value));
+										}
+										else
+										{
+											mem.log(ll2, to!string(value));
+										}
+									}
+								}
+								else
+								{
+									if (prntf)
+									{
+										if (cond)
+										{
+											logf(ll2, condValue, "%s", value);
+										}
+										else
+										{
+											logf(ll2, "%s", value);
+										}
+									}
+									else
+									{
+										if (cond)
+										{
+											log(ll2, condValue, 
+												to!string(value));
+										}
+										else
+										{
+											log(ll2, to!string(value));
+										}
+									}
+								}
+
+								string valueStr = to!string(value);
+								++value;
+
+								bool shouldLog = ((gll != LogLevel.off)
+									&& (ll != LogLevel.off)
+									&& (cond ? condValue : true)
+									&& (ll2 >= gll)
+									&& (ll2 >= ll));
+
+								/*
+								writefln(
+									"go(%b) ll2o(%b) c(%b) lg(%b) ll(%b) s(%b)"
+									, gll != LogLevel.off, ll2 != LogLevel.off,
+									cond ? condValue : true,
+									ll2 >= gll, ll2 >= ll, shouldLog);
+								*/
+								
+
+								if (shouldLog)
+								{
+									assert(mem.msg == valueStr, format(
+										"gll(%u) ll2(%u) cond(%b)" ~
+										" condValue(%b)" ~
+										" memOrG(%b) shouldLog(%b) %s == %s", 
+										gll, ll2, cond, condValue, memOrG,
+										shouldLog, mem.msg, valueStr
+									));
+								}
+								else
+								{
+									assert(mem.msg != valueStr, format(
+										"gll(%u) ll2(%u) cond(%b) " ~
+										"condValue(%b)  memOrG(%b) " ~
+										"shouldLog(%b) %s != %s", gll, 
+										ll2, cond, condValue, memOrG,shouldLog,
+										mem.msg, valueStr
+									));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
