@@ -2,25 +2,25 @@ module std.logger.stdiologger;
 
 import std.stdio;
 import std.string;
-import std.logger.core;
+import std.logger.templatelogger;
 
 /** This $(D Logger) implementation writes log messages to the systems
 standard output. The format of the output is:
 $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
 */
-class StdIOLogger : Logger
+class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
 {
     static @trusted this()
     {
-        super("", LogLevel.info);
-        StdIOLogger.stdioMutex = new Mutex();
+        this("", LogLevel.info);
+        //StdIOLogger.stdioMutex = new Mutex();
     }
 
     /** Default constructor for the $(D StdIOLogger) Logger.
 
     Params:
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
-      for $(D StdIOLogger) is $(D LogLevel.info).
+      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the 
+      $(D LogLevel) for $(D StdIOLogger) is $(D LogLevel.info).
 
     Example:
     -------------
@@ -30,15 +30,15 @@ class StdIOLogger : Logger
     */
     public @safe this(const LogLevel lv = LogLevel.info)
     {
-        super("", lv);
+        this("", lv);
     }
 
     /** A constructor for the $(D StdIOLogger) Logger.
 
     Params:
       name = The name of the logger. Compare to $(D MultiLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the $(D LogLevel)
-      for $(D StdIOLogger) is $(D LogLevel.info).
+      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the 
+      $(D LogLevel) for $(D StdIOLogger) is $(D LogLevel.info).
 
     Example:
     -------------
@@ -46,14 +46,13 @@ class StdIOLogger : Logger
     auto l2 = new StdIOLogger("someName", LogLevel.fatal);
     -------------
     */
-    public @safe this(string name, const LogLevel lv = LogLevel.info)
+    public this(string name, const LogLevel lv = LogLevel.info) @trusted
     {
-        super(name, lv);
+        super(stdout.lockingTextWriter(), name, lv);
     }
 
     /** The messages written to $(D stdio) has the format of:
     $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    */
     public override void writeLogMsg(ref LoggerPayload payload) @trusted
     {
         version(DisableStdIOLogging)
@@ -73,8 +72,9 @@ class StdIOLogger : Logger
             }
         }
     }
+    */
 
-    private static __gshared Mutex stdioMutex;
+    //private static __gshared Mutex stdioMutex;
 }
 
 unittest
