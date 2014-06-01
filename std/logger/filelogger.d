@@ -85,7 +85,7 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     private string filename;
 }
 
-unittest // file logger test
+/*unittest // file logger test
 {
     import std.file;
     import std.random;
@@ -129,4 +129,4 @@ unittest // file logger test
     assert(nextFile.empty, nextFile);
     assert(readLine.indexOf(written) != -1);
     assert(readLine.indexOf(notWritten) == -1);
-}
+}*/

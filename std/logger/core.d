@@ -1187,7 +1187,7 @@ version(unittest)
     file.close();
 }
 
-unittest
+/*unittest
 {
     import std.file;
     string name = randomString(32);
@@ -1218,7 +1218,7 @@ unittest
     assert(!nextFile.empty, nextFile);
     assert(nextFile.indexOf(written) != -1);
     assert(nextFile.indexOf(notWritten) == -1);
-}
+}*/
 
 @trusted unittest
 {
