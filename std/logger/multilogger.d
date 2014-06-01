@@ -25,7 +25,7 @@ class MultiLogger : Logger
     */
     public this(const LogLevel lv = LogLevel.info) @safe
     {
-        super("", lv);
+        this("", lv);
     }
 
     /** A constructor for the $(D MultiLogger) Logger.
