@@ -50,31 +50,6 @@ class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     {
         super(stdout.lockingTextWriter(), name, lv);
     }
-
-    /** The messages written to $(D stdio) has the format of:
-    $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    public override void writeLogMsg(ref LoggerPayload payload) @trusted
-    {
-        version(DisableStdIOLogging)
-        {
-        }
-        else
-        {
-            size_t fnIdx = payload.file.lastIndexOf('/');
-            fnIdx = fnIdx == -1 ? 0 : fnIdx+1;
-            size_t funIdx = payload.funcName.lastIndexOf('.');
-            funIdx = funIdx == -1 ? 0 : funIdx+1;
-            synchronized(stdioMutex)
-            {
-                writefln("%s:%s:%s:%u %s",payload.timestamp.toISOExtString(),
-                    payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
-                    payload.line, payload.msg);
-            }
-        }
-    }
-    */
-
-    //private static __gshared Mutex stdioMutex;
 }
 
 unittest

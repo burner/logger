@@ -52,27 +52,6 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
         //this.fileMutex = new Mutex();
     }
 
-    /** The messages written to file has the format of:
-    $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    public override void writeLogMsg(ref LoggerPayload payload) @trusted
-    {
-        version(DisableFileLogging)
-        {
-        }
-        else
-        {
-            size_t fnIdx = payload.file.lastIndexOf('/');
-            fnIdx = fnIdx == -1 ? 0 : fnIdx+1;
-            size_t funIdx = payload.funcName.lastIndexOf('.');
-            funIdx = funIdx == -1 ? 0 : funIdx+1;
-            synchronized(fileMutex)
-            {
-                this.file_.writefln("%s:%s:%s:%u %s",payload.timestamp.toISOExtString(),
-                    payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
-                    payload.line, payload.msg);
-            }
-        }
-    }*/
 
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
@@ -81,7 +60,6 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     }
 
     private __gshared File file_;
-    //private __gshared Mutex fileMutex;
     private string filename;
 }
 
