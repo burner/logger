@@ -12,7 +12,7 @@ public void defaultFormatter(T,F)(ref T t, ref F payload) @trusted
 
     size_t fnIdx = payload.file.lastIndexOf('/') + 1;
     size_t funIdx = payload.funcName.lastIndexOf('.') + 1;
-    formattedWrite(t, "%s:%s:%s:%u %s",payload.timestamp.toISOExtString(),
+    formattedWrite(t, "%s:%s:%s:%u %s\n",payload.timestamp.toISOExtString(),
         payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
         payload.line, payload.msg);
 }
@@ -50,12 +50,15 @@ class TemplateLogger(Sink, alias Formatter, alias Filter = a => true) : Logger
 
 unittest 
 {
+	import std.conv;
     auto app = appender!string();
 
     alias defaultF = defaultFormatter!(Appender!string, Logger.LoggerPayload);
     auto l = new TemplateLogger!(Appender!string, defaultF, 
         (a) => true)(app);
     l.log("Hello");
+	int line = __LINE__ - 1;
 
     assert(app.data().indexOf("Hello") != -1);
+    assert(app.data().indexOf(to!string(line)) != line);
 }

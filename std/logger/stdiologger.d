@@ -82,6 +82,6 @@ unittest
     version(std_logger_stdouttest)
     {
         auto s = new StdIOLogger();
-        s.log();
+        s.log("Hello");
     }
 }
