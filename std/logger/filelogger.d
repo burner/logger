@@ -3,12 +3,13 @@ module std.logger.filelogger;
 import std.stdio;
 import std.string;
 import std.logger.core;
+import std.logger.templatelogger;
 
 /** This $(D Logger) implementation writes log messages to the associated
 file. The name of the file has to be passed on construction time. If the file
 is already present new log messages will be append at its end.
 */
-class FileLogger : Logger
+class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
 {
     /** Default constructor for the $(D StdIOLogger) Logger.
 
@@ -44,15 +45,15 @@ class FileLogger : Logger
     */
     public @trusted this(const string fn, string name, const LogLevel lv = LogLevel.info)
     {
-        super(name, lv);
+        super(stdout.lockingTextWriter(), name, lv);
         this.filename = fn;
-        this.file_.open(this.filename, "a");
-        this.fileMutex = new Mutex();
+       	this.file_.open(this.filename, "a");
+		sink = this.file.lockingTextWriter();
+        //this.fileMutex = new Mutex();
     }
 
     /** The messages written to file has the format of:
     $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
-    */
     public override void writeLogMsg(ref LoggerPayload payload) @trusted
     {
         version(DisableFileLogging)
@@ -71,7 +72,7 @@ class FileLogger : Logger
                     payload.line, payload.msg);
             }
         }
-    }
+    }*/
 
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
@@ -80,7 +81,7 @@ class FileLogger : Logger
     }
 
     private __gshared File file_;
-    private __gshared Mutex fileMutex;
+    //private __gshared Mutex fileMutex;
     private string filename;
 }
 
