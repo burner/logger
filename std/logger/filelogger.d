@@ -67,6 +67,8 @@ unittest // file logger test
 {
     import std.file;
     import std.random;
+    import std.array : empty;
+
     Mt19937 gen;
     string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
@@ -81,8 +83,8 @@ unittest // file logger test
     string written = "this should be written to file";
 
     l.logLevel = LogLevel.critical;
-    l.log(LogLevel.warning, notWritten);
-    l.log(LogLevel.critical, written);
+    l.logl(LogLevel.warning, notWritten);
+    l.logl(LogLevel.critical, written);
 
     l.file.flush();
     l.file.close();
@@ -96,8 +98,8 @@ unittest // file logger test
     file.close();
 
     l = new FileLogger(filename);
-    l.log(LogLevel.critical, false, notWritten);
-    l.log(LogLevel.fatal, true, written);
+    l.loglc(LogLevel.critical, false, notWritten);
+    l.loglc(LogLevel.fatal, true, written);
     l.file.close();
 
     file = File(filename, "r");

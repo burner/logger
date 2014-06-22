@@ -57,6 +57,7 @@ class MultiLogger : Logger
     */
     public void insertLogger(Logger newLogger) @safe
     {
+		import std.array;
         if (newLogger.name.empty)
         {
             throw new Exception("A Logger must have a name to be inserted " ~

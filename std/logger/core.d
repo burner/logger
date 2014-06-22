@@ -36,68 +36,116 @@ fLogger.fatal("Logging to the fileLogger with its warning LogLevel");
 
 The following EBNF describes how to construct log statements:
 <table>
- <tr>
-  <td>LOGGING</td> <td style="width:30px"> : </td> <td> MEMBER_LOG ;</td> </tr>
- </tr>
- <tr>
-  <td/> <td/> | </td> <td> FREE_LOG ;</td>
- </tr>
- <tr>
-  <td>MEMBER_LOG</td> <td> : </td> <td> identifier LOG_CALL ;</td>
- </tr>
- <tr>
-  <td>FREE_LOG</td> <td> : </td> <td> LOG_CALL ;</td>
- </tr>
- <tr>
-  <td> LOG_CALL </td> <td> : </td> <td> LOG_STRING </td>
- </tr>
- <tr>
-  <td/> <td> | </td> <td> LOG_FORMAT ;</td>
- </tr>
- <tr>
-  <td> LOG_STRING </td> <td> : </td> <td> log(LOG_TYPE_PARAMS) </td>
- </tr>
- <tr>
-  <td/> <td> | </td> <td> LOG_LEVEL(LOG_PARAMS) ;</td>
- </tr>
- <tr>
- <tr>
-  <td> LOG_FORMAT </td> <td> : </td> <td> logf(LOG_TYPE_PARAMS_A) </td>
- </tr>
- <tr>
-  <td/> <td> | </td> <td> LOG_LEVELF(LOG_PARAMS_A) ;</td>
- </tr>
- <tr>
-  <td> LOG_LEVEL </td> <td> : </td> <td> trace | info | warning | error |
-  critical | fatal ; </td>
- </tr>
- <tr>
-  <td> LOG_LEVELF </td> <td> : </td> <td> traceF | infoF | warningF | errorF |
-  criticalF | fatalF ; </td>
- </tr>
- <tr>
-  <td> LOG_TYPE_PARAMS </td> <td> : </td> <td> EPSILON | bool | LOG_LEVEL |
-    string | bool, LOG_LEVEL | bool, string | LOG_LEVEL, string | bool, 
-    LOG_LEVEL, string ; </td>
- <tr>
- <tr>
-  <td> LOG_PARAMS </td> <td> : </td> <td> EPSILON | bool |
-    bool, string | string ; </td>
- <tr>
- <tr>
-  <td> LOG_TYPE_PARAMS_A </td> <td> : </td> <td> EPSILON | bool | LOG_LEVEL |
-    string | string, A... | bool, LOG_LEVEL | bool, string | bool, string,
-    A... ; </td>
   <tr>
-  <td/>
-    <td> | </td> <td> LOG_LEVEL, string | LOG_LEVEL, string, A... | bool, 
-    LOG_LEVEL, string | bool, LOG_LEVEL, string, A... ;
-    </td>
+    <td>LOGGING</td> <td style="width:30px"> : </td> <td> MEMBER_LOG ;</td> </tr>
+  </tr>
   <tr>
- <tr>
-  <td> LOG_PARAMS_A </td> <td> : </td> <td> EPSILON | bool |
-    bool, string | bool, string, A... | string | string, A... ; </td>
- <tr>
+    <td/> <td/> | </td> <td> FREE_LOG ;</td>
+  </tr>
+  <tr>
+    <td>MEMBER_LOG</td> <td> : </td> <td> identifier LOG_CALL ;</td>
+  </tr>
+  <tr>
+    <td>FREE_LOG</td> <td> : </td> <td> LOG_CALL ;</td>
+  </tr>
+  <tr>
+    <td> LOG_CALL </td> <td> : </td> <td> LOG_NORMAL </td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> LOG_FORMAT ;</td>
+  </tr>
+
+  <tr>
+    <td> LOG_NORMAL </td> <td> : </td> <td> NOLOGLEVEL </td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECT</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> LOGLEVEL</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECTLOGLEVEL</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> CONDI</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> LLCONDI</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECTCONDI ;</td>
+  </tr>
+
+  <tr>
+    <td> LOG_FORMAT </td> <td> : </td> <td> NOLOGLEVELF </td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECTF</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> LOGLEVELF</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECTLOGLEVELF</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> CONDIF</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> LLCONDIF</td>
+  </tr>
+  <tr>
+    <td/> <td> | </td> <td> DIRECTCONDIF ;</td>
+  </tr>
+
+  <tr>
+    <td> NOLOGLEVEL </td> <td> | </td> <td> log ( LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECT </td> <td> | </td> <td> LL ( LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> LOGLEVEL </td> <td> | </td> <td> logl (LogLevel, LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECTLOGLEVEL </td> <td> | </td> <td> LLl (LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> CONDI </td> <td> | </td> <td> logc (true|false, LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> LLCONDI </td> <td> | </td> <td> loglc (LogLevel, true|false, LOGARGS) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECTCONDI </td> <td> | </td> <td> LLc (true|false, LOGARGS ) ; </td>
+  </tr>
+
+  <tr>
+    <td> NOLOGLEVELF </td> <td> | </td> <td> logf ( string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECTF </td> <td> | </td> <td> LLf ( string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> LOGLEVELF </td> <td> | </td> <td> logl (LogLevel, string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECTLOGLEVELF </td> <td> | </td> <td> LLl (string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> CONDIF </td> <td> | </td> <td> logc (true|false, string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> LLCONDIF </td> <td> | </td> <td> loglc (LogLevel, true|false, string , LOGARGS ) ; </td>
+  </tr>
+  <tr>
+    <td> DIRECTCONDIF </td> <td> | </td> <td> LLc (true|false, string , LOGARGS ) ; </td>
+  </tr>
+
+  <tr>
+    <td> LL </td> <td> | </td> <td> info | warning | error | critical | fatal ; </td>
+  </tr>
 </table>
 The occurrences of $(D A...), in the grammar, specify variadic template
 arguments.
@@ -133,7 +181,7 @@ version argument to the $(D D) compiler.
 
 module std.logger.core;
 
-import std.array : empty;
+import std.array;
 import std.stdio;
 import std.conv;
 import std.datetime;
@@ -325,6 +373,41 @@ private string genDocComment(const bool asMemberFunction,
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
 //pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
+private immutable formatString = q{
+        import std.format : formattedWrite;
+
+        auto app = appender!string();
+        foreach (arg; args)
+        {
+            alias A = typeof(arg);
+            static if (isAggregateType!A || is(A == enum))
+            {
+                std.format.formattedWrite(app, "%s", arg);
+            }
+            else static if (isSomeString!A)
+            {
+                std.format.formattedWrite(app, "%s", arg);
+            }
+            else static if (isIntegral!A)
+            {
+                toTextRange(arg, app);
+            }
+            else static if (isBoolean!A)
+            {
+                std.format.formattedWrite(app, "%s", arg ? "true" : "false");
+            }
+            else static if (isSomeChar!A)
+            {
+                std.format.formattedWrite(app, "%c", arg);
+            }
+            else
+            {
+                // Most general case
+                std.format.formattedWrite(w, "%s", arg);
+            }
+        }
+};
+
 private string buildLogFunction(const bool asMemberFunction,
         const bool asConditional, const bool asPrintf, const LogLevel lv,
         const bool specificLogLevel = false)
@@ -341,21 +424,25 @@ private string buildLogFunction(const bool asMemberFunction,
         ret ~= "log";
     }
 
+    ret ~= specificLogLevel ? "l" : "";
+
+    ret ~= asConditional ? "c" : "";
+
     ret ~= asPrintf ? "f(" : "(";
+
+    ret ~= q{int line = __LINE__, string file = __FILE__, string funcName
+       = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+       string moduleName = __MODULE__, A...)(};
 
     if (asPrintf)
     {
-        ret ~= q{int line = __LINE__, string file = __FILE__, string funcName
-            = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(};
-
         ret ~= specificLogLevel ? "const LogLevel logLevel, " : "";
 
         if (asConditional)
         {
             ret ~= "bool cond, ";
         }
-        ret ~= "string msg, lazy A a";
+        ret ~= "string msg, lazy A args";
     }
     else
     {
@@ -365,9 +452,7 @@ private string buildLogFunction(const bool asMemberFunction,
         {
             ret ~= "bool cond, ";
         }
-        ret ~= q{string msg = "", int line = __LINE__, string file =
-            __FILE__, string funcName = __FUNCTION__, string prettyFuncName
-             = __PRETTY_FUNCTION__, string moduleName = __MODULE__};
+        ret ~= "A args";
     }
 
     ret ~= ") @trusted {\n";
@@ -415,6 +500,11 @@ private string buildLogFunction(const bool asMemberFunction,
 
         ret ~= firstBool ? ") {\n" : "";
 
+        if (!asPrintf) 
+        {
+            ret ~= formatString;
+        }
+
         ret ~= "\tthis.logMessage(file, line, funcName, prettyFuncName, " ~
             "moduleName, ";
         if (specificLogLevel)
@@ -428,7 +518,7 @@ private string buildLogFunction(const bool asMemberFunction,
         }
 
         ret ~= asConditional ? "cond, " : "true, ";
-        ret ~= asPrintf ? "format(msg, a));\n" : "msg);\n";
+        ret ~= asPrintf ? "format(msg, args));\n" : "app.data());\n";
         if (asConditional || lv != LogLevel.unspecific || specificLogLevel)
         {
             if (lv == LogLevel.fatal)
@@ -474,7 +564,16 @@ private string buildLogFunction(const bool asMemberFunction,
 
         ret ~= firstBool ? ") {\n" : "";
 
-        ret ~= "\tLogManager.defaultLogger.log(";
+        if (asPrintf)
+        {
+            ret ~= "\tLogManager.defaultLogger.loglcf!(line, file, funcName," ~
+                "prettyFuncName, moduleName)\n\t\t(";
+        }
+        else
+        {
+            ret ~= "\tLogManager.defaultLogger.loglc!(line, file, funcName," ~
+                "prettyFuncName, moduleName)\n\t\t(";
+        }
 
         if (specificLogLevel)
         {
@@ -488,8 +587,7 @@ private string buildLogFunction(const bool asMemberFunction,
         }
 
         ret ~= asConditional ? "cond, " : "true, ";
-        ret ~= asPrintf ? "format(msg, a), " : "msg, ";
-        ret ~= "line, file, funcName, prettyFuncName, moduleName);\n";
+        ret ~= asPrintf ? "msg, args);\n" : "args);\n";
 
         if (asConditional || lv != LogLevel.unspecific || specificLogLevel)
         {
@@ -568,6 +666,7 @@ struct Tracer {
     private string file;
     private string funcName;
     private string prettyFuncName;
+    private string moduleName;
 
     /**
     This static method is used to construct a Tracer as shown in the above
@@ -580,7 +679,8 @@ struct Tracer {
     */
     static Tracer opCall(Logger l, int line = __LINE__, string file = __FILE__,
            string funcName = __FUNCTION__,
-           string prettyFuncName = __PRETTY_FUNCTION__) @trusted
+           string prettyFuncName = __PRETTY_FUNCTION__,
+           string moduleName = __MODULE__) @trusted
     {
         Tracer ret;
         ret.logger = l;
@@ -588,13 +688,14 @@ struct Tracer {
         ret.file = file;
         ret.funcName = funcName;
         ret.prettyFuncName = prettyFuncName;
+        ret.moduleName = moduleName;
         return ret;
     }
 
     ~this() @trusted
     {
-        this.logger.trace("leaving scope", this.line, this.file,
-            this.funcName, this.prettyFuncName);
+        this.logger.tracef("%d:%s %s %s", this.line, this.file, this.funcName, 
+            "leaving scope");
     }
 }
 
@@ -849,6 +950,7 @@ static class LogManager {
 }
 
 //                     mem    cond   printf LogLevel
+//pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 mixin(buildLogFunction(false, false, false, LogLevel.unspecific));
 mixin(buildLogFunction(false, false, false, LogLevel.trace));
 mixin(buildLogFunction(false, false, false, LogLevel.info));
@@ -881,6 +983,8 @@ mixin(buildLogFunction(false, false, false, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, true, false, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, false, true, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, true, true, LogLevel.unspecific, true));
+/+
++/
 
 unittest
 {
@@ -985,8 +1089,8 @@ unittest
         assert(tl.line == __LINE__-1, to!string(tl.line));
     }
     assert(tl.msg != "entering");
-    assert(tl.msg == "leaving scope");
-    assert(tl.line == __LINE__-5);
+    assert(tl.msg.indexOf("leaving scope") != -1, tl.msg);
+    assert(tl.msg.indexOf(to!string(__LINE__-5)) != -1);
 }
 
 unittest
@@ -1011,13 +1115,13 @@ unittest
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.log(true, msg);
+    l.logc(true, msg);
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg);
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.log(false, msg);
+    l.logc(false, msg);
     assert(l.msg == msg);
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1029,31 +1133,31 @@ unittest
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(true, msg, "Yet");
+    l.logcf(true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(false, msg, "Yet");
+    l.logcf(false, msg, "Yet");
     int nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, msg, "Yet");
+    l.loglf(LogLevel.fatal, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, true, msg, "Yet");
+    l.loglcf(LogLevel.fatal, true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, false, msg, "Yet");
+    l.loglcf(LogLevel.fatal, false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1085,13 +1189,13 @@ unittest
     assert(l.line == lineNumber, to!string(l.line));
     assert(l.msg == msg, l.msg);
 
-    log(true, msg);
+    logc(true, msg);
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg);
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    log(false, msg);
+    logc(false, msg);
     assert(l.msg == msg);
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1103,32 +1207,32 @@ unittest
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(true, msg, "Yet");
+    logcf(true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(false, msg, "Yet");
+    logcf(false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
     msg = "%s Another message";
-    logf(LogLevel.fatal, msg, "Yet");
+    loglf(LogLevel.fatal, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(LogLevel.fatal, true, msg, "Yet");
+    loglcf(LogLevel.fatal, true, msg, "Yet");
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(LogLevel.fatal, false, msg, "Yet");
+    loglcf(LogLevel.fatal, false, msg, "Yet");
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1172,8 +1276,8 @@ version(unittest)
     LogManager.globalLogLevel = LogLevel.critical;
     assert(l.logLevel == LogLevel.critical);
 
-    log(LogLevel.warning, notWritten);
-    log(LogLevel.critical, written);
+    logl(LogLevel.warning, notWritten);
+    logl(LogLevel.critical, written);
 
     l.file.flush();
     l.file.close();
@@ -1208,8 +1312,8 @@ unittest
     LogManager.defaultLogger = l;
     log.logLevel = LogLevel.fatal;
 
-    log(LogLevel.critical, false, notWritten);
-    log(LogLevel.fatal, true, written);
+    loglc(LogLevel.critical, false, notWritten);
+    loglc(LogLevel.fatal, true, written);
     l.file.close();
 
     auto file = File(filename, "r");
@@ -1285,24 +1389,24 @@ unittest
                                     {
                                         if (cond)
                                         {
-                                            mem.logf(ll2, condValue, "%s", 
+                                            mem.loglcf(ll2, condValue, "%s", 
                                                 value);
                                         }
                                         else
                                         {
-                                            mem.logf(ll2, "%s", value);
+                                            mem.loglf(ll2, "%s", value);
                                         }
                                     }
                                     else
                                     {
                                         if (cond)
                                         {
-                                            mem.log(ll2, condValue,
+                                            mem.loglc(ll2, condValue,
                                                 to!string(value));
                                         }
                                         else
                                         {
-                                            mem.log(ll2, to!string(value));
+                                            mem.logl(ll2, to!string(value));
                                         }
                                     }
                                 }
@@ -1312,23 +1416,23 @@ unittest
                                     {
                                         if (cond)
                                         {
-                                            logf(ll2, condValue, "%s", value);
+                                            loglcf(ll2, condValue, "%s", value);
                                         }
                                         else
                                         {
-                                            logf(ll2, "%s", value);
+                                            loglf(ll2, "%s", value);
                                         }
                                     }
                                     else
                                     {
                                         if (cond)
                                         {
-                                            log(ll2, condValue, 
+                                            loglc(ll2, condValue, 
                                                 to!string(value));
                                         }
                                         else
                                         {
-                                            log(ll2, to!string(value));
+                                            logl(ll2, to!string(value));
                                         }
                                     }
                                 }
