@@ -6,8 +6,36 @@ import std.logger.stdiologger;
 /** MultiLogger logs to multiple logger.
 
 It can be used to construct arbitrary, tree like structures. Basically a $(D
-MultiLogger) is a map. It maps $(D string)s to $(D Logger). By adding $(D
-MultiLogger) into another $(D MultiLogger) non leaf nodes are added. The
+MultiLogger) is a map. It maps $(D Logger)s to $(D strings)s. By adding a $(D
+MultiLogger) into another $(D MultiLogger) a non leaf nodes is added into the
+tree. The map is implemented as an associated array by the mapper 
+$(D MultiLogger.logger).
+
+Example:
+--------------
+/+
+
+root -> node -> b
+|       |
+|       |-> c
+|-> a
+
++/
+
+auto root = new MultiLogger("root", LogLevel.trace);
+auto node = new MultiLogger("Node", LogLevel.warning);
+
+auto a = new StdioLogger("a", LogLevel.trace);
+auto b = new StdioLogger("b", LogLevel.info);
+auto c = new StdioLogger("c", LogLevel.info);
+
+root.insert(node);
+root.insert(a);
+
+node.insert(b);
+node.insert(c);
+--------------
+
 */
 class MultiLogger : Logger
 {
