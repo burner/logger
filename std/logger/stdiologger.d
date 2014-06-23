@@ -19,7 +19,7 @@ class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     /** Default constructor for the $(D StdIOLogger) Logger.
 
     Params:
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the 
+      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the
       $(D LogLevel) for $(D StdIOLogger) is $(D LogLevel.info).
 
     Example:
@@ -37,7 +37,7 @@ class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
 
     Params:
       name = The name of the logger. Compare to $(D MultiLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the 
+      lv = The $(D LogLevel) for the $(D StdIOLogger). By default the
       $(D LogLevel) for $(D StdIOLogger) is $(D LogLevel.info).
 
     Example:

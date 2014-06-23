@@ -8,7 +8,7 @@ import std.logger.stdiologger;
 It can be used to construct arbitrary, tree like structures. Basically a $(D
 MultiLogger) is a map. It maps $(D Logger)s to $(D strings)s. By adding a $(D
 MultiLogger) into another $(D MultiLogger) a non leaf nodes is added into the
-tree. The map is implemented as an associated array by the mapper 
+tree. The map is implemented as an associated array by the mapper
 $(D MultiLogger.logger).
 
 Example:
@@ -60,8 +60,8 @@ class MultiLogger : Logger
 
     Params:
       name = The name of the logger. Compare to $(D FileLogger.insertLogger).
-      lv = The $(D LogLevel) for the $(D MultiLogger). By default the 
-	  $(D LogLevel) for $(D MultiLogger) is $(D LogLevel.info).
+      lv = The $(D LogLevel) for the $(D MultiLogger). By default the
+      $(D LogLevel) for $(D MultiLogger) is $(D LogLevel.info).
 
     Example:
     -------------
@@ -74,18 +74,18 @@ class MultiLogger : Logger
         super(name, lv);
     }
 
-	/** This member holds all important data of the $(D MultiLogger).
-	
-	As mentioned earlier a $(D MultiLogger) is map, this associative array is
-	the mapping.
-	*/
+    /** This member holds all important data of the $(D MultiLogger).
+
+    As mentioned earlier a $(D MultiLogger) is map, this associative array is
+    the mapping.
+    */
     public Logger[string] logger;
 
     /** This method inserts a new Logger into the Multilogger.
     */
     public void insertLogger(Logger newLogger) @safe
     {
-		import std.array;
+        import std.array;
         if (newLogger.name.empty)
         {
             throw new Exception("A Logger must have a name to be inserted " ~

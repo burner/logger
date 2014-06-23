@@ -47,9 +47,8 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     {
         super(stdout.lockingTextWriter(), name, lv);
         this.filename = fn;
-       	this.file_.open(this.filename, "a");
-		sink = this.file.lockingTextWriter();
-        //this.fileMutex = new Mutex();
+        this.file_.open(this.filename, "a");
+        sink = this.file.lockingTextWriter();
     }
 
 
