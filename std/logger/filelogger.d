@@ -62,14 +62,12 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     private string filename;
 }
 
-unittest // file logger test
+unittest
 {
-    import std.file;
-    import std.random;
+    import std.file : remove;
     import std.array : empty;
+	import std.string : indexOf;
 
-    Mt19937 gen;
-    string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
     auto l = new FileLogger(filename);
 
@@ -86,26 +84,9 @@ unittest // file logger test
     l.logl(LogLevel.critical, written);
 
     l.file.flush();
-    l.file.close();
-
     auto file = File(filename, "r");
-    assert(!file.eof);
-
-    string readLine = file.readln();
-    assert(readLine.indexOf(written) != -1);
-    assert(readLine.indexOf(notWritten) == -1);
-    file.close();
-
-    l = new FileLogger(filename);
-    l.loglc(LogLevel.critical, false, notWritten);
-    l.loglc(LogLevel.fatal, true, written);
-    l.file.close();
-
-    file = File(filename, "r");
-    file.readln();
-    readLine = file.readln();
-    string nextFile = file.readln();
-    assert(nextFile.empty, nextFile);
-    assert(readLine.indexOf(written) != -1);
-    assert(readLine.indexOf(notWritten) == -1);
+	string readLine = file.readln();
+    assert(readLine.indexOf(written) != -1, readLine);
+	readLine = file.readln();
+    assert(readLine.indexOf(notWritten) == -1, readLine);
 }

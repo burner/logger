@@ -72,6 +72,7 @@ class TemplateLogger(Sink, alias Formatter, alias Filter = a => true) : Logger
     }
 }
 
+/+
 unittest
 {
     import std.conv;
@@ -86,3 +87,4 @@ unittest
     assert(app.data().indexOf("Hello") != -1);
     assert(app.data().indexOf(to!string(line)) != line);
 }
++/

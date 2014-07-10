@@ -4,6 +4,7 @@ import std.stdio;
 import std.string;
 import std.logger.templatelogger;
 
+
 /** This $(D Logger) implementation writes log messages to the systems
 standard output. The format of the output is:
 $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).

@@ -188,7 +188,7 @@ import std.datetime;
 import std.string;
 import std.exception;
 import std.concurrency;
-import core.sync.mutex : Mutex;
+//import core.sync.mutex : Mutex;
 
 import std.logger.stdiologger;
 import std.logger.multilogger;
@@ -620,6 +620,7 @@ private string buildLogFunction(const bool asMemberFunction,
     return ret;
 }
 
+/+
 // just sanity checking if parenthesis, and braces are balanced
 unittest
 {
@@ -643,6 +644,7 @@ unittest
         }
     }
 }
++/
 
 /**
 Tracer generates $(D trace) calls to the passed logger wenn the $(D Tracer)
@@ -759,7 +761,7 @@ abstract class Logger
         // Helper
         static LoggerPayload opCall(string file, int line, string funcName,
                 string prettyFuncName, string moduleName, LogLevel logLevel,
-                SysTime timestamp, Tid threadId, string msg) @trusted
+                Tid threadId, SysTime timestamp, string msg) @trusted
         {
             LoggerPayload ret;
             ret.file = file;
@@ -814,7 +816,7 @@ abstract class Logger
         else
         {
             auto lp = LoggerPayload(file, line, funcName, prettyFuncName,
-                moduleName, logLevel, Clock.currTime, thisTid, msg);
+                moduleName, logLevel, thisTid, Clock.currTime, msg);
             this.writeLogMsg(lp);
         }
     }
@@ -902,7 +904,7 @@ An $(D StdIOLogger) is assigned to be the default $(D Logger).
 static class LogManager {
     private @trusted static this()
     {
-        LogManager.defaultLogger_ = new StdIOLogger();
+        LogManager.defaultLogger_ = new NullLogger();
         LogManager.defaultLogger.logLevel = LogLevel.all;
         LogManager.globalLogLevel_ = LogLevel.all;
     }
@@ -983,8 +985,21 @@ mixin(buildLogFunction(false, false, false, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, true, false, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, false, true, LogLevel.unspecific, true));
 mixin(buildLogFunction(false, true, true, LogLevel.unspecific, true));
-/+
-+/
+
+version(unittest)
+{
+    import std.array;
+    import std.ascii;
+    import std.random;
+
+    @trusted string randomString(size_t upto)
+    {
+        auto app = Appender!string();
+        foreach(_ ; 0 .. upto)
+            app.put(letters[uniform(0, letters.length)]);
+        return app.data;
+    }
+}
 
 unittest
 {
@@ -1237,21 +1252,6 @@ unittest
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
-}
-
-version(unittest)
-{
-    import std.array;
-    import std.ascii;
-    import std.random;
-
-    @trusted string randomString(size_t upto)
-    {
-        auto app = Appender!string();
-        foreach(_ ; 0 .. upto)
-            app.put(letters[uniform(0, letters.length)]);
-        return app.data;
-    }
 }
 
 @trusted unittest // default logger
