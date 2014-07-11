@@ -645,7 +645,7 @@ unittest
 }
 
 /**
-Tracer generates $(D trace) calls to the passed logger wenn the $(D Tracer)
+Tracer generates $(D trace) calls to the passed logger when the $(D Tracer)
 struct gets out of scope, this way tracing the control flow gets easier. The
 trace message will contain the linenumber where the $(D Tracer) struct was
 created.
@@ -726,7 +726,7 @@ enum LogLevel : ubyte
 }
 
 /** This class is the base of every logger. In order to create a new kind of
-logger a derivating class needs to implementation the method $(D writeLogMsg).
+logger a derived class needs to implement the $(D writeLogMsg) method.
 */
 abstract class Logger
 {
@@ -779,7 +779,7 @@ abstract class Logger
 
     Every subclass of $(D Logger) has to call this constructor from there
     constructor. It sets the $(D LogLevel), the name of the $(D Logger), and
-    creates a fatal handler. The fatal handler will throw, and $(D Error) if a
+    creates a fatal handler. The fatal handler will throw an $(D Error) if a
     log call is made with a $(D LogLevel) $(D LogLevel.fatal).
     */
     public this(string newName, LogLevel lv) @safe
@@ -894,9 +894,9 @@ abstract class Logger
 }
 
 /** The static $(D LogManager) handles the creation, and the release of
-instances of the $(D Logger) class. It also handels the $(I defaultLogger)
+instances of the $(D Logger) class. It also handles the $(I defaultLogger)
 which is used if no logger is manually selected. Additionally the
-$(D LogManager) also allows to retrieve $(D Logger) by there name.
+$(D LogManager) also allows to retrieve $(D Logger)s by their names.
 An $(D StdIOLogger) is assigned to be the default $(D Logger).
 */
 static class LogManager {
@@ -912,7 +912,7 @@ static class LogManager {
 
     /** This method returns the default $(D Logger).
 
-    The Logger is returned as a reference that means it can be assigend,
+    The Logger is returned as a reference. This means it can be rassigned,
     thus changing the defaultLogger.
 
     Example:
