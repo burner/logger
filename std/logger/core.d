@@ -452,7 +452,7 @@ private string buildLogFunction(const bool asMemberFunction,
         {
             ret ~= "bool cond, ";
         }
-        ret ~= "A args";
+        ret ~= "lazy A args";
     }
 
     ret ~= ") @trusted {\n";
@@ -620,7 +620,6 @@ private string buildLogFunction(const bool asMemberFunction,
     return ret;
 }
 
-/+
 // just sanity checking if parenthesis, and braces are balanced
 unittest
 {
@@ -644,7 +643,6 @@ unittest
         }
     }
 }
-+/
 
 /**
 Tracer generates $(D trace) calls to the passed logger wenn the $(D Tracer)
@@ -904,8 +902,8 @@ An $(D StdIOLogger) is assigned to be the default $(D Logger).
 static class LogManager {
     private @trusted static this()
     {
-        LogManager.defaultLogger_ = new NullLogger();
-        LogManager.defaultLogger.logLevel = LogLevel.all;
+        //LogManager.defaultLogger_ = new StdIOLogger();
+        //LogManager.defaultLogger.logLevel = LogLevel.all;
         LogManager.globalLogLevel_ = LogLevel.all;
     }
 
@@ -925,6 +923,11 @@ static class LogManager {
     */
     public @property final static ref Logger defaultLogger() @trusted
     {
+        if(LogManager.defaultLogger_ is null)
+        {
+            LogManager.defaultLogger_ = new
+                StdIOLogger(LogManager.globalLogLevel_);
+        }
         return LogManager.defaultLogger_;
     }
 

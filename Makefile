@@ -1,4 +1,4 @@
-all: logger.d
+all: std/logger/*.d main.d
 	dmd -unittest -debug -cov -gc std/logger/*.d main.d -oflog -D
 	./log
 	

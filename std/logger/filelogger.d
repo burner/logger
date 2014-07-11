@@ -9,7 +9,8 @@ import std.logger.templatelogger;
 file. The name of the file has to be passed on construction time. If the file
 is already present new log messages will be append at its end.
 */
-class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
+class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter, 
+    (a) => true)
 {
     /** Default constructor for the $(D StdIOLogger) Logger.
 
@@ -45,9 +46,13 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter)
     */
     public @trusted this(const string fn, string name, const LogLevel lv = LogLevel.info)
     {
+        import std.exception : enforce;
         super(stdout.lockingTextWriter(), name, lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
+        enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
+            "\" for logging.");
+        
         sink = this.file.lockingTextWriter();
     }
 
