@@ -150,15 +150,15 @@ The following EBNF describes how to construct log statements:
 The occurrences of $(D A...), in the grammar, specify variadic template
 arguments.
 
-For conditional logging pass a boolean to the log or logf functions. Only if
+For conditional logging pass a boolean to the logc or logcf functions. Only if
 the condition pass is true the message will be logged.
 
 Messages are logged if the $(D LogLevel) of the log message is greater equal
-than the $(D LogLevel) of the used $(D Logger), and the global $(D LogLevel).
-To assign the $(D LogLevel) of a $(D Logger) use the $(D logLevel) property of
-the logger. The global $(D LogLevel) is managed by the static $(D LogManager).
-It can be changed by assigning the $(D globalLogLevel) property of the $(D
-LogManager).
+than the $(D LogLevel) of the used $(D Logger) and additionally if the $(D
+LogLevel of the log message is greater equal to the global $(D LogLevel).
+The global $(D LogLevel) is accessible by using $(D
+LogManager.globalLogLevel). To assign the $(D LogLevel) of a $(D Logger) use 
+the $(D logLevel) property of the logger.
 
 To customize the logger behaviour, create a new $(D class) that inherits from
 the abstract $(D Logger) $(D class), and implements the $(D writeLogMsg)
@@ -645,61 +645,6 @@ unittest
 }
 
 /**
-Tracer generates $(D trace) calls to the passed logger when the $(D Tracer)
-struct gets out of scope, this way tracing the control flow gets easier. The
-trace message will contain the linenumber where the $(D Tracer) struct was
-created.
-
-Example:
--------
-{
-    auto tracer = Tracer(trace("entering"));
-    ...
-            // when the scope is left the tracer will log a trace message
-            // saying "leaving scope"
-}
--------
-*/
-struct Tracer {
-    private Logger logger;
-    private int line;
-    private string file;
-    private string funcName;
-    private string prettyFuncName;
-    private string moduleName;
-
-    /**
-    This static method is used to construct a Tracer as shown in the above
-    example.
-
-    Params:
-        l = The $(D Logger) that should be used by the $(D Tracer)
-
-    Returns: A new $(D Tracer)
-    */
-    static Tracer opCall(Logger l, int line = __LINE__, string file = __FILE__,
-           string funcName = __FUNCTION__,
-           string prettyFuncName = __PRETTY_FUNCTION__,
-           string moduleName = __MODULE__) @trusted
-    {
-        Tracer ret;
-        ret.logger = l;
-        ret.line = line;
-        ret.file = file;
-        ret.funcName = funcName;
-        ret.prettyFuncName = prettyFuncName;
-        ret.moduleName = moduleName;
-        return ret;
-    }
-
-    ~this() @trusted
-    {
-        this.logger.tracef("%d:%s %s %s", this.line, this.file, this.funcName,
-            "leaving scope");
-    }
-}
-
-/**
 There are eight usable logging level. These level are $(I all), $(I trace),
 $(I info), $(I warning), $(I error), $(I critical), $(I fatal), and $(I off).
 If a log function with $(D LogLevel.fatal) is called the shutdown handler of
@@ -726,7 +671,7 @@ enum LogLevel : ubyte
 }
 
 /** This class is the base of every logger. In order to create a new kind of
-logger a derived class needs to implement the $(D writeLogMsg) method.
+logger a deriving class needs to implement the $(D writeLogMsg) method.
 */
 abstract class Logger
 {
@@ -1092,23 +1037,6 @@ unittest
     ml.removeLogger(tl1.name);
     ml.removeLogger(tl2.name);
     assertThrown!Exception(ml.removeLogger(tl1.name));
-}
-
-unittest
-{
-    auto oldLL = LogManager.globalLogLevel;
-    LogManager.globalLogLevel = LogLevel.all;
-    scope(exit) LogManager.globalLogLevel = oldLL;
-    auto tl = new TestLogger("one", LogLevel.trace);
-    tl.trace("hello");
-    assert(tl.msg == "hello", tl.msg);
-    {
-        auto tracer = Tracer(tl.trace("entering"));
-        assert(tl.line == __LINE__-1, to!string(tl.line));
-    }
-    assert(tl.msg != "entering");
-    assert(tl.msg.indexOf("leaving scope") != -1, tl.msg);
-    assert(tl.msg.indexOf(to!string(__LINE__-5)) != -1);
 }
 
 unittest
