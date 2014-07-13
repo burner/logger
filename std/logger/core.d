@@ -186,8 +186,10 @@ import std.stdio;
 import std.conv;
 import std.datetime;
 import std.string;
+import std.range;
 import std.exception;
 import std.concurrency;
+import std.format;
 //import core.sync.mutex : Mutex;
 
 import std.logger.stdiologger;
@@ -195,6 +197,7 @@ import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
 
+/+
 private pure string logLevelToParameterString(const LogLevel lv)
 {
     switch(lv)
@@ -263,7 +266,9 @@ private pure string logLevelToDisable(const LogLevel lv)
             assert(false, to!string(cast(int)lv));
     }
 }
++/
 
+/+
 private string genDocComment(const bool asMemberFunction,
         const bool asConditional, const bool asPrintf,
         const LogLevel lv, const bool specificLogLevel = false)
@@ -367,12 +372,313 @@ private string genDocComment(const bool asMemberFunction,
     return ret ~ " */\n";
 }
 
++/
+
 //pragma(msg, genDocComment(false, true, true, LogLevel.unspecific, true));
-//pragma(msg, buildLogFunction(false, true, true, LogLevel.unspecific, true));
+//pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
 //pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
+public ref Logger log(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+{
+	if (LogManager.defaultLogger.logLevel >= LogManager.globalLogLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off) 
+	{
+		LogManager.defaultLogger.log!(line, file, funcName,prettyFuncName, 
+			moduleName)(args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger logl(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const LogLevel logLevel, lazy A args)
+	@trusted 
+{
+	if (logLevel >= LogManager.globalLogLevel 
+			&& logLevel >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.logl!(line, file, funcName,prettyFuncName, 
+			moduleName)(logLevel, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger logc(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+{
+	if (cond && LogManager.defaultLogger.logLevel >= LogManager.globalLogLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.logc!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger loglc(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const LogLevel logLevel, const bool cond, 
+	lazy A args) @trusted 
+{
+	if (cond && logLevel >= LogManager.globalLogLevel
+			&& logLevel >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.loglc!(line, file, funcName,prettyFuncName, 
+			moduleName)(logLevel, cond, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger logf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(string msg, 
+	lazy A args) @trusted 
+{
+	if (LogManager.defaultLogger.logLevel >= LogManager.globalLogLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.logf!(line, file, funcName,prettyFuncName, 
+			moduleName)(msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger loglf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const LogLevel logLevel, string msg, 
+	lazy A args) @trusted 
+{
+	if (logLevel >= LogManager.globalLogLevel 
+			&& logLevel >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.loglf!(line, file, funcName,prettyFuncName, 
+			moduleName)(logLevel, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger logcf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
+	@trusted 
+{
+	if (cond && LogManager.defaultLogger.logLevel >= LogManager.globalLogLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.logcf!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger loglcf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const LogLevel logLevel, bool cond, 
+	string msg, lazy A args) @trusted 
+{
+	if (cond && logLevel >= LogManager.globalLogLevel 
+			&& logLevel >= LogManager.defaultLogger.logLevel
+			&&LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.loglcf!(line, file, funcName,prettyFuncName, 
+			moduleName)(logLevel, cond, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger trace(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+{
+	if (LogLevel.trace >= LogManager.globalLogLevel
+			&& LogLevel.trace >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off) 
+	{
+		LogManager.defaultLogger.trace!(line, file, funcName,prettyFuncName, 
+			moduleName)(args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger tracec(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+{
+	if (cond && LogLevel.trace >= LogManager.globalLogLevel
+			&& LogLevel.trace >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.tracec!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger tracef(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
+	@trusted 
+{
+	if (cond && LogLevel.trace >= LogManager.globalLogLevel
+			&& LogLevel.trace >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.tracecf!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger tracecf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
+	@trusted 
+{
+	if (cond && LogManager.defaultLogger.logLevel >= LogManager.globalLogLevel
+			&& LogLevel.trace >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.tracecf!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+/////
+
+enum freeLog = q{
+
+public ref Logger %s(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+{
+	if (LogLevel.%s >= LogManager.globalLogLevel
+			&& LogLevel.%s >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off) 
+	{
+		LogManager.defaultLogger.%s!(line, file, funcName,prettyFuncName, 
+			moduleName)(args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger %sc(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+{
+	if (cond && LogLevel.%s >= LogManager.globalLogLevel
+			&& LogLevel.%s >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.%sc!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger %sf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(string msg, lazy A args) 
+	@trusted 
+{
+	if (cond && LogLevel.%s >= LogManager.globalLogLevel
+			&& LogLevel.%s >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.%sf!(line, file, funcName,prettyFuncName, 
+			moduleName)(msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+
+public ref Logger %scf(int line = __LINE__, string file = __FILE__, 
+	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
+	@trusted 
+{
+	if (cond && LogLevel.%s >= LogManager.globalLogLevel
+			&& LogLevel.%s >= LogManager.defaultLogger.logLevel
+			&& LogManager.globalLogLevel != LogLevel.off 
+			&& LogManager.defaultLogger.logLevel != LogLevel.off ) 
+	{
+		LogManager.defaultLogger.%scf!(line, file, funcName,prettyFuncName, 
+			moduleName)(cond, msg, args);
+	}
+
+	return LogManager.defaultLogger;
+}
+};
+
+/*
+
+
+*/
+	
+mixin(freeLog.format(
+	"info", "info", "info", "info",
+	"info", "info", "info", "info",
+	"info", "info", "info", "info",
+	"info", "info", "info", "info"));
+mixin(freeLog.format(
+	"warning", "warning", "warning", "warning",
+	"warning", "warning", "warning", "warning",
+	"warning", "warning", "warning", "warning",
+	"warning", "warning", "warning", "warning"));
+mixin(freeLog.format(
+	"error", "error", "error", "error",
+	"error", "error", "error", "error",
+	"error", "error", "error", "error",
+	"error", "error", "error", "error"));
+mixin(freeLog.format(
+	"critical", "critical", "critical", "critical",
+	"critical", "critical", "critical", "critical",
+	"critical", "critical", "critical", "critical",
+	"critical", "critical", "critical", "critical"));
+mixin(freeLog.format(
+	"fatal", "fatal", "fatal", "fatal",
+	"fatal", "fatal", "fatal", "fatal",
+	"fatal", "fatal", "fatal", "fatal",
+	"fatal", "fatal", "fatal", "fatal"));
+
+/+
 private immutable formatString = q{
         import std.format : formattedWrite;
 
@@ -407,7 +713,9 @@ private immutable formatString = q{
             }
         }
 };
++/
 
+/+
 private string buildLogFunction(const bool asMemberFunction,
         const bool asConditional, const bool asPrintf, const LogLevel lv,
         const bool specificLogLevel = false)
@@ -619,8 +927,98 @@ private string buildLogFunction(const bool asMemberFunction,
     }
     return ret;
 }
++/
+
+enum memLog = q{
+	public ref Logger %s(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+	{
+		if (LogLevel.%s >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.%s, true, Logger.buildLogString(args));
+			%s
+		}
+	
+		return this;
+	}
+
+	public ref Logger %sc(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+	{
+		if (cond && LogLevel.%s >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.%s, cond, Logger.buildLogString(args));
+			%s
+		}
+
+		return this;
+	}
+
+	public ref Logger %sf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted 
+	{
+		if (LogLevel.%s >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.%s, true, format(msg, args));
+			%s
+		}
+	
+		return this;
+	}
+
+	public ref Logger %scf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
+	   	@trusted 
+	{
+		if (cond && LogLevel.%s >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.%s, cond, format(msg, args));
+			%s
+		}
+
+		return this;
+	}
+};
+/*
+
+	*/
+
+//pragma(msg, memLog.format("fatal", "fatal", "fatal", "fatalHandler();"));
+
+//string fatalDG = "fatalLogger();"
+
+//pragma(msg, memLog);
+/*pragma(msg, memLog.format(
+	"info", "info", "info", "fatalHandler();",
+	"info", "info", "info", "fatalHandler();",
+	"fatal", "fatal", "fatal", "fatalHandler();",
+	"fatal", "fatal", "fatal", "fatalHandler();"));
+*/
+
+
+
+//pragma(msg, buildLogFunction(true, false, false, LogLevel.unspecific));
 
 // just sanity checking if parenthesis, and braces are balanced
+/+
 unittest
 {
     import std.algorithm : balancedParens;
@@ -643,6 +1041,7 @@ unittest
         }
     }
 }
++/
 
 /**
 There are eight usable logging level. These level are $(I all), $(I trace),
@@ -731,7 +1130,7 @@ abstract class Logger
     {
         this.logLevel = lv;
         this.name = newName;
-        this.fatalLogger = delegate() {
+        this.fatalHandler = delegate() {
             throw new Error("A Fatal Log Message was logged");
         };
     }
@@ -796,46 +1195,280 @@ abstract class Logger
     By default an $(D Error) will be thrown.
     */
     public final void setFatalHandler(void delegate() dg) @safe {
-        this.fatalLogger = dg;
+        this.fatalHandler = dg;
     }
 
+	static private final string buildLogString(Args...)(Args args)
+	{
+		auto app = appender!string();
+		auto fmt = FormatSpec!char("%s");
+		foreach(arg; args)
+		{
+			formatValue(app, arg, fmt);
+		}
+
+		return app.data();
+	}
+
+	public ref Logger log(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+	{
+		if (this.logLevel_ >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				this.logLevel_, true, Logger.buildLogString(args));
+		}
+	
+		return this;
+	}
+
+	public ref Logger logc(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+	{
+		if (cond && this.logLevel_ >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				this.logLevel_, cond, Logger.buildLogString(args));
+		}
+
+		return this;
+	}
+
+	public ref Logger logl(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const LogLevel logLevel, lazy A args) 
+		@trusted 
+	{
+		if (logLevel >= this.logLevel
+				&& logLevel >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				logLevel, true, Logger.buildLogString(args));
+		}
+
+		return this;
+	}
+
+	public ref Logger loglc(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const LogLevel logLevel, 
+		const bool cond, lazy A args) @trusted 
+	{
+		if (cond && logLevel >= this.logLevel
+				&& logLevel >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				logLevel, cond, Logger.buildLogString(args));
+		}
+
+		return this;
+	}
+
+	public ref Logger logf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted 
+	{
+		if (this.logLevel_ >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				this.logLevel_, true, format(msg, args));
+		}
+	
+		return this;
+	}
+
+	public ref Logger logcf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
+	   	@trusted 
+	{
+		if (cond && this.logLevel_ >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				this.logLevel_, cond, format(msg, args));
+		}
+
+		return this;
+	}
+
+	public ref Logger loglf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const LogLevel logLevel, string msg, 
+		lazy A args) @trusted 
+	{
+		if (logLevel >= this.logLevel
+				&& logLevel >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				logLevel, true, format(msg, args));
+		}
+
+		return this;
+	}
+
+	public ref Logger loglcf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const LogLevel logLevel, const bool cond, 
+		string msg, lazy A args) @trusted 
+	{
+		if (cond && logLevel >= this.logLevel
+				&& logLevel >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				logLevel, cond, format(msg, args));
+		}
+
+		return this;
+	}
+
+	public ref Logger trace(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(lazy A args) @trusted 
+	{
+		if (LogLevel.trace >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.trace, true, Logger.buildLogString(args));
+		}
+	
+		return this;
+	}
+
+	public ref Logger tracec(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
+	{
+		if (cond && LogLevel.trace >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.trace, cond, Logger.buildLogString(args));
+		}
+
+		return this;
+	}
+
+	public ref Logger tracef(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted 
+	{
+		if (LogLevel.trace >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.trace, true, format(msg, args));
+		}
+	
+		return this;
+	}
+
+	public ref Logger tracecf(int line = __LINE__, string file = __FILE__, 
+		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+		string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
+	   	@trusted 
+	{
+		if (cond && LogLevel.trace >= LogManager.globalLogLevel
+				&& LogManager.globalLogLevel != LogLevel.off 
+				&& this.logLevel_ != LogLevel.off) 
+		{
+			this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+				LogLevel.trace, cond, format(msg, args));
+		}
+
+		return this;
+	}
+	
+	mixin(memLog.format(
+		"info", "info", "info", "",
+		"info", "info", "info", "",
+		"info", "info", "info", "",
+		"info", "info", "info", ""));
+	mixin(memLog.format(
+		"warning", "warning", "warning", "",
+		"warning", "warning", "warning", "",
+		"warning", "warning", "warning", "",
+		"warning", "warning", "warning", ""));
+	mixin(memLog.format(
+		"error", "error", "error", "",
+		"error", "error", "error", "",
+		"error", "error", "error", "",
+		"error", "error", "error", ""));
+	mixin(memLog.format(
+		"critical", "critical", "critical", "",
+		"critical", "critical", "critical", "",
+		"critical", "critical", "critical", "",
+		"critical", "critical", "critical", ""));
+	mixin(memLog.format(
+		"fatal", "fatal", "fatal", "fatalHandler();",
+		"fatal", "fatal", "fatal", "fatalHandler();",
+		"fatal", "fatal", "fatal", "fatalHandler();",
+		"fatal", "fatal", "fatal", "fatalHandler();"));
+
+	/*
     //                     mem   cond   printf LogLevel
-    mixin(buildLogFunction(true, false, false, LogLevel.unspecific));
-    mixin(buildLogFunction(true, false, false, LogLevel.trace));
-    mixin(buildLogFunction(true, false, false, LogLevel.info));
+    //mixin(buildLogFunction(true, false, false, LogLevel.unspecific));
+    //mixin(buildLogFunction(true, false, false, LogLevel.trace));
+    //mixin(buildLogFunction(true, false, false, LogLevel.info));
     mixin(buildLogFunction(true, false, false, LogLevel.warning));
     mixin(buildLogFunction(true, false, false, LogLevel.error));
     mixin(buildLogFunction(true, false, false, LogLevel.critical));
     mixin(buildLogFunction(true, false, false, LogLevel.fatal));
-    mixin(buildLogFunction(true, false, true, LogLevel.unspecific));
-    mixin(buildLogFunction(true, false, true, LogLevel.trace));
-    mixin(buildLogFunction(true, false, true, LogLevel.info));
+    //mixin(buildLogFunction(true, false, true, LogLevel.unspecific));
+    //mixin(buildLogFunction(true, false, true, LogLevel.trace));
+    //mixin(buildLogFunction(true, false, true, LogLevel.info));
     mixin(buildLogFunction(true, false, true, LogLevel.warning));
     mixin(buildLogFunction(true, false, true, LogLevel.error));
     mixin(buildLogFunction(true, false, true, LogLevel.critical));
     mixin(buildLogFunction(true, false, true, LogLevel.fatal));
     mixin(buildLogFunction(true, true, false, LogLevel.unspecific));
-    mixin(buildLogFunction(true, true, false, LogLevel.trace));
-    mixin(buildLogFunction(true, true, false, LogLevel.info));
+    //mixin(buildLogFunction(true, true, false, LogLevel.trace));
+    //mixin(buildLogFunction(true, true, false, LogLevel.info));
     mixin(buildLogFunction(true, true, false, LogLevel.warning));
     mixin(buildLogFunction(true, true, false, LogLevel.error));
     mixin(buildLogFunction(true, true, false, LogLevel.critical));
     mixin(buildLogFunction(true, true, false, LogLevel.fatal));
     mixin(buildLogFunction(true, true, true, LogLevel.unspecific));
-    mixin(buildLogFunction(true, true, true, LogLevel.trace));
-    mixin(buildLogFunction(true, true, true, LogLevel.info));
+    //mixin(buildLogFunction(true, true, true, LogLevel.trace));
+    //mixin(buildLogFunction(true, true, true, LogLevel.info));
     mixin(buildLogFunction(true, true, true, LogLevel.warning));
     mixin(buildLogFunction(true, true, true, LogLevel.error));
     mixin(buildLogFunction(true, true, true, LogLevel.critical));
     mixin(buildLogFunction(true, true, true, LogLevel.fatal));
-    mixin(buildLogFunction(true, false, false, LogLevel.unspecific, true));
-    mixin(buildLogFunction(true, true, false, LogLevel.unspecific, true));
-    mixin(buildLogFunction(true, false, true, LogLevel.unspecific, true));
-    mixin(buildLogFunction(true, true, true, LogLevel.unspecific, true));
+    //mixin(buildLogFunction(true, false, false, LogLevel.unspecific, true));
+    //mixin(buildLogFunction(true, true, false, LogLevel.unspecific, true));
+    //mixin(buildLogFunction(true, false, true, LogLevel.unspecific, true));
+    //mixin(buildLogFunction(true, true, true, LogLevel.unspecific, true));
+	*/
 
     private LogLevel logLevel_ = LogLevel.info;
     private string name_;
-    private void delegate() fatalLogger;
+    private void delegate() fatalHandler;
 }
 
 /** The static $(D LogManager) handles the creation, and the release of
@@ -901,38 +1534,38 @@ static class LogManager {
 
 //                     mem    cond   printf LogLevel
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
-mixin(buildLogFunction(false, false, false, LogLevel.unspecific));
-mixin(buildLogFunction(false, false, false, LogLevel.trace));
-mixin(buildLogFunction(false, false, false, LogLevel.info));
-mixin(buildLogFunction(false, false, false, LogLevel.warning));
-mixin(buildLogFunction(false, false, false, LogLevel.error));
-mixin(buildLogFunction(false, false, false, LogLevel.critical));
-mixin(buildLogFunction(false, false, false, LogLevel.fatal));
-mixin(buildLogFunction(false, false, true, LogLevel.unspecific));
-mixin(buildLogFunction(false, false, true, LogLevel.trace));
-mixin(buildLogFunction(false, false, true, LogLevel.info));
-mixin(buildLogFunction(false, false, true, LogLevel.warning));
-mixin(buildLogFunction(false, false, true, LogLevel.error));
-mixin(buildLogFunction(false, false, true, LogLevel.critical));
-mixin(buildLogFunction(false, false, true, LogLevel.fatal));
-mixin(buildLogFunction(false, true, false, LogLevel.unspecific));
-mixin(buildLogFunction(false, true, false, LogLevel.trace));
-mixin(buildLogFunction(false, true, false, LogLevel.info));
-mixin(buildLogFunction(false, true, false, LogLevel.warning));
-mixin(buildLogFunction(false, true, false, LogLevel.error));
-mixin(buildLogFunction(false, true, false, LogLevel.critical));
-mixin(buildLogFunction(false, true, false, LogLevel.fatal));
-mixin(buildLogFunction(false, true, true, LogLevel.unspecific));
-mixin(buildLogFunction(false, true, true, LogLevel.trace));
-mixin(buildLogFunction(false, true, true, LogLevel.info));
-mixin(buildLogFunction(false, true, true, LogLevel.warning));
-mixin(buildLogFunction(false, true, true, LogLevel.error));
-mixin(buildLogFunction(false, true, true, LogLevel.critical));
-mixin(buildLogFunction(false, true, true, LogLevel.fatal));
-mixin(buildLogFunction(false, false, false, LogLevel.unspecific, true));
-mixin(buildLogFunction(false, true, false, LogLevel.unspecific, true));
-mixin(buildLogFunction(false, false, true, LogLevel.unspecific, true));
-mixin(buildLogFunction(false, true, true, LogLevel.unspecific, true));
+//mixin(buildLogFunction(false, false, false, LogLevel.unspecific));
+//mixin(buildLogFunction(false, false, false, LogLevel.trace));
+//mixin(buildLogFunction(false, false, false, LogLevel.info));
+//mixin(buildLogFunction(false, false, false, LogLevel.warning));
+//mixin(buildLogFunction(false, false, false, LogLevel.error));
+//mixin(buildLogFunction(false, false, false, LogLevel.critical));
+//mixin(buildLogFunction(false, false, false, LogLevel.fatal));
+//mixin(buildLogFunction(false, false, true, LogLevel.unspecific));
+//mixin(buildLogFunction(false, false, true, LogLevel.trace));
+//mixin(buildLogFunction(false, false, true, LogLevel.info));
+//mixin(buildLogFunction(false, false, true, LogLevel.warning));
+//mixin(buildLogFunction(false, false, true, LogLevel.error));
+//mixin(buildLogFunction(false, false, true, LogLevel.critical));
+//mixin(buildLogFunction(false, false, true, LogLevel.fatal));
+//mixin(buildLogFunction(false, true, false, LogLevel.unspecific));
+//mixin(buildLogFunction(false, true, false, LogLevel.trace));
+//mixin(buildLogFunction(false, true, false, LogLevel.info));
+//mixin(buildLogFunction(false, true, false, LogLevel.warning));
+//mixin(buildLogFunction(false, true, false, LogLevel.error));
+//mixin(buildLogFunction(false, true, false, LogLevel.critical));
+//mixin(buildLogFunction(false, true, false, LogLevel.fatal));
+//mixin(buildLogFunction(false, true, true, LogLevel.unspecific));
+//mixin(buildLogFunction(false, true, true, LogLevel.trace));
+//mixin(buildLogFunction(false, true, true, LogLevel.info));
+//mixin(buildLogFunction(false, true, true, LogLevel.warning));
+//mixin(buildLogFunction(false, true, true, LogLevel.error));
+//mixin(buildLogFunction(false, true, true, LogLevel.critical));
+//mixin(buildLogFunction(false, true, true, LogLevel.fatal));
+//mixin(buildLogFunction(false, false, false, LogLevel.unspecific, true));
+//mixin(buildLogFunction(false, true, false, LogLevel.unspecific, true));
+//mixin(buildLogFunction(false, false, true, LogLevel.unspecific, true));
+//mixin(buildLogFunction(false, true, true, LogLevel.unspecific, true));
 
 version(unittest)
 {
