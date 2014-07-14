@@ -197,7 +197,6 @@ import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
 
-/+
 private pure string logLevelToParameterString(const LogLevel lv)
 {
     switch(lv)
@@ -266,9 +265,7 @@ private pure string logLevelToDisable(const LogLevel lv)
             assert(false, to!string(cast(int)lv));
     }
 }
-+/
 
-/+
 private string genDocComment(const bool asMemberFunction,
         const bool asConditional, const bool asPrintf,
         const LogLevel lv, const bool specificLogLevel = false)
@@ -372,14 +369,27 @@ private string genDocComment(const bool asMemberFunction,
     return ret ~ " */\n";
 }
 
-+/
-
-//pragma(msg, genDocComment(false, true, true, LogLevel.unspecific, true));
+//pragma(msg, genDocComment(false, false, false, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.trace));
 //pragma(msg, buildLogFunction(false, false, true, LogLevel.info));
 
+/** This function logs data.
+
+In order for the data to be processed the $(D LogLevel) of the defaultLogger 
+must be greater equal to the global $(D LogLevel).
+
+Params:
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+log("Hello World", 3.1415);
+--------------------
+*/
 public ref Logger log(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(lazy A args) @trusted 
@@ -395,6 +405,24 @@ public ref Logger log(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data depending on a $(D LogLevel) passed
+explicitly.
+
+This function takes a $(D LogLevel) as first argument. In order for the
+data to be processed the $(D LogLevel) must be greater equal to the
+$(D LogLevel) of the used logger, and the global $(D LogLevel).
+
+Params:
+logLevel = The $(D LogLevel) used for logging the message.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+logl(LogLevel.error, "Hello World");
+--------------------
+*/
 public ref Logger logl(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const LogLevel logLevel, lazy A args)
@@ -412,6 +440,24 @@ public ref Logger logl(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data depending on a $(D condition) passed
+explicitly.
+
+This function takes a $(D bool) as first argument. In order for the
+data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+the defaultLogger must be greater equal to the global $(D LogLevel).
+
+Params:
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+logl(false, 1337);
+--------------------
+*/
 public ref Logger logc(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
@@ -427,6 +473,25 @@ public ref Logger logc(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data depending on a $(D condition) and a $(D LogLevel) 
+passed explicitly.
+
+This function takes a $(D bool) as first argument and a $(D bool) as second 
+argument. In order for the
+data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+the defaultLogger must be greater equal to the global $(D LogLevel).
+
+Params:
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+loglc(LogLevel.info, someCondition, 13, 37, "Hello World");
+--------------------
+*/
 public ref Logger loglc(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const LogLevel logLevel, const bool cond, 
@@ -444,6 +509,22 @@ public ref Logger loglc(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a printf style manner.
+
+In order for the data to be processed the $(D LogLevel) of the defaultLogger 
+must be greater equal to the global $(D LogLevel).
+
+Params:
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+logf("Hello World %f", 3.1415);
+--------------------
+*/
 public ref Logger logf(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(string msg, 
@@ -460,6 +541,25 @@ public ref Logger logf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a printf style manner depending on a 
+$(D condition) and a $(D LogLevel) passed explicitly.
+
+This function takes a $(D LogLevel) as first argument. In order for the
+data to be processed the $(D LogLevel) must be greater equal to the
+$(D LogLevel) of the used logger, and the global $(D LogLevel).
+
+Params:
+logLevel = The $(D LogLevel) used for logging the message.
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+loglf(LogLevel.critical, "%d", 1337);
+--------------------
+*/
 public ref Logger loglf(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const LogLevel logLevel, string msg, 
@@ -477,6 +577,25 @@ public ref Logger loglf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a print style manner depending on a 
+$(D condition) passed explicitly
+
+This function takes a $(D bool) as first argument. In order for the
+data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+the defaultLogger must be greater equal to the global $(D LogLevel).
+
+Params:
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+logcf(false, "%d", 1337);
+--------------------
+*/
 public ref Logger logcf(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
@@ -493,6 +612,27 @@ public ref Logger logcf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a print style manner depending on a $(D
+LogLevel) and a $(D condition) passed explicitly
+
+This function takes a $(D LogLevel) as first argument This function takes a
+$(D bool) as second argument. In order for the data to be processed the 
+$(D bool) must be $(D true) and the $(D LogLevel) of the defaultLogger must be
+greater equal to the global $(D LogLevel).
+
+Params:
+logLevel = The $(D LogLevel) used for logging the message.
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+loglcf(LogLevel.trace, false, "%d %s", 1337, "is number");
+--------------------
+*/
 public ref Logger loglcf(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const LogLevel logLevel, bool cond, 

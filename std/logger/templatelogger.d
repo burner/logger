@@ -14,7 +14,8 @@ public void defaultFormatter(T,F)(ref T t, ref F payload) @trusted
 {
     size_t fnIdx = payload.file.lastIndexOf('/') + 1;
     size_t funIdx = payload.funcName.lastIndexOf('.') + 1;
-    formattedWrite(t, "%s:%s:%s:%u %s\n",payload.timestamp.toISOExtString(),
+	auto time = payload.timestamp.toISOExtString();
+    formattedWrite(t, "%s:%s:%s:%u %s\n", time[0 .. 25],
         payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
         payload.line, payload.msg);
 }

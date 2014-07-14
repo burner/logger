@@ -1,20 +1,36 @@
 module std.logger.stdiologger;
 
 import std.stdio;
+import core.sync.mutex;
 import std.string;
 import std.logger.templatelogger;
+
+private struct StdioOutputRange {
+	static __gshared Mutex mu;
+
+	void put(T)(ref T t) {
+		mu.lock();
+		scope(exit) mu.unlock();
+		write(t);
+	}
+
+	static StdioOutputRange opCall() {
+		StdioOutputRange ret;
+		StdioOutputRange.mu =  new Mutex();
+		return ret;
+	}
+}
 
 /** This $(D Logger) implementation writes log messages to the systems
 standard output. The format of the output is:
 $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
 */
-class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter, 
+class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter, 
     (a) => true)
 {
     static @trusted this()
     {
         this("", LogLevel.info);
-        //StdIOLogger.stdioMutex = new Mutex();
     }
 
     /** Default constructor for the $(D StdIOLogger) Logger.
@@ -49,7 +65,7 @@ class StdIOLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
     */
     public this(string name, const LogLevel lv = LogLevel.info) @trusted
     {
-        super(stdout.lockingTextWriter(), name, lv);
+        super(StdioOutputRange(), name, lv);
     }
 }
 
