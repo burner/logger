@@ -197,6 +197,7 @@ import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
 
+/+
 private pure string logLevelToParameterString(const LogLevel lv)
 {
     switch(lv)
@@ -368,6 +369,7 @@ private string genDocComment(const bool asMemberFunction,
 
     return ret ~ " */\n";
 }
++/
 
 //pragma(msg, genDocComment(false, false, false, LogLevel.unspecific, true));
 //pragma(msg, buildLogFunction(false, false, false, LogLevel.unspecific));
@@ -455,7 +457,7 @@ Returns: The logger used by the logging function as reference.
 
 Examples:
 --------------------
-logl(false, 1337);
+logc(false, 1337);
 --------------------
 */
 public ref Logger logc(int line = __LINE__, string file = __FILE__, 
@@ -482,6 +484,7 @@ data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
 the defaultLogger must be greater equal to the global $(D LogLevel).
 
 Params:
+logLevel = The $(D LogLevel) used for logging the message.
 cond = Only if this $(D bool) is $(D true) will the data be logged.
 args = The data that should be logged.
 
@@ -546,7 +549,7 @@ $(D condition) and a $(D LogLevel) passed explicitly.
 
 This function takes a $(D LogLevel) as first argument. In order for the
 data to be processed the $(D LogLevel) must be greater equal to the
-$(D LogLevel) of the used logger, and the global $(D LogLevel).
+$(D LogLevel) of the used Logger and the global $(D LogLevel).
 
 Params:
 logLevel = The $(D LogLevel) used for logging the message.
@@ -577,7 +580,7 @@ public ref Logger loglf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
-/** This function logs data in a print style manner depending on a 
+/** This function logs data in a printf style manner depending on a 
 $(D condition) passed explicitly
 
 This function takes a $(D bool) as first argument. In order for the
@@ -612,7 +615,7 @@ public ref Logger logcf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
-/** This function logs data in a print style manner depending on a $(D
+/** This function logs data in a printf style manner depending on a $(D
 LogLevel) and a $(D condition) passed explicitly
 
 This function takes a $(D LogLevel) as first argument This function takes a
@@ -650,6 +653,32 @@ public ref Logger loglcf(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data with $(D LogLevel) $(D trace).
+
+In order for the data to be processed the $(D LogLevel) of the defaultLogger
+must be smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must
+also be smaller equal to $(D LogLevel.trace).
+
+Params:
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+trace(1337, "is number");
+--------------------
+
+Additionally, to $(D tracecf) there are the function.
+$(LI $(D info))
+$(LI $(D warning))
+$(LI $(D error))
+$(LI $(D critical))
+$(LI $(D fatal))
+
+These function behave exactly like $(D tracecf) with the exception of a
+different $(D LogLevel) used for logging the data.
+*/
 public ref Logger trace(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(lazy A args) @trusted 
@@ -666,6 +695,36 @@ public ref Logger trace(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a printf style manner with $(D LogLevel) 
+$(D trace), a $(D condition) is passed explicitly.
+
+This function takes a $(D bool) as first argument. In order for the data to be processed the 
+$(D bool) must be $(D true), the $(D LogLevel) of the defaultLogger must be
+smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must also be
+smaller equal to $(D LogLevel.trace).
+
+Params:
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+tracecf(false, "%d %s", 1337, "is number");
+--------------------
+
+Additionally, to $(D tracecf) there are the function.
+$(LI $(D infocf))
+$(LI $(D warningcf))
+$(LI $(D errorcf))
+$(LI $(D criticalcf))
+$(LI $(D fatalcf))
+
+These function behave exactly like $(D tracecf) with the exception of a
+different $(D LogLevel) used for logging the data.
+*/
 public ref Logger tracec(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
@@ -682,6 +741,35 @@ public ref Logger tracec(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a printf style manner with $(D LogLevel) 
+$(D trace).
+
+In order for the data to be processed the $(D bool) must be $(D true), the $(D
+LogLevel) of the defaultLogger must be smaller equal to $(D LogLevel.trace)
+and the global $(D LogLevel) must also be smaller equal to $(D
+LogLevel.trace).
+
+Params:
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+tracef("%d %s", 1337, "is number");
+--------------------
+
+Additionally, to $(D tracecf) there are the function.
+$(LI $(D infof))
+$(LI $(D warningf))
+$(LI $(D errorf))
+$(LI $(D criticalf))
+$(LI $(D fatalf))
+
+These function behave exactly like $(D tracef) with the exception of a
+different $(D LogLevel) used for logging the data.
+*/
 public ref Logger tracef(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
@@ -699,6 +787,36 @@ public ref Logger tracef(int line = __LINE__, string file = __FILE__,
 	return LogManager.defaultLogger;
 }
 
+/** This function logs data in a printf style manner with $(D LogLevel) 
+$(D trace), a $(D condition) is passed explicitly
+
+This function takes a $(D bool) as first argument. In order for the data to be processed the 
+$(D bool) must be $(D true), the $(D LogLevel) of the defaultLogger must be
+smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must also be
+smaller equal to $(D LogLevel.trace).
+
+Params:
+cond = Only if this $(D bool) is $(D true) will the data be logged.
+msg = The $(D string) that is used to format the additional data.
+args = The data that should be logged.
+
+Returns: The logger used by the logging function as reference. 
+
+Examples:
+--------------------
+tracecf(false, "%d %s", 1337, "is number");
+--------------------
+
+Additionally, to $(D tracecf) there are the function.
+$(LI $(D infocf))
+$(LI $(D warningcf))
+$(LI $(D errorcf))
+$(LI $(D criticalcf))
+$(LI $(D fatalcf))
+
+These function behave exactly like $(D tracecf) with the exception of a
+different $(D LogLevel) used for logging the data.
+*/
 public ref Logger tracecf(int line = __LINE__, string file = __FILE__, 
 	string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 	string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args) 
@@ -715,8 +833,6 @@ public ref Logger tracecf(int line = __LINE__, string file = __FILE__,
 
 	return LogManager.defaultLogger;
 }
-
-/////
 
 enum freeLog = q{
 
@@ -1350,6 +1466,26 @@ abstract class Logger
 		return app.data();
 	}
 
+	
+	/** This method logs data depending on a $(D condition) passed
+	explicitly.
+	
+	This method takes a $(D bool) as first argument. In order for the
+	data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+	the Logger must be greater equal to the global $(D LogLevel).
+	
+	Params:
+	cond = Only if this $(D bool) is $(D true) will the data be logged.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.log(1337);
+	--------------------
+	*/
 	public ref Logger log(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(lazy A args) @trusted 
@@ -1366,6 +1502,25 @@ abstract class Logger
 		return this;
 	}
 
+	/** This method logs data depending on a $(D condition) passed
+	explicitly.
+	
+	This method takes a $(D bool) as first argument. In order for the
+	data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+	the Logger must be greater equal to the global $(D LogLevel).
+	
+	Params:
+	cond = Only if this $(D bool) is $(D true) will the data be logged.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.logc(false, 1337);
+	--------------------
+	*/
 	public ref Logger logc(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted 
@@ -1381,6 +1536,25 @@ abstract class Logger
 		return this;
 	}
 
+	/** This method logs data depending on a $(D LogLevel) passed
+	explicitly.
+	
+	This method takes a $(D LogLevel) as first argument. In order for the
+	data to be processed the $(D LogLevel) must be greater equal to the
+	$(D LogLevel) of the used Logger and the global $(D LogLevel).
+	
+	Params:
+	logLevel = The $(D LogLevel) used for logging the message.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.logl(LogLevel.error, "Hello World");
+	--------------------
+	*/
 	public ref Logger logl(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(const LogLevel logLevel, lazy A args) 
@@ -1398,6 +1572,27 @@ abstract class Logger
 		return this;
 	}
 
+	/** This method logs data depending on a $(D condition) and a $(D LogLevel) 
+	passed explicitly.
+	
+	This method takes a $(D bool) as first argument and a $(D bool) as second
+	argument. In order for the data to be processed the $(D bool) must be $(D
+	true) and the $(D LogLevel) of the Logger must be greater equal to
+	the global $(D LogLevel).
+	
+	Params:
+	logLevel = The $(D LogLevel) used for logging the message.
+	cond = Only if this $(D bool) is $(D true) will the data be logged.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.loglc(LogLevel.info, someCondition, 13, 37, "Hello World");
+	--------------------
+	*/
 	public ref Logger loglc(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(const LogLevel logLevel, 
@@ -1415,6 +1610,24 @@ abstract class Logger
 		return this;
 	}
 
+	
+	/** This method logs data in a printf style manner.
+	
+	In order for the data to be processed the $(D LogLevel) of the Logger 
+	must be greater equal to the global $(D LogLevel).
+	
+	Params:
+	msg = The $(D string) that is used to format the additional data.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.logf("Hello World %f", 3.1415);
+	--------------------
+	*/
 	public ref Logger logf(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted 
@@ -1431,6 +1644,26 @@ abstract class Logger
 		return this;
 	}
 
+	/** This function logs data in a printf style manner depending on a 
+	$(D condition) passed explicitly
+	
+	This function takes a $(D bool) as first argument. In order for the
+	data to be processed the $(D bool) must be $(D true) and the $(D LogLevel) of
+	the Logger must be greater equal to the global $(D LogLevel).
+	
+	Params:
+	cond = Only if this $(D bool) is $(D true) will the data be logged.
+	msg = The $(D string) that is used to format the additional data.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.logcf(false, "%d", 1337);
+	--------------------
+	*/
 	public ref Logger logcf(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
@@ -1447,6 +1680,26 @@ abstract class Logger
 		return this;
 	}
 
+	/** This function logs data in a printf style manner depending on a 
+	$(D condition).
+	
+	This function takes a $(D LogLevel) as first argument. In order for the
+	data to be processed the $(D LogLevel) must be greater equal to the
+	$(D LogLevel) of the used Logger, and the global $(D LogLevel).
+	
+	Params:
+	logLevel = The $(D LogLevel) used for logging the message.
+	msg = The $(D string) that is used to format the additional data.
+	args = The data that should be logged.
+	
+	Returns: The logger used by the logging function as reference. 
+	
+	Examples:
+	--------------------
+	auto l = new StdIOLogger();
+	l.loglf(LogLevel.critical, "%d", 1337);
+	--------------------
+	*/
 	public ref Logger loglf(int line = __LINE__, string file = __FILE__, 
 		string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
 		string moduleName = __MODULE__, A...)(const LogLevel logLevel, string msg, 
@@ -1998,6 +2251,7 @@ unittest
 unittest
 {
     import std.file;
+    import core.memory;
     string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
     auto oldunspecificLogger = LogManager.defaultLogger;
@@ -2018,7 +2272,8 @@ unittest
 
     loglc(LogLevel.critical, false, notWritten);
     loglc(LogLevel.fatal, true, written);
-    l.file.close();
+    l.file.flush();
+	GC.free(cast(void*)l);
 
     auto file = File(filename, "r");
     auto readLine = file.readln();
@@ -2026,6 +2281,7 @@ unittest
     assert(!nextFile.empty, nextFile);
     assert(nextFile.indexOf(written) != -1);
     assert(nextFile.indexOf(notWritten) == -1);
+	file.close();
 }
 
 @trusted unittest
