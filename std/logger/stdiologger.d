@@ -24,6 +24,10 @@ private struct StdioOutputRange {
 /** This $(D Logger) implementation writes log messages to the systems
 standard output. The format of the output is:
 $(D FileNameWithoutPath:FunctionNameWithoutModulePath:LineNumber Message).
+
+The $(D StdIOLogger) is thread safe, in the sense that the output of the
+all $(D StdIOLogger) to stdout will not be subject to race conditions. In
+other words stdout is locked for writing.
 */
 class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter, 
     (a) => true)
