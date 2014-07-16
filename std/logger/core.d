@@ -1947,6 +1947,41 @@ unittest
     }
 }
 
+// testing more possible log conditions
+@trusted unittest
+{
+    auto oldunspecificLogger = defaultLogger;
+
+    auto mem = new TestLogger("tl");
+    defaultLogger = mem;
+
+    scope(exit)
+    {
+        defaultLogger = oldunspecificLogger;
+        globalLogLevel = LogLevel.all;
+    }
+
+    foreach(gll; [LogLevel.all, LogLevel.trace,
+            LogLevel.info, LogLevel.warning, LogLevel.error,
+            LogLevel.critical, LogLevel.fatal, LogLevel.off])
+    {
+
+        globalLogLevel = gll;
+
+        foreach(ll; [LogLevel.all, LogLevel.trace,
+                LogLevel.info, LogLevel.warning, LogLevel.error,
+                LogLevel.critical, LogLevel.fatal, LogLevel.off])
+        {
+
+            mem.logLevel = ll;
+
+            foreach(cond; [true, false])
+			{
+			}
+		}
+	}
+}
+
 // Issue #5
 unittest
 {
