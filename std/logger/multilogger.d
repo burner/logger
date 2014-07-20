@@ -114,6 +114,14 @@ class MultiLogger : Logger
         assert(l1.removeLogger("some_logger") is l2);
     }
 
+    unittest
+    {
+		import std.exception : assertThrown;
+        auto l1 = new MultiLogger;
+        auto l2 = new StdIOLogger();
+        assertThrown(l1.insertLogger(l2));
+    }
+
     /** This method removes a Logger from the Multilogger.
 
     See_Also: std.logger.MultiLogger.insertLogger

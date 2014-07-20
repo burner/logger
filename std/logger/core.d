@@ -1968,80 +1968,80 @@ unittest
                 LogLevel.info, LogLevel.warning, LogLevel.error,
                 LogLevel.critical, LogLevel.fatal, LogLevel.off])
         {
-			foreach(cond; [true, false])
-			{
-            	mem.logLevel = ll;
+            foreach(cond; [true, false])
+            {
+                mem.logLevel = ll;
 
-				bool gllVSll = LogLevel.trace >= globalLogLevel;
-				bool gllOff = globalLogLevel != LogLevel.off;
-				bool llOff = mem.logLevel != LogLevel.off;
-				bool test = gllVSll && gllOff && llOff && cond;
+                bool gllVSll = LogLevel.trace >= globalLogLevel;
+                bool gllOff = globalLogLevel != LogLevel.off;
+                bool llOff = mem.logLevel != LogLevel.off;
+                bool test = gllVSll && gllOff && llOff && cond;
 
-				mem.line = -1;
-				/*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace, 
-				  		mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel, 
-						gllVSll, gllOff, llOff, cond, test);
-				*/	
+                mem.line = -1;
+                /*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace,
+                          mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel,
+                        gllVSll, gllOff, llOff, cond, test);
+                */
 
-				mem.trace(__LINE__); int line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.trace(__LINE__); int line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.tracec(cond, __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.tracec(cond, __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.tracef("%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.tracef("%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.tracecf(cond, "%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.tracecf(cond, "%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				gllVSll = LogLevel.trace >= globalLogLevel;
-				test = gllVSll && gllOff && llOff && cond;
+                gllVSll = LogLevel.trace >= globalLogLevel;
+                test = gllVSll && gllOff && llOff && cond;
 
-				mem.info(__LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.info(__LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.infoc(cond, __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.infoc(cond, __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.infof("%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.infof("%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.infocf(cond, "%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.infocf(cond, "%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				gllVSll = LogLevel.trace >= globalLogLevel;
-				test = gllVSll && gllOff && llOff && cond;
+                gllVSll = LogLevel.trace >= globalLogLevel;
+                test = gllVSll && gllOff && llOff && cond;
 
-				mem.warning(__LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.warning(__LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.warningc(cond, __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.warningc(cond, __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.warningf("%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.warningf("%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.warningcf(cond, "%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.warningcf(cond, "%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				gllVSll = LogLevel.trace >= globalLogLevel;
-				test = gllVSll && gllOff && llOff && cond;
+                gllVSll = LogLevel.trace >= globalLogLevel;
+                test = gllVSll && gllOff && llOff && cond;
 
-				mem.critical(__LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.critical(__LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.criticalc(cond, __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.criticalc(cond, __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.criticalf("%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
+                mem.criticalf("%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
 
-				mem.criticalcf(cond, "%d", __LINE__); line = __LINE__;
-				assert(test ? mem.line == line : true); line = -1;
-			}
-		}
-	}
+                mem.criticalcf(cond, "%d", __LINE__); line = __LINE__;
+                assert(test ? mem.line == line : true); line = -1;
+            }
+        }
+    }
 }
 
 @safe unittest
@@ -2064,77 +2064,77 @@ unittest
 
         globalLogLevel = gll;
 
-		foreach(cond; [true, false])
-		{
-			bool gllVSll = LogLevel.trace >= globalLogLevel;
-			bool gllOff = globalLogLevel != LogLevel.off;
-			bool llOff = mem.logLevel != LogLevel.off;
-			bool test = gllVSll && gllOff && llOff && cond;
+        foreach(cond; [true, false])
+        {
+            bool gllVSll = LogLevel.trace >= globalLogLevel;
+            bool gllOff = globalLogLevel != LogLevel.off;
+            bool llOff = mem.logLevel != LogLevel.off;
+            bool test = gllVSll && gllOff && llOff && cond;
 
-			mem.line = -1;
-			/*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace, 
-			  		mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel, 
-					gllVSll, gllOff, llOff, cond, test);
-			*/	
+            mem.line = -1;
+            /*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace,
+                      mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel,
+                    gllVSll, gllOff, llOff, cond, test);
+            */
 
-			trace(__LINE__); int line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            trace(__LINE__); int line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			tracec(cond, __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            tracec(cond, __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			tracef("%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            tracef("%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			tracecf(cond, "%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            tracecf(cond, "%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			gllVSll = LogLevel.trace >= globalLogLevel;
-			test = gllVSll && gllOff && llOff && cond;
+            gllVSll = LogLevel.trace >= globalLogLevel;
+            test = gllVSll && gllOff && llOff && cond;
 
-			info(__LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            info(__LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			infoc(cond, __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            infoc(cond, __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			infof("%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            infof("%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			infocf(cond, "%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            infocf(cond, "%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			gllVSll = LogLevel.trace >= globalLogLevel;
-			test = gllVSll && gllOff && llOff && cond;
+            gllVSll = LogLevel.trace >= globalLogLevel;
+            test = gllVSll && gllOff && llOff && cond;
 
-			warning(__LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            warning(__LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			warningc(cond, __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            warningc(cond, __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			warningf("%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            warningf("%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			warningcf(cond, "%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            warningcf(cond, "%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			gllVSll = LogLevel.trace >= globalLogLevel;
-			test = gllVSll && gllOff && llOff && cond;
+            gllVSll = LogLevel.trace >= globalLogLevel;
+            test = gllVSll && gllOff && llOff && cond;
 
-			critical(__LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            critical(__LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			criticalc(cond, __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            criticalc(cond, __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			criticalf("%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
+            criticalf("%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
 
-			criticalcf(cond, "%d", __LINE__); line = __LINE__;
-			assert(test ? mem.line == line : true); line = -1;
-		}
-	}
+            criticalcf(cond, "%d", __LINE__); line = __LINE__;
+            assert(test ? mem.line == line : true); line = -1;
+        }
+    }
 }
 
 // Issue #5
@@ -2184,7 +2184,7 @@ unittest
 
 unittest
 {
-	import std.exception : assertThrown;
-	auto tl = new TestLogger();
-	assertThrown!Throwable(tl.fatal("fatal"));
+    import std.exception : assertThrown;
+    auto tl = new TestLogger();
+    assertThrown!Throwable(tl.fatal("fatal"));
 }
