@@ -10,7 +10,7 @@ $(D import std.logger; log("I am here");) this will print a message to the
 stdio device.  The message will contain the filename, the linenumber, the name
 of the surrounding function, and the message.
 
-Copyright: Copyright Robert burner Schadek 2013.
+Copyright: Copyright Robert burner Schadek 2013 --
 License:   <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
 Authors:   $(WEB http://www.svs.informatik.uni-oldenburg.de/60865.html, Robert burner Schadek)
 
@@ -1975,8 +1975,21 @@ unittest
 
             mem.logLevel = ll;
 
+			bool gllVSll = ll >= gll;
+			bool gllOff = gll != LogLevel.off;
+			bool llOff = ll != LogLevel.off;
+
             foreach(cond; [true, false])
 			{
+				bool callVSll = LogLevel.trace >= ll;
+
+				mem.trace(__LINE__); int line = __LINE__;
+				mem.tracec(true, __LINE__); line = __LINE__;
+				mem.tracec(false, __LINE__); line = __LINE__;
+				mem.tracef("%d", __LINE__); line = __LINE__;
+				mem.tracef("%d", __LINE__); line = __LINE__;
+				mem.tracecf(true, "%d", __LINE__); line = __LINE__;
+				mem.tracecf(false, "%d", __LINE__); line = __LINE__;
 			}
 		}
 	}
