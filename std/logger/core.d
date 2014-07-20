@@ -526,13 +526,13 @@ public ref Logger tracef(int line = __LINE__, string file = __FILE__,
     string moduleName = __MODULE__, A...)(string msg, lazy A args)
     @trusted
 {
-    if (cond && LogLevel.trace >= globalLogLevel
+    if (LogLevel.trace >= globalLogLevel
             && LogLevel.trace >= defaultLogger.logLevel
             && globalLogLevel != LogLevel.off
             && defaultLogger.logLevel != LogLevel.off )
     {
         defaultLogger.tracecf!(line, file, funcName,prettyFuncName,
-            moduleName)(cond, msg, args);
+            moduleName)(true, msg, args);
     }
 
     return defaultLogger;
@@ -624,7 +624,7 @@ public ref Logger %sf(int line = __LINE__, string file = __FILE__,
     string moduleName = __MODULE__, A...)(string msg, lazy A args)
     @trusted
 {
-    if (cond && LogLevel.%s >= globalLogLevel
+    if (LogLevel.%s >= globalLogLevel
             && LogLevel.%s >= defaultLogger.logLevel
             && globalLogLevel != LogLevel.off
             && defaultLogger.logLevel != LogLevel.off )
@@ -1478,7 +1478,7 @@ version(unittest)
     }
 }
 
-unittest
+@safe unittest
 {
     LogLevel ll = globalLogLevel;
     globalLogLevel = LogLevel.fatal;
@@ -1528,7 +1528,7 @@ unittest
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
-unittest
+@safe unittest
 {
     auto oldunspecificLogger = defaultLogger;
     LogLevel oldLogLevel = globalLogLevel;
@@ -1545,7 +1545,7 @@ unittest
 
 }
 
-unittest
+@safe unittest
 {
     auto tl1 = new TestLogger("one");
     auto tl2 = new TestLogger("two");
@@ -1568,7 +1568,7 @@ unittest
     assertThrown!Exception(ml.removeLogger(tl1.name));
 }
 
-unittest
+@safe unittest
 {
     bool errorThrown = false;
     auto tl = new TestLogger("one");
@@ -1580,7 +1580,7 @@ unittest
     assert(errorThrown);
 }
 
-unittest
+@safe unittest
 {
     auto l = new TestLogger("_", LogLevel.info);
     string msg = "Hello Logger World";
@@ -1714,7 +1714,7 @@ unittest
     assert(l.logLevel == LogLevel.info);
 }
 
-@trusted unittest // default logger
+unittest // default logger
 {
     import std.file;
     string name = randomString(32);
@@ -1787,7 +1787,7 @@ unittest
     file.close();
 }
 
-@trusted unittest
+@safe unittest
 {
     auto tl = new TestLogger("tl", LogLevel.all);
     int l = __LINE__;
@@ -1805,7 +1805,7 @@ unittest
 //pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
 
 // testing possible log conditions
-@trusted unittest
+@safe unittest
 {
     auto oldunspecificLogger = defaultLogger;
 
@@ -1948,7 +1948,103 @@ unittest
 }
 
 // testing more possible log conditions
-@trusted unittest
+@safe unittest
+{
+    auto mem = new TestLogger("tl");
+
+    scope(exit)
+    {
+        globalLogLevel = LogLevel.all;
+    }
+
+    foreach(gll; [LogLevel.all, LogLevel.trace,
+            LogLevel.info, LogLevel.warning, LogLevel.error,
+            LogLevel.critical, LogLevel.fatal, LogLevel.off])
+    {
+
+        globalLogLevel = gll;
+
+        foreach(ll; [LogLevel.all, LogLevel.trace,
+                LogLevel.info, LogLevel.warning, LogLevel.error,
+                LogLevel.critical, LogLevel.fatal, LogLevel.off])
+        {
+			foreach(cond; [true, false])
+			{
+            	mem.logLevel = ll;
+
+				bool gllVSll = LogLevel.trace >= globalLogLevel;
+				bool gllOff = globalLogLevel != LogLevel.off;
+				bool llOff = mem.logLevel != LogLevel.off;
+				bool test = gllVSll && gllOff && llOff && cond;
+
+				mem.line = -1;
+				/*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace, 
+				  		mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel, 
+						gllVSll, gllOff, llOff, cond, test);
+				*/	
+
+				mem.trace(__LINE__); int line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.tracec(cond, __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.tracef("%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.tracecf(cond, "%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				gllVSll = LogLevel.trace >= globalLogLevel;
+				test = gllVSll && gllOff && llOff && cond;
+
+				mem.info(__LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.infoc(cond, __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.infof("%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.infocf(cond, "%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				gllVSll = LogLevel.trace >= globalLogLevel;
+				test = gllVSll && gllOff && llOff && cond;
+
+				mem.warning(__LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.warningc(cond, __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.warningf("%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.warningcf(cond, "%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				gllVSll = LogLevel.trace >= globalLogLevel;
+				test = gllVSll && gllOff && llOff && cond;
+
+				mem.critical(__LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.criticalc(cond, __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.criticalf("%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+
+				mem.criticalcf(cond, "%d", __LINE__); line = __LINE__;
+				assert(test ? mem.line == line : true); line = -1;
+			}
+		}
+	}
+}
+
+@safe unittest
 {
     auto oldunspecificLogger = defaultLogger;
 
@@ -1968,29 +2064,75 @@ unittest
 
         globalLogLevel = gll;
 
-        foreach(ll; [LogLevel.all, LogLevel.trace,
-                LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, LogLevel.fatal, LogLevel.off])
-        {
+		foreach(cond; [true, false])
+		{
+			bool gllVSll = LogLevel.trace >= globalLogLevel;
+			bool gllOff = globalLogLevel != LogLevel.off;
+			bool llOff = mem.logLevel != LogLevel.off;
+			bool test = gllVSll && gllOff && llOff && cond;
 
-            mem.logLevel = ll;
+			mem.line = -1;
+			/*writefln("%3d %3d %3d %b g %b go %b lo %b %b %b", LogLevel.trace, 
+			  		mem.logLevel, globalLogLevel, LogLevel.trace >= mem.logLevel, 
+					gllVSll, gllOff, llOff, cond, test);
+			*/	
 
-			bool gllVSll = ll >= gll;
-			bool gllOff = gll != LogLevel.off;
-			bool llOff = ll != LogLevel.off;
+			trace(__LINE__); int line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
 
-            foreach(cond; [true, false])
-			{
-				bool callVSll = LogLevel.trace >= ll;
+			tracec(cond, __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
 
-				mem.trace(__LINE__); int line = __LINE__;
-				mem.tracec(true, __LINE__); line = __LINE__;
-				mem.tracec(false, __LINE__); line = __LINE__;
-				mem.tracef("%d", __LINE__); line = __LINE__;
-				mem.tracef("%d", __LINE__); line = __LINE__;
-				mem.tracecf(true, "%d", __LINE__); line = __LINE__;
-				mem.tracecf(false, "%d", __LINE__); line = __LINE__;
-			}
+			tracef("%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			tracecf(cond, "%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			gllVSll = LogLevel.trace >= globalLogLevel;
+			test = gllVSll && gllOff && llOff && cond;
+
+			info(__LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			infoc(cond, __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			infof("%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			infocf(cond, "%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			gllVSll = LogLevel.trace >= globalLogLevel;
+			test = gllVSll && gllOff && llOff && cond;
+
+			warning(__LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			warningc(cond, __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			warningf("%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			warningcf(cond, "%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			gllVSll = LogLevel.trace >= globalLogLevel;
+			test = gllVSll && gllOff && llOff && cond;
+
+			critical(__LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			criticalc(cond, __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			criticalf("%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
+
+			criticalcf(cond, "%d", __LINE__); line = __LINE__;
+			assert(test ? mem.line == line : true); line = -1;
 		}
 	}
 }
@@ -2038,4 +2180,11 @@ unittest
     assert(tl.msg.indexOf("info") == -1);
     error("error");
     assert(tl.msg.indexOf("error") == 0);
+}
+
+unittest
+{
+	import std.exception : assertThrown;
+	auto tl = new TestLogger();
+	assertThrown!Throwable(tl.fatal("fatal"));
 }
