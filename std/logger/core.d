@@ -757,7 +757,8 @@ that logger is called.
 */
 enum LogLevel : ubyte
 {
-    unspecific = 0, /** If no $(D LogLevel) is passed to the log function this
+    //unspecific = 0, 
+	/*If no $(D LogLevel) is passed to the log function this
                     level indicates that the current level of the $(D Logger)
                     is to be used for logging the message.  */
     all = 1, /** Lowest possible assignable $(D LogLevel). */
@@ -879,7 +880,6 @@ abstract class Logger
     to $(D LogLevel.unspecific).*/
     public @property final void logLevel(const LogLevel lv) pure nothrow @safe
     {
-        assert(lv != LogLevel.unspecific);
         this.logLevel_ = lv;
     }
 

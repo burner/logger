@@ -63,7 +63,7 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
         return this.file_;
     }
 
-    private __gshared File file_;
+    private File file_;
     private string filename;
 }
 
