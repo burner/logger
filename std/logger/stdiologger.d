@@ -76,6 +76,10 @@ class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter,
 	{
 		return StdioOutputRange();
 	}
+
+	override final void cleanup()
+	{
+	}
 }
 
 unittest

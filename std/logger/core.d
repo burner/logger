@@ -1737,7 +1737,7 @@ unittest
     loglc(LogLevel.critical, false, notWritten);
     loglc(LogLevel.fatal, true, written);
     l.file.flush();
-    GC.free(cast(void*)l);
+	destroy(l);
 
     auto file = File(filename, "r");
     auto readLine = file.readln();

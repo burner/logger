@@ -57,6 +57,7 @@ abstract class TemplateLogger(Sink, alias Formatter, alias Filter) : Logger
     }
 
 	Sink getSink();
+	void cleanup();
 
     public override void writeLogMsg(ref LoggerPayload payload)
     {
@@ -69,6 +70,7 @@ abstract class TemplateLogger(Sink, alias Formatter, alias Filter) : Logger
             if (filterFun(payload))
             {
                 Formatter(sink, payload);
+				this.cleanup();
             }
         }
     }

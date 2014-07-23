@@ -59,6 +59,11 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
 		return this.file_.lockingTextWriter();
 	}
 
+	override final void cleanup()
+	{
+		this.file_.flush();
+	}
+
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
     {
