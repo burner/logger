@@ -406,456 +406,251 @@ public ref Logger loglcf(int line = __LINE__, string file = __FILE__,
     return defaultLogger;
 }
 
-alias trace = logImpl!(LogLevel.trace);
-alias info = logImpl!(LogLevel.info);
-alias warning = logImpl!(LogLevel.warning);
-alias error = logImpl!(LogLevel.error);
-alias critical = logImpl!(LogLevel.critical);
-alias fatal = logImpl!(LogLevel.fatal);
-
-alias tracec = logImplc!(LogLevel.trace);
-alias infoc = logImplc!(LogLevel.info);
-alias warningc = logImplc!(LogLevel.warning);
-alias errorc = logImplc!(LogLevel.error);
-alias criticalc = logImplc!(LogLevel.critical);
-alias fatalc = logImplc!(LogLevel.fatal);
-
-alias tracef = logImplf!(LogLevel.trace);
-alias infof = logImplf!(LogLevel.info);
-alias warningf = logImplf!(LogLevel.warning);
-alias errorf = logImplf!(LogLevel.error);
-alias criticalf = logImplf!(LogLevel.critical);
-alias fatalf = logImplf!(LogLevel.fatal);
-
-alias tracecf = logImplcf!(LogLevel.trace);
-alias infocf = logImplcf!(LogLevel.info);
-alias warningcf = logImplcf!(LogLevel.warning);
-alias errorcf = logImplcf!(LogLevel.error);
-alias criticalcf = logImplcf!(LogLevel.critical);
-alias fatalcf = logImplcf!(LogLevel.fatal);
-
+///
 template logImpl(LogLevel ll)
 {
-	ref Logger logImpl(int line = __LINE__, string file = __FILE__,
-	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-	    string moduleName = __MODULE__, A...)(lazy A args) @trusted
-	{
-	    if (ll >= globalLogLevel
-	            && ll >= defaultLogger.logLevel
-	            && globalLogLevel != LogLevel.off
-	            && defaultLogger.logLevel != LogLevel.off)
-	    {
-	        defaultLogger.logImplM!(ll).logImpl!(line, file, funcName,prettyFuncName,
-	            moduleName)(args);
-	    }
-	
-	    return defaultLogger;
-	}
-}
+    /** This function logs data in a writeln style manner to the
+    defaultLogger.
 
-template logImplc(LogLevel ll)
-{
-	ref Logger logImplc(int line = __LINE__, string file = __FILE__,
-	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-	    string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
-	{
-	    if (cond && ll >= globalLogLevel
-	            && ll >= defaultLogger.logLevel
-	            && globalLogLevel != LogLevel.off
-	            && defaultLogger.logLevel != LogLevel.off )
-	    {
-	        defaultLogger.logImplM!(ll).logImplc!(line, file, funcName,prettyFuncName,
-	            moduleName)(cond, args);
-	    }
-	
-	    return defaultLogger;
-	}
-}
+    In order for the resulting log message to be logged the $(D LogLevel) must
+    be greater equal than the $(D LogLevel) of the defaultLogger and must be
+    greater equal than the global $(D LogLevel).
 
-template logImplf(LogLevel ll)
-{
-	ref Logger logImplf(int line = __LINE__, string file = __FILE__,
-	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-	    string moduleName = __MODULE__, A...)(string msg, lazy A args)
-	    @trusted
-	{
-	    if (ll >= globalLogLevel
-	            && ll >= defaultLogger.logLevel
-	            && globalLogLevel != LogLevel.off
-	            && defaultLogger.logLevel != LogLevel.off )
-	    {
-	        defaultLogger.logImplM!(ll).logImplc!(line, file, funcName,prettyFuncName,
-	            moduleName)(true, msg, args);
-	    }
-	
-	    return defaultLogger;
-	}
-}
+    Params:
+    args = The data that should be logged.
 
-template logImplcf(LogLevel ll)
-{
-	ref Logger logImplcf(int line = __LINE__, string file = __FILE__,
-	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-	    string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
-	    @trusted
-	{
-	    if (cond && ll >= defaultLogger.logLevel
-				&& defaultLogger.logLevel >= globalLogLevel
-	            && globalLogLevel != LogLevel.off
-	            && defaultLogger.logLevel != LogLevel.off )
-	    {
-	        defaultLogger.logImplM!(ll).logImplcf!(line, file, funcName,prettyFuncName,
-	            moduleName)(cond, msg, args);
-	    }
-	
-	    return defaultLogger;
-	}
-}
+    Returns: The logger used by the logging function as reference.
 
-/+
-/** This function logs data with $(D LogLevel) $(D trace).
-
-In order for the data to be processed the $(D LogLevel) of the defaultLogger
-must be smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must
-also be smaller equal to $(D LogLevel.trace).
-
-Params:
-args = The data that should be logged.
-
-Returns: The logger used by the logging function as reference.
-
-Examples:
---------------------
-trace(1337, "is number");
---------------------
-
-Additionally, to $(D tracecf) there are the function.
-$(LI $(D info))
-$(LI $(D warning))
-$(LI $(D error))
-$(LI $(D critical))
-$(LI $(D fatal))
-
-These function behave exactly like $(D tracecf) with the exception of a
-different $(D LogLevel) used for logging the data.
-*/
-public ref Logger trace(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(lazy A args) @trusted
-{
-    if (LogLevel.trace >= globalLogLevel
-            && LogLevel.trace >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off)
-    {
-        defaultLogger.trace!(line, file, funcName,prettyFuncName,
-            moduleName)(args);
-    }
-
-    return defaultLogger;
-}
-
-/** This method logs data with $(D LogLevel) $(D trace), a $(D condition)
-is passed explicitly.
-
-In order for the data to be processed the $(D LogLevel) of the defaultLogger
-must be smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must
-also be smaller equal to $(D LogLevel.trace).
-
-Params:
-cond = Only if this $(D bool) is $(D true) will the data be logged.
-args = The data that should be logged.
-
-Returns: The logger used by the logging method as reference.
-
-Examples:
---------------------
-trace(1337, "is number");
---------------------
-
-Additionally, to $(D tracecf) there are the method.
-$(LI $(D info))
-$(LI $(D warning))
-$(LI $(D error))
-$(LI $(D critical))
-$(LI $(D fatal))
-
-These method behave exactly like $(D tracecf) with the exception of a
-different $(D LogLevel) used for logging the data.
-*/
-public ref Logger tracec(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
-{
-    if (cond && LogLevel.trace >= globalLogLevel
-            && LogLevel.trace >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.tracec!(line, file, funcName,prettyFuncName,
-            moduleName)(cond, args);
-    }
-
-    return defaultLogger;
-}
-
-/** This function logs data in a printf style manner with $(D LogLevel)
-$(D LogLevel.trace).
-
-In order for the data to be processed the $(D bool) must be $(D true), the $(D
-LogLevel) of the defaultLogger must be smaller equal to $(D LogLevel.trace)
-and the global $(D LogLevel) must also be smaller equal to $(D
-LogLevel.trace).
-
-Params:
-msg = The $(D string) that is used to format the additional data.
-args = The data that should be logged.
-
-Returns: The logger used by the logging function as reference.
-
-Examples:
---------------------
-tracef("%d %s", 1337, "is number");
---------------------
-
-Additionally, to $(D tracecf) there are the function.
-$(LI $(D infof))
-$(LI $(D warningf))
-$(LI $(D errorf))
-$(LI $(D criticalf))
-$(LI $(D fatalf))
-
-These function behave exactly like $(D tracef) with the exception of a
-different $(D LogLevel) used for logging the data.
-*/
-public ref Logger tracef(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(string msg, lazy A args)
-    @trusted
-{
-    if (LogLevel.trace >= globalLogLevel
-            && LogLevel.trace >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.tracecf!(line, file, funcName,prettyFuncName,
-            moduleName)(true, msg, args);
-    }
-
-    return defaultLogger;
-}
-
-/** This function logs data in a printf style manner with $(D LogLevel)
-$(D trace), a $(D condition) is passed explicitly
-
-This function takes a $(D bool) as first argument. In order for the data to be processed the
-$(D bool) must be $(D true), the $(D LogLevel) of the defaultLogger must be
-smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must also be
-smaller equal to $(D LogLevel.trace).
-
-Params:
-cond = Only if this $(D bool) is $(D true) will the data be logged.
-msg = The $(D string) that is used to format the additional data.
-args = The data that should be logged.
-
-Returns: The logger used by the logging function as reference.
-
-Examples:
---------------------
-tracecf(false, "%d %s", 1337, "is number");
---------------------
-
-Additionally, to $(D tracecf) there are the function.
-$(LI $(D infocf))
-$(LI $(D warningcf))
-$(LI $(D errorcf))
-$(LI $(D criticalcf))
-$(LI $(D fatalcf))
-
-These function behave exactly like $(D tracecf) with the exception of a
-different $(D LogLevel) used for logging the data.
-*/
-public ref Logger tracecf(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
-    @trusted
-{
-    if (cond && defaultLogger.logLevel >= globalLogLevel
-            && LogLevel.trace >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.tracecf!(line, file, funcName,prettyFuncName,
-            moduleName)(cond, msg, args);
-    }
-
-    return defaultLogger;
-}
-
-enum freeLog = q{
-
-public ref Logger %s(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(lazy A args) @trusted
-{
-    if (LogLevel.%s >= globalLogLevel
-            && LogLevel.%s >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off)
-    {
-        defaultLogger.%s!(line, file, funcName,prettyFuncName,
-            moduleName)(args);
-    }
-
-    return defaultLogger;
-}
-
-public ref Logger %sc(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
-{
-    if (cond && LogLevel.%s >= globalLogLevel
-            && LogLevel.%s >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.%sc!(line, file, funcName,prettyFuncName,
-            moduleName)(cond, args);
-    }
-
-    return defaultLogger;
-}
-
-public ref Logger %sf(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(string msg, lazy A args)
-    @trusted
-{
-    if (LogLevel.%s >= globalLogLevel
-            && LogLevel.%s >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.%sf!(line, file, funcName,prettyFuncName,
-            moduleName)(msg, args);
-    }
-
-    return defaultLogger;
-}
-
-public ref Logger %scf(int line = __LINE__, string file = __FILE__,
-    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
-    @trusted
-{
-    if (cond && LogLevel.%s >= globalLogLevel
-            && LogLevel.%s >= defaultLogger.logLevel
-            && globalLogLevel != LogLevel.off
-            && defaultLogger.logLevel != LogLevel.off )
-    {
-        defaultLogger.%scf!(line, file, funcName,prettyFuncName,
-            moduleName)(cond, msg, args);
-    }
-
-    return defaultLogger;
-}
-};
-
-mixin(freeLog.format(
-    "info", "info", "info", "info",
-    "info", "info", "info", "info",
-    "info", "info", "info", "info",
-    "info", "info", "info", "info"));
-mixin(freeLog.format(
-    "warning", "warning", "warning", "warning",
-    "warning", "warning", "warning", "warning",
-    "warning", "warning", "warning", "warning",
-    "warning", "warning", "warning", "warning"));
-mixin(freeLog.format(
-    "error", "error", "error", "error",
-    "error", "error", "error", "error",
-    "error", "error", "error", "error",
-    "error", "error", "error", "error"));
-mixin(freeLog.format(
-    "critical", "critical", "critical", "critical",
-    "critical", "critical", "critical", "critical",
-    "critical", "critical", "critical", "critical",
-    "critical", "critical", "critical", "critical"));
-mixin(freeLog.format(
-    "fatal", "fatal", "fatal", "fatal",
-    "fatal", "fatal", "fatal", "fatal",
-    "fatal", "fatal", "fatal", "fatal",
-    "fatal", "fatal", "fatal", "fatal"));
-
-enum memLog = q{
-    public ref Logger %s(int line = __LINE__, string file = __FILE__,
+    Examples:
+    --------------------
+    trace(1337, "is number");
+    info(1337, "is number");
+    error(1337, "is number");
+    critical(1337, "is number");
+    fatal(1337, "is number");
+    --------------------
+    */
+    ref Logger logImpl(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy A args) @trusted
     {
-        if (LogLevel.%s >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.%s, true, Logger.buildLogString(args));
-            %s
+        }
+        else
+        {
+            if (ll >= globalLogLevel
+                    && ll >= defaultLogger.logLevel
+                    && globalLogLevel != LogLevel.off
+                    && defaultLogger.logLevel != LogLevel.off)
+            {
+                defaultLogger.logImplM!(ll).logImpl!(line, file, funcName,
+                    prettyFuncName, moduleName)(args);
+            }
         }
 
-        return this;
+        return defaultLogger;
     }
+}
+///
+alias trace = logImpl!(LogLevel.trace);
+///
+alias info = logImpl!(LogLevel.info);
+///
+alias warning = logImpl!(LogLevel.warning);
+///
+alias error = logImpl!(LogLevel.error);
+///
+alias critical = logImpl!(LogLevel.critical);
+///
+alias fatal = logImpl!(LogLevel.fatal);
 
-    public ref Logger %sc(int line = __LINE__, string file = __FILE__,
+///
+template logImplc(LogLevel ll)
+{
+    /** This function logs data in a writeln style manner to the
+    defaultLogger depending on a condition passed as the first element.
+
+    In order for the resulting log message to be logged the $(D LogLevel) must
+    be greater equal than the $(D LogLevel) of the defaultLogger and must be
+    greater equal than the global $(D LogLevel). Additionally, the condition
+    passed must be true.
+
+    Params:
+    cond = The condition
+    args = The data that should be logged.
+
+    Returns: The logger used by the logging function as reference.
+
+    Examples:
+    --------------------
+    tracec(true, 1337, "is number");
+    infoc(false, 1337, "is number");
+    errorc(4 < 3, 1337, "is number");
+    criticalc(4 > 3, 1337, "is number");
+    fatalc(someFunctionReturingABool(), 1337, "is number");
+    --------------------
+    */
+    ref Logger logImplc(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
     {
-        if (cond && LogLevel.%s >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.%s, cond, Logger.buildLogString(args));
-            %s
+        }
+        else
+        {
+            if (cond && ll >= globalLogLevel
+                    && ll >= defaultLogger.logLevel
+                    && globalLogLevel != LogLevel.off
+                    && defaultLogger.logLevel != LogLevel.off )
+            {
+                defaultLogger.logImplM!(ll).logImplc!(line, file, funcName,
+                    prettyFuncName, moduleName)(cond, args);
+            }
         }
 
-        return this;
+        return defaultLogger;
     }
+}
+///
+alias tracec = logImplc!(LogLevel.trace);
+///
+alias infoc = logImplc!(LogLevel.info);
+///
+alias warningc = logImplc!(LogLevel.warning);
+///
+alias errorc = logImplc!(LogLevel.error);
+///
+alias criticalc = logImplc!(LogLevel.critical);
+///
+alias fatalc = logImplc!(LogLevel.fatal);
 
-    public ref Logger %sf(int line = __LINE__, string file = __FILE__,
+///
+template logImplf(LogLevel ll)
+{
+    /** This function logs data in a writefln style manner to the
+    defaultLogger.
+
+    In order for the resulting log message to be logged the $(D LogLevel) must
+    be greater equal than the $(D LogLevel) of the defaultLogger and must be
+    greater equal than the global $(D LogLevel).
+
+    Params:
+    msg = The format string.
+    args = The data that should be logged.
+
+    Returns: The logger used by the logging function as reference.
+
+    Examples:
+    --------------------
+    tracef("%d %s", 1337, "is number");
+    infof("%d %s", 1337, "is number");
+    errorf("%d %s", 1337, "is number");
+    criticalf("%d %s", 1337, "is number");
+    fatalf("%d %s", 1337, "is number");
+    --------------------
+    */
+    ref Logger logImplf(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted
+        string moduleName = __MODULE__, A...)(string msg, lazy A args)
+        @trusted
     {
-        if (LogLevel.%s >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.%s, true, format(msg, args));
-            %s
+        }
+        else
+        {
+            if (ll >= globalLogLevel
+                    && ll >= defaultLogger.logLevel
+                    && globalLogLevel != LogLevel.off
+                    && defaultLogger.logLevel != LogLevel.off )
+            {
+                defaultLogger.logImplM!(ll).logImplc!(line, file, funcName,
+                    prettyFuncName, moduleName)(true, msg, args);
+            }
         }
 
-        return this;
+        return defaultLogger;
     }
+}
 
-    public ref Logger %scf(int line = __LINE__, string file = __FILE__,
+///
+alias tracef = logImplf!(LogLevel.trace);
+///
+alias infof = logImplf!(LogLevel.info);
+///
+alias warningf = logImplf!(LogLevel.warning);
+///
+alias errorf = logImplf!(LogLevel.error);
+///
+alias criticalf = logImplf!(LogLevel.critical);
+///
+alias fatalf = logImplf!(LogLevel.fatal);
+
+///
+template logImplcf(LogLevel ll)
+{
+    /** This function logs data in a writefln style manner to the
+    defaultLogger depending on a condition passed as first argument.
+
+    In order for the resulting log message to be logged the $(D LogLevel) must
+    be greater equal than the $(D LogLevel) of the defaultLogger and must be
+    greater equal than the global $(D LogLevel). Additionally, the condition
+    passed must be true.
+
+    Params:
+    cond = The condition
+    msg = The format string.
+    args = The data that should be logged.
+
+    Returns: The logger used by the logging function as reference.
+
+    Examples:
+    --------------------
+    tracecf(true, "%d %s", 1337, "is number");
+    infocf(false, "%d %s", 1337, "is number");
+    errorcf(3.14 != PI, "%d %s", 1337, "is number");
+    criticalcf(3 < 4, "%d %s", 1337, "is number");
+    fatalcf(4 > 3, "%d %s", 1337, "is number");
+    --------------------
+    */
+    ref Logger logImplcf(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
-           @trusted
+        @trusted
     {
-        if (cond && LogLevel.%s >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.%s, cond, format(msg, args));
-            %s
+        }
+        else
+        {
+            if (cond && ll >= defaultLogger.logLevel
+                    && defaultLogger.logLevel >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && defaultLogger.logLevel != LogLevel.off )
+            {
+                defaultLogger.logImplM!(ll).logImplcf!(line, file, funcName,
+                    prettyFuncName, moduleName)(cond, msg, args);
+            }
         }
 
-        return this;
+        return defaultLogger;
     }
-};
-+/
+}
+
+///
+alias tracecf = logImplcf!(LogLevel.trace);
+///
+alias infocf = logImplcf!(LogLevel.info);
+///
+alias warningcf = logImplcf!(LogLevel.warning);
+///
+alias errorcf = logImplcf!(LogLevel.error);
+///
+alias criticalcf = logImplcf!(LogLevel.critical);
+///
+alias fatalcf = logImplcf!(LogLevel.fatal);
 
 /**
 There are eight usable logging level. These level are $(I all), $(I trace),
@@ -865,10 +660,6 @@ that logger is called.
 */
 enum LogLevel : ubyte
 {
-    //unspecific = 0, 
-	/*If no $(D LogLevel) is passed to the log function this
-                    level indicates that the current level of the $(D Logger)
-                    is to be used for logging the message.  */
     all = 1, /** Lowest possible assignable $(D LogLevel). */
     trace = 32, /** $(D LogLevel) for tracing the execution of the program. */
     info = 64, /** This level is used to display information about the
@@ -964,7 +755,7 @@ abstract class Logger
     */
     public void logMessage(string file, int line, string funcName,
             string prettyFuncName, string moduleName, LogLevel logLevel,
-            bool cond, string msg)
+            string msg)
         @trusted
     {
         version(DisableLogging)
@@ -1024,111 +815,227 @@ abstract class Logger
         return app.data();
     }
 
-	alias trace = logImplM!(LogLevel.trace).logImpl;
-	alias info = logImplM!(LogLevel.info).logImpl;
-	alias warning = logImplM!(LogLevel.warning).logImpl;
-	alias error = logImplM!(LogLevel.error).logImpl;
-	alias critical = logImplM!(LogLevel.critical).logImpl;
-	alias fatal = logImplM!(LogLevel.fatal).logImpl;
-	
-	alias tracec = logImplM!(LogLevel.trace).logImplc;
-	alias infoc = logImplM!(LogLevel.info).logImplc;
-	alias warningc = logImplM!(LogLevel.warning).logImplc;
-	alias errorc = logImplM!(LogLevel.error).logImplc;
-	alias criticalc = logImplM!(LogLevel.critical).logImplc;
-	alias fatalc = logImplM!(LogLevel.fatal).logImplc;
-	
-	alias tracef = logImplM!(LogLevel.trace).logImplf;
-	alias infof = logImplM!(LogLevel.info).logImplf;
-	alias warningf = logImplM!(LogLevel.warning).logImplf;
-	alias errorf = logImplM!(LogLevel.error).logImplf;
-	alias criticalf = logImplM!(LogLevel.critical).logImplf;
-	alias fatalf = logImplM!(LogLevel.fatal).logImplf;
-	
-	alias tracecf = logImplM!(LogLevel.trace).logImplcf;
-	alias infocf = logImplM!(LogLevel.info).logImplcf;
-	alias warningcf = logImplM!(LogLevel.warning).logImplcf;
-	alias errorcf = logImplM!(LogLevel.error).logImplcf;
-	alias criticalcf = logImplM!(LogLevel.critical).logImplcf;
-	alias fatalcf = logImplM!(LogLevel.fatal).logImplcf;
+    ///
+    template logImplM(LogLevel ll)
+    {
+        /** This function logs data in a writeln style manner to the
+        used logger.
 
-	template logImplM(LogLevel ll) 
-	{
-    	public ref Logger logImpl(int line = __LINE__, string file = __FILE__,
-    	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    	    string moduleName = __MODULE__, A...)(lazy A args) @trusted
-    	{
-    	    if (ll >= globalLogLevel
-    	            && globalLogLevel != LogLevel.off
-    	            && this.logLevel_ != LogLevel.off)
-    	    {
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater equal than the $(D LogLevel) of the used $(D Logger)
+        and must be greater equal than the global $(D LogLevel).
 
-    	        this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-    	            ll, true, Logger.buildLogString(args));
+        Params:
+        args = The data that should be logged.
 
-				static if(ll == LogLevel.fatal)
-					fatalHandler();
-    	    }
+        Returns: The logger used by the logging function as reference.
 
-    	    return this;
-    	}
+        Examples:
+        --------------------
+        Logger l;
+        l.trace(1337, "is number");
+        l.info(1337, "is number");
+        l.error(1337, "is number");
+        l.critical(1337, "is number");
+        l.fatal(1337, "is number");
+        --------------------
+        */
+        public ref Logger logImpl(int line = __LINE__, string file = __FILE__,
+            string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(lazy A args) @trusted
+        {
+            if (ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
 
-    	public ref Logger logImplc(int line = __LINE__, string file = __FILE__,
-    	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    	    string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
-    	{
-    	    if (cond && ll >= globalLogLevel
-    	            && globalLogLevel != LogLevel.off
-    	            && this.logLevel_ != LogLevel.off)
-    	    {
-    	        this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-    	            ll, cond, Logger.buildLogString(args));
+                this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+                    ll, Logger.buildLogString(args));
 
-				static if(ll == LogLevel.fatal)
-					fatalHandler();
-    	    }
+                static if(ll == LogLevel.fatal)
+                    fatalHandler();
+            }
 
-    	    return this;
-    	}
+            return this;
+        }
 
-    	public ref Logger logImplf(int line = __LINE__, string file = __FILE__,
-    	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    	    string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted
-    	{
-    	    if (ll >= globalLogLevel
-    	            && globalLogLevel != LogLevel.off
-    	            && this.logLevel_ != LogLevel.off)
-    	    {
+        /** This function logs data in a writeln style manner to the
+        used $(D Logger) depending on a condition passed as the first element.
 
-    	        this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-    	            ll, true, format(msg, args));
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater equal than the $(D LogLevel) of the used $(D Logger)
+        and must be greater equal than the global $(D LogLevel). Additionally,
+        the condition passed must be true.
 
-				static if(ll == LogLevel.fatal)
-					fatalHandler();
-    	    }
+        Params:
+        cond = The condition
+        args = The data that should be logged.
 
-    	    return this;
-    	}
+        Returns: The logger used by the logging function as reference.
 
-    	public ref Logger logImplcf(int line = __LINE__, string file = __FILE__,
-    	    string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-    	    string moduleName = __MODULE__, A...)(const bool cond, string msg, 
-			lazy A args) @trusted
-    	{
-    	    if (cond && ll >= globalLogLevel
-    	            && globalLogLevel != LogLevel.off
-    	            && this.logLevel_ != LogLevel.off)
-    	    {
-    	        this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-    	            ll, cond, format(msg, args));
+        Examples:
+        --------------------
+        Logger l;
+        l.tracec(true, 1337, "is number");
+        l.infoc(false, 1337, "is number");
+        l.errorc(4 < 3, 1337, "is number");
+        l.criticalc(4 > 3, 1337, "is number");
+        l.fatalc(someFunctionReturingABool(), 1337, "is number");
+        --------------------
+        */
+        public ref Logger logImplc(int line = __LINE__, string file = __FILE__,
+            string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
+        {
+            if (cond && ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+                    ll, Logger.buildLogString(args));
 
-				static if(ll == LogLevel.fatal)
-					fatalHandler();
-    	    }
+                static if(ll == LogLevel.fatal)
+                    fatalHandler();
+            }
 
-    	    return this;
-    	}
-	}
+            return this;
+        }
+
+        /** This function logs data in a writefln style manner to the
+        used $(D Logger).
+
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater equal than the $(D LogLevel) of the used $(D Logger)
+        and must be greater equal than the global $(D LogLevel).
+
+        Params:
+        msg = The format string.
+        args = The data that should be logged.
+
+        Returns: The logger used by the logging function as reference.
+
+        Examples:
+        --------------------
+        Logger l;
+        l.tracef("%d %s", 1337, "is number");
+        l.infof("%d %s", 1337, "is number");
+        l.errorf("%d %s", 1337, "is number");
+        l.criticalf("%d %s", 1337, "is number");
+        l.fatalf("%d %s", 1337, "is number");
+        --------------------
+        */
+        public ref Logger logImplf(int line = __LINE__, string file = __FILE__,
+            string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted
+        {
+            if (ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+
+                this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+                    ll, format(msg, args));
+
+                static if(ll == LogLevel.fatal)
+                    fatalHandler();
+            }
+
+            return this;
+        }
+
+        /** This function logs data in a writefln style manner to the
+        used $(D Logger) depending on a condition passed as first argument.
+
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater equal than the $(D LogLevel) of the used $(D Logger)
+        and must be greater equal than the global $(D LogLevel). Additionally,
+        the condition passed must be true.
+
+        Params:
+        cond = The condition
+        msg = The format string.
+        args = The data that should be logged.
+
+        Returns: The logger used by the logging function as reference.
+
+        Examples:
+        --------------------
+        Logger l;
+        l.tracecf(true, "%d %s", 1337, "is number");
+        l.infocf(false, "%d %s", 1337, "is number");
+        l.errorcf(3.14 != PI, "%d %s", 1337, "is number");
+        l.criticalcf(3 < 4, "%d %s", 1337, "is number");
+        l.fatalcf(4 > 3, "%d %s", 1337, "is number");
+        --------------------
+        */
+        public ref Logger logImplcf(int line = __LINE__, string file = __FILE__,
+            string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(const bool cond, string msg,
+            lazy A args) @trusted
+        {
+            if (cond && ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName, moduleName,
+                    ll, format(msg, args));
+
+                static if(ll == LogLevel.fatal)
+                    fatalHandler();
+            }
+
+            return this;
+        }
+    }
+
+    ///
+    alias trace = logImplM!(LogLevel.trace).logImpl;
+    ///
+    alias info = logImplM!(LogLevel.info).logImpl;
+    ///
+    alias warning = logImplM!(LogLevel.warning).logImpl;
+    ///
+    alias error = logImplM!(LogLevel.error).logImpl;
+    ///
+    alias critical = logImplM!(LogLevel.critical).logImpl;
+    ///
+    alias fatal = logImplM!(LogLevel.fatal).logImpl;
+    ///
+    alias tracec = logImplM!(LogLevel.trace).logImplc;
+    ///
+    alias infoc = logImplM!(LogLevel.info).logImplc;
+    ///
+    alias warningc = logImplM!(LogLevel.warning).logImplc;
+    ///
+    alias errorc = logImplM!(LogLevel.error).logImplc;
+    ///
+    alias criticalc = logImplM!(LogLevel.critical).logImplc;
+    ///
+    alias fatalc = logImplM!(LogLevel.fatal).logImplc;
+    ///
+    alias tracef = logImplM!(LogLevel.trace).logImplf;
+    ///
+    alias infof = logImplM!(LogLevel.info).logImplf;
+    ///
+    alias warningf = logImplM!(LogLevel.warning).logImplf;
+    ///
+    alias errorf = logImplM!(LogLevel.error).logImplf;
+    ///
+    alias criticalf = logImplM!(LogLevel.critical).logImplf;
+    ///
+    alias fatalf = logImplM!(LogLevel.fatal).logImplf;
+    ///
+    alias tracecf = logImplM!(LogLevel.trace).logImplcf;
+    ///
+    alias infocf = logImplM!(LogLevel.info).logImplcf;
+    ///
+    alias warningcf = logImplM!(LogLevel.warning).logImplcf;
+    ///
+    alias errorcf = logImplM!(LogLevel.error).logImplcf;
+    ///
+    alias criticalcf = logImplM!(LogLevel.critical).logImplcf;
+    ///
+    alias fatalcf = logImplM!(LogLevel.fatal).logImplcf;
 
     /** This method logs data with the $(D LogLevel) of the used $(D Logger).
 
@@ -1151,13 +1058,19 @@ abstract class Logger
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy A args) @trusted
     {
-        if (this.logLevel_ >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
+        }
+        else
+        {
+            if (this.logLevel_ >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
 
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                this.logLevel_, true, Logger.buildLogString(args));
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, Logger.buildLogString(args));
+            }
         }
 
         return this;
@@ -1186,12 +1099,18 @@ abstract class Logger
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
     {
-        if (cond && this.logLevel_ >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                this.logLevel_, cond, Logger.buildLogString(args));
+        }
+        else
+        {
+            if (cond && this.logLevel_ >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, Logger.buildLogString(args));
+            }
         }
 
         return this;
@@ -1221,13 +1140,19 @@ abstract class Logger
         string moduleName = __MODULE__, A...)(const LogLevel logLevel, lazy A args)
         @trusted
     {
-        if (logLevel >= this.logLevel
-                && logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                logLevel, true, Logger.buildLogString(args));
+        }
+        else
+        {
+            if (logLevel >= this.logLevel
+                    && logLevel >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, Logger.buildLogString(args));
+            }
         }
 
         return this;
@@ -1259,13 +1184,19 @@ abstract class Logger
         string moduleName = __MODULE__, A...)(const LogLevel logLevel,
         const bool cond, lazy A args) @trusted
     {
-        if (cond && logLevel >= this.logLevel
-                && logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                logLevel, cond, Logger.buildLogString(args));
+        }
+        else
+        {
+            if (cond && logLevel >= this.logLevel
+                    && logLevel >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, Logger.buildLogString(args));
+            }
         }
 
         return this;
@@ -1293,13 +1224,19 @@ abstract class Logger
         string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted
     {
-        if (this.logLevel_ >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
+        }
+        else
+        {
+            if (this.logLevel_ >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
 
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                this.logLevel_, true, format(msg, args));
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, format(msg, args));
+            }
         }
 
         return this;
@@ -1330,12 +1267,18 @@ abstract class Logger
         string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
            @trusted
     {
-        if (cond && this.logLevel_ >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                this.logLevel_, cond, format(msg, args));
+        }
+        else
+        {
+            if (cond && this.logLevel_ >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, format(msg, args));
+            }
         }
 
         return this;
@@ -1366,13 +1309,19 @@ abstract class Logger
         string moduleName = __MODULE__, A...)(const LogLevel logLevel, string msg,
         lazy A args) @trusted
     {
-        if (logLevel >= this.logLevel
-                && logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                logLevel, true, format(msg, args));
+        }
+        else
+        {
+            if (logLevel >= this.logLevel
+                    && logLevel >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, format(msg, args));
+            }
         }
 
         return this;
@@ -1405,226 +1354,23 @@ abstract class Logger
         string moduleName = __MODULE__, A...)(const LogLevel logLevel, const bool cond,
         string msg, lazy A args) @trusted
     {
-        if (cond && logLevel >= this.logLevel
-                && logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
+        version(DisableLogging)
         {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                logLevel, cond, format(msg, args));
+        }
+        else
+        {
+            if (cond && logLevel >= this.logLevel
+                    && logLevel >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
+            {
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, format(msg, args));
+            }
         }
 
         return this;
     }
-
-	/+
-    /** This method logs data with $(D LogLevel) $(D trace).
-
-    In order for the data to be processed the $(D LogLevel) of the defaultLogger
-    must be smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must
-    also be smaller equal to $(D LogLevel.trace).
-
-    Params:
-    args = The data that should be logged.
-
-    Returns: The logger used by the logging method as reference.
-
-    Examples:
-    --------------------
-    auto l = new StdIOLogger();
-    l.trace(1337, "is number");
-    --------------------
-
-    Additionally, to $(D tracecf) there are the method.
-    $(LI $(D info))
-    $(LI $(D warning))
-    $(LI $(D error))
-    $(LI $(D critical))
-    $(LI $(D fatal))
-
-    These method behave exactly like $(D tracecf) with the exception of a
-    different $(D LogLevel) used for logging the data.
-    */
-    public ref Logger trace(int line = __LINE__, string file = __FILE__,
-        string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(lazy A args) @trusted
-    {
-        if (LogLevel.trace >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
-        {
-
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.trace, true, Logger.buildLogString(args));
-        }
-
-        return this;
-    }
-
-    /** This method logs data with $(D LogLevel) $(D trace), a $(D condition)
-    is passed explicitly.
-
-    This method takes a $(D bool) as first argument. In order for the data to
-    be processed the $(D bool) must be $(D true), the $(D LogLevel) of the
-    Logger must be smaller equal to $(D LogLevel.trace) and the global
-    $(D LogLevel) must also be smaller equal to $(D LogLevel.trace).
-
-    Params:
-    cond = Only if this $(D bool) is $(D true) will the data be logged.
-    args = The data that should be logged.
-
-    Returns: The logger used by the logging method as reference.
-
-    Examples:
-    --------------------
-    auto l = new StdIOLogger();
-    l.tracec(false, 1337, "is number");
-    --------------------
-
-    Additionally, to $(D tracecf) there are the method.
-    $(LI $(D infocf))
-    $(LI $(D warningcf))
-    $(LI $(D errorcf))
-    $(LI $(D criticalcf))
-    $(LI $(D fatalcf))
-
-    These method behave exactly like $(D tracecf) with the exception of a
-    different $(D LogLevel) used for logging the data.
-    */
-    public ref Logger tracec(int line = __LINE__, string file = __FILE__,
-        string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool cond, lazy A args) @trusted
-    {
-        if (cond && LogLevel.trace >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
-        {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.trace, cond, Logger.buildLogString(args));
-        }
-
-        return this;
-    }
-
-    /** This method logs data in a printf style manner with $(D LogLevel)
-    $(D trace).
-
-    In order for the data to be processed the $(D bool) must be $(D true), the
-    $(D LogLevel) of the Logger must be smaller equal to $(D LogLevel.trace)
-    and the global $(D LogLevel) must also be smaller equal to $(D
-    LogLevel.trace).
-
-    Params:
-    msg = The $(D string) that is used to format the additional data.
-    args = The data that should be logged.
-
-    Returns: The logger used by the logging function as reference.
-
-    Examples:
-    --------------------
-    auto l = new StdIOLogger();
-    l.tracef("%d %s", 1337, "is number");
-    --------------------
-
-    Additionally, to $(D tracecf) there are the method.
-    $(LI $(D infof))
-    $(LI $(D warningf))
-    $(LI $(D errorf))
-    $(LI $(D criticalf))
-    $(LI $(D fatalf))
-
-    These function behave exactly like $(D tracef) with the exception of a
-    different $(D LogLevel) used for logging the data.
-    */
-    public ref Logger tracef(int line = __LINE__, string file = __FILE__,
-        string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(string msg, lazy A args) @trusted
-    {
-        if (LogLevel.trace >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
-        {
-
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.trace, true, format(msg, args));
-        }
-
-        return this;
-    }
-
-    /** This method logs data in a printf style manner with $(D LogLevel)
-    $(D trace), a $(D condition) is passed explicitly.
-
-    This method takes a $(D bool) as first argument. In order for the data to be processed the
-    $(D bool) must be $(D true), the $(D LogLevel) of the Logger must be
-    smaller equal to $(D LogLevel.trace) and the global $(D LogLevel) must also be
-    smaller equal to $(D LogLevel.trace).
-
-    Params:
-    cond = Only if this $(D bool) is $(D true) will the data be logged.
-    msg = The $(D string) that is used to format the additional data.
-    args = The data that should be logged.
-
-    Returns: The logger used by the logging function as reference.
-
-    Examples:
-    --------------------
-    auto l = new StdIOLogger();
-    l.tracecf(false, "%d %s", 1337, "is number");
-    --------------------
-
-    Additionally, to $(D tracecf) there are the function.
-    $(LI $(D infocf))
-    $(LI $(D warningcf))
-    $(LI $(D errorcf))
-    $(LI $(D criticalcf))
-    $(LI $(D fatalcf))
-
-    These function behave exactly like $(D tracecf) with the exception of a
-    different $(D LogLevel) used for logging the data.
-    */
-    public ref Logger tracecf(int line = __LINE__, string file = __FILE__,
-        string funcName = __FUNCTION__, string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool cond, string msg, lazy A args)
-           @trusted
-    {
-        if (cond && LogLevel.trace >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && this.logLevel_ != LogLevel.off)
-        {
-            this.logMessage(file, line, funcName, prettyFuncName, moduleName,
-                LogLevel.trace, cond, format(msg, args));
-        }
-
-        return this;
-    }
-
-    mixin(memLog.format(
-        "info", "info", "info", "",
-        "info", "info", "info", "",
-        "info", "info", "info", "",
-        "info", "info", "info", ""));
-    mixin(memLog.format(
-        "warning", "warning", "warning", "",
-        "warning", "warning", "warning", "",
-        "warning", "warning", "warning", "",
-        "warning", "warning", "warning", ""));
-    mixin(memLog.format(
-        "error", "error", "error", "",
-        "error", "error", "error", "",
-        "error", "error", "error", "",
-        "error", "error", "error", ""));
-    mixin(memLog.format(
-        "critical", "critical", "critical", "",
-        "critical", "critical", "critical", "",
-        "critical", "critical", "critical", "",
-        "critical", "critical", "critical", ""));
-    mixin(memLog.format(
-        "fatal", "fatal", "fatal", "fatalHandler();",
-        "fatal", "fatal", "fatal", "fatalHandler();",
-        "fatal", "fatal", "fatal", "fatalHandler();",
-        "fatal", "fatal", "fatal", "fatalHandler();"));
-	+/
 
     private LogLevel logLevel_ = LogLevel.info;
     private string name_;

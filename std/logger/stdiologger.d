@@ -29,7 +29,7 @@ The $(D StdIOLogger) is thread safe, in the sense that the output of the
 all $(D StdIOLogger) to stdout will not be subject to race conditions. In
 other words stdout is locked for writing.
 */
-class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter, 
+class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter,
     (a) => true)
 {
     static @trusted this()
@@ -69,8 +69,13 @@ class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter,
     */
     public this(string name, const LogLevel lv = LogLevel.info) @trusted
     {
-        super(StdioOutputRange(), name, lv);
+        super(name, lv);
     }
+
+	override StdioOutputRange getSink() 
+	{
+		return StdioOutputRange();
+	}
 }
 
 unittest

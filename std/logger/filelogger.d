@@ -46,16 +46,18 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
     */
     public @trusted this(const string fn, string name, const LogLevel lv = LogLevel.info)
     {
-        import std.exception : enforce;
-        super(stdout.lockingTextWriter(), name, lv);
+		import std.exception : enforce;
+        super(name, lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
         enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
             "\" for logging.");
-        
-        sink = this.file.lockingTextWriter();
     }
 
+	override File.LockingTextWriter getSink() 
+	{
+		return this.file_.lockingTextWriter();
+	}
 
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
