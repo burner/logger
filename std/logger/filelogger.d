@@ -9,7 +9,7 @@ import std.logger.templatelogger;
 file. The name of the file has to be passed on construction time. If the file
 is already present new log messages will be append at its end.
 */
-class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter, 
+class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
     (a) => true)
 {
     /** Default constructor for the $(D StdIOLogger) Logger.
@@ -47,15 +47,22 @@ class FileLogger : TemplateLogger!(File.LockingTextWriter, defaultFormatter,
     public @trusted this(const string fn, string name, const LogLevel lv = LogLevel.info)
     {
         import std.exception : enforce;
-        super(stdout.lockingTextWriter(), name, lv);
+        super(name, lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
         enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
             "\" for logging.");
-        
-        sink = this.file.lockingTextWriter();
     }
 
+    override File.LockingTextWriter getSink()
+    {
+        return this.file_.lockingTextWriter();
+    }
+
+    override final void cleanup()
+    {
+        this.file_.flush();
+    }
 
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
@@ -71,7 +78,7 @@ unittest
 {
     import std.file : remove;
     import std.array : empty;
-	import std.string : indexOf;
+    import std.string : indexOf;
 
     string filename = randomString(32) ~ ".tempLogFile";
     auto l = new FileLogger(filename);
@@ -87,11 +94,11 @@ unittest
     l.logLevel = LogLevel.critical;
     l.logl(LogLevel.warning, notWritten);
     l.logl(LogLevel.critical, written);
+	destroy(l);
 
-    l.file.flush();
     auto file = File(filename, "r");
-	string readLine = file.readln();
+    string readLine = file.readln();
     assert(readLine.indexOf(written) != -1, readLine);
-	readLine = file.readln();
+    readLine = file.readln();
     assert(readLine.indexOf(notWritten) == -1, readLine);
 }

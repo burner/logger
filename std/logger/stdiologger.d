@@ -6,19 +6,19 @@ import std.string;
 import std.logger.templatelogger;
 
 private struct StdioOutputRange {
-	static __gshared Mutex mu;
+    static __gshared Mutex mu;
 
-	void put(T)(ref T t) {
-		mu.lock();
-		scope(exit) mu.unlock();
-		write(t);
-	}
+    void put(T)(ref T t) {
+        mu.lock();
+        scope(exit) mu.unlock();
+        write(t);
+    }
 
-	static StdioOutputRange opCall() {
-		StdioOutputRange ret;
-		StdioOutputRange.mu =  new Mutex();
-		return ret;
-	}
+    static StdioOutputRange opCall() {
+        StdioOutputRange ret;
+        StdioOutputRange.mu =  new Mutex();
+        return ret;
+    }
 }
 
 /** This $(D Logger) implementation writes log messages to the systems
@@ -29,10 +29,10 @@ The $(D StdIOLogger) is thread safe, in the sense that the output of the
 all $(D StdIOLogger) to stdout will not be subject to race conditions. In
 other words stdout is locked for writing.
 */
-class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter, 
+class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter,
     (a) => true)
 {
-    static @trusted this()
+    @trusted this()
     {
         this("", LogLevel.info);
     }
@@ -69,7 +69,16 @@ class StdIOLogger : TemplateLogger!(StdioOutputRange, defaultFormatter,
     */
     public this(string name, const LogLevel lv = LogLevel.info) @trusted
     {
-        super(StdioOutputRange(), name, lv);
+        super(name, lv);
+    }
+
+    override StdioOutputRange getSink()
+    {
+        return StdioOutputRange();
+    }
+
+    override final void cleanup()
+    {
     }
 }
 

@@ -1,5 +1,5 @@
 all: std/logger/*.d main.d
-	dmd -unittest -debug -cov -gc std/logger/*.d main.d -oflog -D
+	dmd -unittest -debug -cov -gc std/logger/*.d main.d -oflog -D -w
 	./log
 	
 concur: std/logger/*.d concur.d
