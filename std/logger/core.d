@@ -599,51 +599,70 @@ template DefaultLogFunction(LogLevel ll)
     fatal(1337, "is number");
     --------------------
     */
-    version(DisableLogging)
+    ref Logger DefaultLogFunction(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(lazy A args) @trusted
     {
-        ref Logger DefaultLogFunction(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(A) @trusted
+        if (ll >= globalLogLevel
+                && ll >= defaultLogger.logLevel
+                && globalLogLevel != LogLevel.off
+                && defaultLogger.logLevel != LogLevel.off)
         {
-            return defaultLogger;
+            defaultLogger.MemLogFunctions!(ll).logImpl!(line, file,
+                funcName, prettyFuncName, moduleName)(args);
         }
-    }
-    else
-    {
-        ref Logger DefaultLogFunction(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(lazy A args) @trusted
-        {
-            static if (isLoggingEnabled!ll)
-            {
-                if (ll >= globalLogLevel
-                        && ll >= defaultLogger.logLevel
-                        && globalLogLevel != LogLevel.off
-                        && defaultLogger.logLevel != LogLevel.off)
-                {
-                    defaultLogger.MemLogFunctions!(ll).logImpl!(line, file,
-                        funcName, prettyFuncName, moduleName)(args);
-                }
-            }
 
-            return defaultLogger;
-        }
+        return defaultLogger;
+    }
+}
+
+template DefaultLogFunctionDisabled(LogLevel ll)
+{
+    ref Logger DefaultLogFunction(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(A) @trusted
+    {
+        return defaultLogger;
     }
 }
 /// Ditto
-alias trace = DefaultLogFunction!(LogLevel.trace);
+version(TraceLoggingDisabled)
+	alias trace = DefaultLogFunctionDisabled!(LogLevel.trace);
+else
+	alias trace = DefaultLogFunction!(LogLevel.trace);
 /// Ditto
-alias info = DefaultLogFunction!(LogLevel.info);
+version(InfoLoggingDisabled)
+	alias info = DefaultLogFunctionDisabled!(LogLevel.info);
+else
+	alias info = DefaultLogFunction!(LogLevel.info);
+
 /// Ditto
-alias warning = DefaultLogFunction!(LogLevel.warning);
+version(WarningLoggingDisabled)
+	alias warning = DefaultLogFunctionDisabled!(LogLevel.warning);
+else
+	alias warning = DefaultLogFunction!(LogLevel.warning);
+
 /// Ditto
-alias error = DefaultLogFunction!(LogLevel.error);
+version(ErrorLoggingDisabled)
+	alias error = DefaultLogFunctionDisabled!(LogLevel.error);
+else
+	alias error = DefaultLogFunction!(LogLevel.error);
+
 /// Ditto
-alias critical = DefaultLogFunction!(LogLevel.critical);
+version(CriticalLoggingDisabled)
+	alias critical = DefaultLogFunctionDisabled!(LogLevel.critical);
+else
+	alias critical = DefaultLogFunction!(LogLevel.critical);
+
 /// Ditto
-alias fatal = DefaultLogFunction!(LogLevel.fatal);
+version(FatalLoggingDisabled)
+	alias fatal = DefaultLogFunctionDisabled!(LogLevel.fatal);
+else
+	alias fatal = DefaultLogFunction!(LogLevel.fatal);
+
+
 
 ///
 template DefaultLogFunctionc(LogLevel ll)
@@ -671,52 +690,71 @@ template DefaultLogFunctionc(LogLevel ll)
     fatalc(someFunctionReturingABool(), 1337, "is number");
     --------------------
     */
-    version(DisableLogging)
+    ref Logger DefaultLogFunctionc(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(const bool condition,
+        lazy A args) @trusted
     {
-        ref Logger DefaultLogFunctionc(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool, A) @trusted
+        if (condition && ll >= globalLogLevel
+                && ll >= defaultLogger.logLevel
+                && globalLogLevel != LogLevel.off
+                && defaultLogger.logLevel != LogLevel.off )
         {
-            return defaultLogger;
+            defaultLogger.MemLogFunctions!(ll).logImplc!(line, file,
+                funcName, prettyFuncName, moduleName)(condition, args);
         }
-    }
-    else
-    {
-        ref Logger DefaultLogFunctionc(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool condition,
-            lazy A args) @trusted
-        {
-            static if (isLoggingEnabled!ll)
-            {
-                if (condition && ll >= globalLogLevel
-                        && ll >= defaultLogger.logLevel
-                        && globalLogLevel != LogLevel.off
-                        && defaultLogger.logLevel != LogLevel.off )
-                {
-                    defaultLogger.MemLogFunctions!(ll).logImplc!(line, file,
-                        funcName, prettyFuncName, moduleName)(condition, args);
-                }
-            }
 
-            return defaultLogger;
-        }
+        return defaultLogger;
     }
 }
 /// Ditto
-alias tracec = DefaultLogFunctionc!(LogLevel.trace);
+template DefaultLogFunctioncDisabled(LogLevel ll)
+{
+    ref Logger DefaultLogFunctionc(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(const bool, A) @trusted
+    {
+        return defaultLogger;
+    }
+}
+
 /// Ditto
-alias infoc = DefaultLogFunctionc!(LogLevel.info);
+version(TraceLoggingDisabled)
+	alias tracec = DefaultLogFunctioncDisabled!(LogLevel.trace);
+else
+	alias tracec = DefaultLogFunctionc!(LogLevel.trace);
+
 /// Ditto
-alias warningc = DefaultLogFunctionc!(LogLevel.warning);
+version(InfoLoggingDisabled)
+	alias infoc = DefaultLogFunctioncDisabled!(LogLevel.info);
+else
+	alias infoc = DefaultLogFunctionc!(LogLevel.info);
+
 /// Ditto
-alias errorc = DefaultLogFunctionc!(LogLevel.error);
+version(WarningLoggingDisabled)
+	alias warningc = DefaultLogFunctioncDisabled!(LogLevel.warning);
+else
+	alias warningc = DefaultLogFunctionc!(LogLevel.warning);
+
 /// Ditto
-alias criticalc = DefaultLogFunctionc!(LogLevel.critical);
+version(ErrorLoggingDisabled)
+	alias errorc = DefaultLogFunctioncDisabled!(LogLevel.error);
+else
+	alias errorc = DefaultLogFunctionc!(LogLevel.error);
+
 /// Ditto
-alias fatalc = DefaultLogFunctionc!(LogLevel.fatal);
+version(CriticalLoggingDisabled)
+	alias criticalc = DefaultLogFunctioncDisabled!(LogLevel.critical);
+else
+	alias criticalc = DefaultLogFunctionc!(LogLevel.critical);
+
+/// Ditto
+version(FatalLoggingDisabled)
+	alias fatalc = DefaultLogFunctioncDisabled!(LogLevel.fatal);
+else
+	alias fatalc = DefaultLogFunctionc!(LogLevel.fatal);
 
 ///
 template DefaultLogFunctionf(LogLevel ll)
@@ -743,54 +781,73 @@ template DefaultLogFunctionf(LogLevel ll)
     fatalf("%d %s", 1337, "is number");
     --------------------
     */
-    version(DisableLogging)
+    ref Logger DefaultLogFunctionf(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(string msg, lazy A args)
+        @trusted
     {
-        ref Logger DefaultLogFunctionf(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(string, A)
-            @trusted
+        if (ll >= globalLogLevel
+                && ll >= defaultLogger.logLevel
+                && globalLogLevel != LogLevel.off
+                && defaultLogger.logLevel != LogLevel.off )
         {
-            return defaultLogger;
+            defaultLogger.MemLogFunctions!(ll).logImplc!(line, file,
+                funcName, prettyFuncName, moduleName)(true, msg, args);
         }
-    }
-    else
-    {
-        ref Logger DefaultLogFunctionf(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(string msg, lazy A args)
-            @trusted
-        {
-            static if (isLoggingEnabled!ll)
-            {
-                if (ll >= globalLogLevel
-                        && ll >= defaultLogger.logLevel
-                        && globalLogLevel != LogLevel.off
-                        && defaultLogger.logLevel != LogLevel.off )
-                {
-                    defaultLogger.MemLogFunctions!(ll).logImplc!(line, file,
-                        funcName, prettyFuncName, moduleName)(true, msg, args);
-                }
-            }
 
-            return defaultLogger;
-        }
+        return defaultLogger;
     }
 }
 
 /// Ditto
-alias tracef = DefaultLogFunctionf!(LogLevel.trace);
+template DefaultLogFunctionfDisabled(LogLevel ll)
+{
+	ref Logger DefaultLogFunctionf(int line = __LINE__,
+	    string file = __FILE__, string funcName = __FUNCTION__,
+	    string prettyFuncName = __PRETTY_FUNCTION__,
+	    string moduleName = __MODULE__, A...)(string, A)
+	    @trusted
+	{
+	    return defaultLogger;
+	}
+}
+
 /// Ditto
-alias infof = DefaultLogFunctionf!(LogLevel.info);
+version(TraceLoggingDisabled)
+	alias tracef = DefaultLogFunctionfDisabled!(LogLevel.trace);
+else
+	alias tracef = DefaultLogFunctionf!(LogLevel.trace);
+
 /// Ditto
-alias warningf = DefaultLogFunctionf!(LogLevel.warning);
+version(InfoLoggingDisabled)
+	alias infof = DefaultLogFunctionfDisabled!(LogLevel.info);
+else
+	alias infof = DefaultLogFunctionf!(LogLevel.info);
+
 /// Ditto
-alias errorf = DefaultLogFunctionf!(LogLevel.error);
+version(WarningLoggingDisabled)
+	alias warningf = DefaultLogFunctionfDisabled!(LogLevel.warning);
+else
+	alias warningf = DefaultLogFunctionf!(LogLevel.warning);
+
 /// Ditto
-alias criticalf = DefaultLogFunctionf!(LogLevel.critical);
+version(ErrorLoggingDisabled)
+	alias errorf = DefaultLogFunctionfDisabled!(LogLevel.error);
+else
+	alias errorf = DefaultLogFunctionf!(LogLevel.error);
+
 /// Ditto
-alias fatalf = DefaultLogFunctionf!(LogLevel.fatal);
+version(CriticalLoggingDisabled)
+	alias criticalf = DefaultLogFunctionfDisabled!(LogLevel.critical);
+else
+	alias criticalf = DefaultLogFunctionf!(LogLevel.critical);
+
+/// Ditto
+version(FatalLoggingDisabled)
+	alias fatalf = DefaultLogFunctionfDisabled!(LogLevel.fatal);
+else
+	alias fatalf = DefaultLogFunctionf!(LogLevel.fatal);
 
 ///
 template DefaultLogFunctioncf(LogLevel ll)
@@ -819,55 +876,74 @@ template DefaultLogFunctioncf(LogLevel ll)
     fatalcf(4 > 3, "%d %s", 1337, "is number");
     --------------------
     */
-    version(DisableLogging)
+    ref Logger DefaultLogFunctioncf(int line = __LINE__,
+        string file = __FILE__, string funcName = __FUNCTION__,
+        string prettyFuncName = __PRETTY_FUNCTION__,
+        string moduleName = __MODULE__, A...)(const bool condition,
+        string msg, lazy A args) @trusted
     {
-        ref Logger DefaultLogFunctioncf(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool,
-            string, A) @trusted
+        if (condition && ll >= defaultLogger.logLevel
+                && defaultLogger.logLevel >= globalLogLevel
+                && globalLogLevel != LogLevel.off
+                && defaultLogger.logLevel != LogLevel.off )
         {
-            return defaultLogger;
+            defaultLogger.MemLogFunctions!(ll).logImplcf!(line, file,
+                funcName, prettyFuncName, moduleName)(condition, msg,
+                args);
         }
-    }
-    else
-    {
-        ref Logger DefaultLogFunctioncf(int line = __LINE__,
-            string file = __FILE__, string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool condition,
-            string msg, lazy A args) @trusted
-        {
-            static if (isLoggingEnabled!ll)
-            {
-                if (condition && ll >= defaultLogger.logLevel
-                        && defaultLogger.logLevel >= globalLogLevel
-                        && globalLogLevel != LogLevel.off
-                        && defaultLogger.logLevel != LogLevel.off )
-                {
-                    defaultLogger.MemLogFunctions!(ll).logImplcf!(line, file,
-                        funcName, prettyFuncName, moduleName)(condition, msg,
-                        args);
-                }
-            }
 
-            return defaultLogger;
-        }
+        return defaultLogger;
     }
 }
 
+///
+template DefaultLogFunctionDisablecf(LogLevel ll)
+{
+	ref Logger DefaultLogFunctioncf(int line = __LINE__,
+	    string file = __FILE__, string funcName = __FUNCTION__,
+	    string prettyFuncName = __PRETTY_FUNCTION__,
+	    string moduleName = __MODULE__, A...)(const bool,
+	    string, A) @trusted
+	{
+	    return defaultLogger;
+	}
+}
+
 /// Ditto
-alias tracecf = DefaultLogFunctioncf!(LogLevel.trace);
+version(TraceLoggingDisabled)
+	alias tracecf = DefaultLogFunctioncfDisabled!(LogLevel.trace);
+else
+	alias tracecf = DefaultLogFunctioncf!(LogLevel.trace);
 /// Ditto
-alias infocf = DefaultLogFunctioncf!(LogLevel.info);
+version(InfoLoggingDisabled)
+	alias infocf = DefaultLogFunctioncfDisabled!(LogLevel.info);
+else
+	alias infocf = DefaultLogFunctioncf!(LogLevel.info);
+
 /// Ditto
-alias warningcf = DefaultLogFunctioncf!(LogLevel.warning);
+version(WarningLoggingDisabled)
+	alias warningcf = DefaultLogFunctioncfDisabled!(LogLevel.warning);
+else
+	alias warningcf = DefaultLogFunctioncf!(LogLevel.warning);
+
 /// Ditto
-alias errorcf = DefaultLogFunctioncf!(LogLevel.error);
+version(ErrorLoggingDisabled)
+	alias errorcf = DefaultLogFunctioncfDisabled!(LogLevel.error);
+else
+	alias errorcf = DefaultLogFunctioncf!(LogLevel.error);
+
 /// Ditto
-alias criticalcf = DefaultLogFunctioncf!(LogLevel.critical);
+version(CriticalLoggingDisabled)
+	alias criticalcf = DefaultLogFunctioncfDisabled!(LogLevel.critical);
+else
+	alias criticalcf = DefaultLogFunctioncf!(LogLevel.critical);
+
 /// Ditto
-alias fatalcf = DefaultLogFunctioncf!(LogLevel.fatal);
+version(FatalLoggingDisabled)
+	alias fatalcf = DefaultLogFunctioncfDisabled!(LogLevel.fatal);
+else
+	alias fatalcf = DefaultLogFunctioncf!(LogLevel.fatal);
+
 
 /**
 There are eight usable logging level. These level are $(I all), $(I trace),
@@ -931,7 +1007,7 @@ abstract class Logger
     creates a fatal handler. The fatal handler will throw an $(D Error) if a
     log call is made with a $(D LogLevel) $(D LogLevel.fatal).
     */
-    public this(string newName, LogLevel lv) @safe
+    this(string newName, LogLevel lv) @safe
     {
         this.logLevel = lv;
         this.name = newName;
@@ -944,7 +1020,7 @@ abstract class Logger
     Params:
         payload = All information associated with call to log function.
     */
-    public void writeLogMsg(ref LoggerPayload payload);
+    void writeLogMsg(ref LoggerPayload payload);
 
     /** This method is the entry point into each logger. It compares the given
     $(D LogLevel) with the $(D LogLevel) of the $(D Logger), and the global
@@ -952,7 +1028,7 @@ abstract class Logger
     message, and all other parameter are passed to the abstract method
     $(D writeLogMsg).
     */
-    public void logMessage(string file, int line, string funcName,
+    void logMessage(string file, int line, string funcName,
             string prettyFuncName, string moduleName, LogLevel logLevel,
             string msg)
         @trusted
@@ -969,26 +1045,26 @@ abstract class Logger
     }
 
     /** Get the $(D LogLevel) of the logger. */
-    public @property final LogLevel logLevel() const pure nothrow @safe
+    @property final LogLevel logLevel() const pure nothrow @safe
     {
         return this.logLevel_;
     }
 
     /** Set the $(D LogLevel) of the logger. The $(D LogLevel) can not be set
     to $(D LogLevel.unspecific).*/
-    public @property final void logLevel(const LogLevel lv) pure nothrow @safe
+    @property final void logLevel(const LogLevel lv) pure nothrow @safe
     {
         this.logLevel_ = lv;
     }
 
     /** Get the $(D name) of the logger. */
-    public @property final string name() const pure nothrow @safe
+    @property final string name() const pure nothrow @safe
     {
         return this.name_;
     }
 
     /** Set the name of the logger. */
-    public @property final void name(string newName) pure nothrow @safe
+    @property final void name(string newName) pure nothrow @safe
     {
         this.name_ = newName;
     }
@@ -998,7 +1074,7 @@ abstract class Logger
 
     By default an $(D Error) will be thrown.
     */
-    public final void setFatalHandler(void delegate() dg) @safe {
+    final void setFatalHandler(void delegate() dg) @safe {
         this.fatalHandler = dg;
     }
 
@@ -1027,39 +1103,23 @@ abstract class Logger
         g.fatal(1337, "is number");
         --------------------
         */
-        version(DisableLogging)
+        ref Logger logImpl(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(lazy A args) @trusted
         {
-            public ref Logger logImpl(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(A args) @trusted
+            if (ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
             {
-                return this;
-            }
-        }
-        else
-        {
-            public ref Logger logImpl(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(lazy A args) @trusted
-            {
-                static if (isLoggingEnabled!ll)
-                {
-                    if (ll >= globalLogLevel
-                            && globalLogLevel != LogLevel.off
-                            && this.logLevel_ != LogLevel.off)
-                    {
-                        this.logMessage(file, line, funcName, prettyFuncName,
-                            moduleName, ll, text(args));
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, ll, text(args));
 
-                        static if (ll == LogLevel.fatal)
-                            fatalHandler();
-                    }
-                }
-
-                return this;
+                static if (ll == LogLevel.fatal)
+                    fatalHandler();
             }
+
+            return this;
         }
 
         /** This function logs data in a writeln style manner to the
@@ -1086,40 +1146,24 @@ abstract class Logger
         g.fatalc(someFunctionReturingABool(), 1337, "is number");
         --------------------
         */
-        version(DisableLogging)
+        ref Logger logImplc(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(const bool condition,
+            lazy A args) @trusted
         {
-            public ref Logger logImplc(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(const bool, A) @trusted
+            if (condition && ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
             {
-                return this;
-            }
-        }
-        else
-        {
-            public ref Logger logImplc(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(const bool condition,
-                lazy A args) @trusted
-            {
-                static if (isLoggingEnabled!ll)
-                {
-                    if (condition && ll >= globalLogLevel
-                            && globalLogLevel != LogLevel.off
-                            && this.logLevel_ != LogLevel.off)
-                    {
-                        this.logMessage(file, line, funcName, prettyFuncName,
-                            moduleName, ll, text(args));
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, ll, text(args));
 
-                        static if (ll == LogLevel.fatal)
-                            fatalHandler();
-                    }
-                }
-
-                return this;
+                static if (ll == LogLevel.fatal)
+                    fatalHandler();
             }
+
+            return this;
         }
 
         /** This function logs data in a writefln style manner to the
@@ -1145,44 +1189,27 @@ abstract class Logger
         g.fatalf("%d %s", 1337, "is number");
         --------------------
         */
-        version(DisableLogging)
+        ref Logger logImplf(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(string msg, lazy A args)
+            @trusted
         {
-            public ref Logger logImplf(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(string, A)
-                @trusted
+            if (ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
             {
-                return this;
+
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, ll, format(msg, args));
+
+                static if (ll == LogLevel.fatal)
+                    fatalHandler();
             }
+
+            return this;
         }
-        else
-        {
-            public ref Logger logImplf(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(string msg, lazy A args)
-                @trusted
-            {
-                static if (isLoggingEnabled!ll)
-                {
-                    if (ll >= globalLogLevel
-                            && globalLogLevel != LogLevel.off
-                            && this.logLevel_ != LogLevel.off)
-                    {
-
-                        this.logMessage(file, line, funcName, prettyFuncName,
-                            moduleName, ll, format(msg, args));
-
-                        static if (ll == LogLevel.fatal)
-                            fatalHandler();
-                    }
-                }
-
-                return this;
-            }
-        }
-
+        
         /** This function logs data in a writefln style manner to the
         used $(D Logger) depending on a condition passed as first argument.
 
@@ -1208,92 +1235,201 @@ abstract class Logger
         g.fatalcf(4 > 3, "%d %s", 1337, "is number");
         --------------------
         */
-        version(DisableLogging)
+        ref Logger logImplcf(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(const bool condition,
+            string msg, lazy A args) @trusted
         {
-            public ref Logger logImplcf(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(const bool, string, A)
-                @trusted
+            if (condition && ll >= globalLogLevel
+                    && globalLogLevel != LogLevel.off
+                    && this.logLevel_ != LogLevel.off)
             {
-                return this;
-            }
-        }
-        else
-        {
-            public ref Logger logImplcf(int line = __LINE__,
-                string file = __FILE__, string funcName = __FUNCTION__,
-                string prettyFuncName = __PRETTY_FUNCTION__,
-                string moduleName = __MODULE__, A...)(const bool condition,
-                string msg, lazy A args) @trusted
-            {
-                static if (isLoggingEnabled!ll)
-                {
-                    if (condition && ll >= globalLogLevel
-                            && globalLogLevel != LogLevel.off
-                            && this.logLevel_ != LogLevel.off)
-                    {
-                        this.logMessage(file, line, funcName, prettyFuncName,
-                            moduleName, ll, format(msg, args));
+                this.logMessage(file, line, funcName, prettyFuncName,
+                    moduleName, ll, format(msg, args));
 
-                        static if (ll == LogLevel.fatal)
-                            fatalHandler();
-                    }
-                }
-
-                return this;
+                static if (ll == LogLevel.fatal)
+                    fatalHandler();
             }
+
+            return this;
         }
     }
 
-    /// Ditto
-    alias trace = MemLogFunctions!(LogLevel.trace).logImpl;
-    /// Ditto
-    alias info = MemLogFunctions!(LogLevel.info).logImpl;
-    /// Ditto
-    alias warning = MemLogFunctions!(LogLevel.warning).logImpl;
-    /// Ditto
-    alias error = MemLogFunctions!(LogLevel.error).logImpl;
-    /// Ditto
-    alias critical = MemLogFunctions!(LogLevel.critical).logImpl;
-    /// Ditto
-    alias fatal = MemLogFunctions!(LogLevel.fatal).logImpl;
-    /// Ditto
-    alias tracec = MemLogFunctions!(LogLevel.trace).logImplc;
-    /// Ditto
-    alias infoc = MemLogFunctions!(LogLevel.info).logImplc;
-    /// Ditto
-    alias warningc = MemLogFunctions!(LogLevel.warning).logImplc;
-    /// Ditto
-    alias errorc = MemLogFunctions!(LogLevel.error).logImplc;
-    /// Ditto
-    alias criticalc = MemLogFunctions!(LogLevel.critical).logImplc;
-    /// Ditto
-    alias fatalc = MemLogFunctions!(LogLevel.fatal).logImplc;
-    /// Ditto
-    alias tracef = MemLogFunctions!(LogLevel.trace).logImplf;
-    /// Ditto
-    alias infof = MemLogFunctions!(LogLevel.info).logImplf;
-    /// Ditto
-    alias warningf = MemLogFunctions!(LogLevel.warning).logImplf;
-    /// Ditto
-    alias errorf = MemLogFunctions!(LogLevel.error).logImplf;
-    /// Ditto
-    alias criticalf = MemLogFunctions!(LogLevel.critical).logImplf;
-    /// Ditto
-    alias fatalf = MemLogFunctions!(LogLevel.fatal).logImplf;
-    /// Ditto
-    alias tracecf = MemLogFunctions!(LogLevel.trace).logImplcf;
-    /// Ditto
-    alias infocf = MemLogFunctions!(LogLevel.info).logImplcf;
-    /// Ditto
-    alias warningcf = MemLogFunctions!(LogLevel.warning).logImplcf;
-    /// Ditto
-    alias errorcf = MemLogFunctions!(LogLevel.error).logImplcf;
-    /// Ditto
-    alias criticalcf = MemLogFunctions!(LogLevel.critical).logImplcf;
-    /// Ditto
-    alias fatalcf = MemLogFunctions!(LogLevel.fatal).logImplcf;
+	template MemLogFunctionsDisabled(LogLevel ll)
+	{
+        ref Logger logImpl(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(A) @trusted
+        {
+
+            return this;
+        }
+
+        ref Logger logImplc(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(const bool, A) @trusted
+        {
+            return this;
+        }
+
+        ref Logger logImplf(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(string, A) @trusted
+        {
+            return this;
+        }
+        
+        ref Logger logImplcf(int line = __LINE__,
+            string file = __FILE__, string funcName = __FUNCTION__,
+            string prettyFuncName = __PRETTY_FUNCTION__,
+            string moduleName = __MODULE__, A...)(lazy const bool,
+            string, A) @trusted
+        {
+            return this;
+        }
+	}
+
+	version(DisableTrace)
+	{
+    	/// Ditto
+    	alias trace = MemLogFunctionsDisabled!(LogLevel.trace).logImpl;
+    	/// Ditto
+    	alias tracec = MemLogFunctionsDisabled!(LogLevel.trace).logImplc;
+    	/// Ditto
+    	alias tracef = MemLogFunctionsDisabled!(LogLevel.trace).logImplf;
+    	/// Ditto
+    	alias tracecf = MemLogFunctionsDisabled!(LogLevel.trace).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias trace = MemLogFunctions!(LogLevel.trace).logImpl;
+    	/// Ditto
+    	alias tracec = MemLogFunctions!(LogLevel.trace).logImplc;
+    	/// Ditto
+    	alias tracef = MemLogFunctions!(LogLevel.trace).logImplf;
+    	/// Ditto
+    	alias tracecf = MemLogFunctions!(LogLevel.trace).logImplcf;
+	}
+
+	version(DisableInfo)
+	{
+    	/// Ditto
+    	alias info = MemLogFunctionsDisabled!(LogLevel.info).logImpl;
+    	/// Ditto
+    	alias infoc = MemLogFunctionsDisabled!(LogLevel.info).logImplc;
+    	/// Ditto
+    	alias infof = MemLogFunctionsDisabled!(LogLevel.info).logImplf;
+    	/// Ditto
+    	alias infocf = MemLogFunctionsDisabled!(LogLevel.info).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias info = MemLogFunctions!(LogLevel.info).logImpl;
+    	/// Ditto
+    	alias infoc = MemLogFunctions!(LogLevel.info).logImplc;
+    	/// Ditto
+    	alias infof = MemLogFunctions!(LogLevel.info).logImplf;
+    	/// Ditto
+    	alias infocf = MemLogFunctions!(LogLevel.info).logImplcf;
+	}
+
+	version(DisableWarning)
+	{
+    	/// Ditto
+    	alias warning = MemLogFunctionsDisabled!(LogLevel.warning).logImpl;
+    	/// Ditto
+    	alias warningc = MemLogFunctionsDisabled!(LogLevel.warning).logImplc;
+    	/// Ditto
+    	alias warningf = MemLogFunctionsDisabled!(LogLevel.warning).logImplf;
+    	/// Ditto
+    	alias warningcf = MemLogFunctionsDisabled!(LogLevel.warning).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias warning = MemLogFunctions!(LogLevel.warning).logImpl;
+    	/// Ditto
+    	alias warningc = MemLogFunctions!(LogLevel.warning).logImplc;
+    	/// Ditto
+    	alias warningf = MemLogFunctions!(LogLevel.warning).logImplf;
+    	/// Ditto
+    	alias warningcf = MemLogFunctions!(LogLevel.warning).logImplcf;
+	}
+
+	version(DisableError)
+	{
+    	/// Ditto
+    	alias error = MemLogFunctionsDisabled!(LogLevel.error).logImpl;
+    	/// Ditto
+    	alias errorc = MemLogFunctionsDisabled!(LogLevel.error).logImplc;
+    	/// Ditto
+    	alias errorf = MemLogFunctionsDisabled!(LogLevel.error).logImplf;
+    	/// Ditto
+    	alias errorcf = MemLogFunctionsDisabled!(LogLevel.error).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias error = MemLogFunctions!(LogLevel.error).logImpl;
+    	/// Ditto
+    	alias errorc = MemLogFunctions!(LogLevel.error).logImplc;
+    	/// Ditto
+    	alias errorf = MemLogFunctions!(LogLevel.error).logImplf;
+    	/// Ditto
+    	alias errorcf = MemLogFunctions!(LogLevel.error).logImplcf;
+	}
+
+	version(DisableCritical)
+	{
+    	/// Ditto
+    	alias critical = MemLogFunctionsDisabled!(LogLevel.critical).logImpl;
+    	/// Ditto
+    	alias criticalc = MemLogFunctionsDisabled!(LogLevel.critical).logImplc;
+    	/// Ditto
+    	alias criticalf = MemLogFunctionsDisabled!(LogLevel.critical).logImplf;
+    	/// Ditto
+    	alias criticalcf = MemLogFunctionsDisabled!(LogLevel.critical).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias critical = MemLogFunctions!(LogLevel.critical).logImpl;
+    	/// Ditto
+    	alias criticalc = MemLogFunctions!(LogLevel.critical).logImplc;
+    	/// Ditto
+    	alias criticalf = MemLogFunctions!(LogLevel.critical).logImplf;
+    	/// Ditto
+    	alias criticalcf = MemLogFunctions!(LogLevel.critical).logImplcf;
+	}
+
+	version(DisableFatal)
+	{
+    	/// Ditto
+    	alias fatal = MemLogFunctionsDisabled!(LogLevel.fatal).logImpl;
+    	/// Ditto
+    	alias fatalc = MemLogFunctionsDisabled!(LogLevel.fatal).logImplc;
+    	/// Ditto
+    	alias fatalf = MemLogFunctionsDisabled!(LogLevel.fatal).logImplf;
+    	/// Ditto
+    	alias fatalcf = MemLogFunctionsDisabled!(LogLevel.fatal).logImplcf;
+	}
+	else
+	{
+    	/// Ditto
+    	alias fatal = MemLogFunctions!(LogLevel.fatal).logImpl;
+    	/// Ditto
+    	alias fatalc = MemLogFunctions!(LogLevel.fatal).logImplc;
+    	/// Ditto
+    	alias fatalf = MemLogFunctions!(LogLevel.fatal).logImplf;
+    	/// Ditto
+    	alias fatalcf = MemLogFunctions!(LogLevel.fatal).logImplcf;
+	}
 
     /** This method logs data with the $(D LogLevel) of the used $(D Logger).
 
@@ -1314,7 +1450,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger log(int line = __LINE__, string file = __FILE__,
+        ref Logger log(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(A args) @trusted
@@ -1324,7 +1460,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger log(int line = __LINE__, string file = __FILE__,
+        ref Logger log(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(lazy A args) @trusted
@@ -1363,7 +1499,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger logc(int line = __LINE__, string file = __FILE__,
+        ref Logger logc(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const bool, A) @trusted
@@ -1373,7 +1509,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger logc(int line = __LINE__, string file = __FILE__,
+        ref Logger logc(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const bool condition,
@@ -1412,7 +1548,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger logl(int line = __LINE__, string file = __FILE__,
+        ref Logger logl(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel, A)
@@ -1423,7 +1559,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger logl(int line = __LINE__, string file = __FILE__,
+        ref Logger logl(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel logLevel,
@@ -1465,7 +1601,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger loglc(int line = __LINE__, string file = __FILE__,
+        ref Logger loglc(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel,
@@ -1476,7 +1612,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger loglc(int line = __LINE__, string file = __FILE__,
+        ref Logger loglc(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel logLevel,
@@ -1515,7 +1651,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger logf(int line = __LINE__, string file = __FILE__,
+        ref Logger logf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(string, A)
@@ -1526,7 +1662,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger logf(int line = __LINE__, string file = __FILE__,
+        ref Logger logf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(string msg, lazy A args)
@@ -1567,7 +1703,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger logcf(int line = __LINE__, string file = __FILE__,
+        ref Logger logcf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const bool, string, A)
@@ -1578,7 +1714,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger logcf(int line = __LINE__, string file = __FILE__,
+        ref Logger logcf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const bool condition,
@@ -1618,7 +1754,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger loglf(int line = __LINE__, string file = __FILE__,
+        ref Logger loglf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel, string, A)
@@ -1629,7 +1765,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger loglf(int line = __LINE__, string file = __FILE__,
+        ref Logger loglf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel logLevel,
@@ -1672,7 +1808,7 @@ abstract class Logger
     */
     version(DisableLogging)
     {
-        public ref Logger loglcf(int line = __LINE__, string file = __FILE__,
+        ref Logger loglcf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel,
@@ -1683,7 +1819,7 @@ abstract class Logger
     }
     else
     {
-        public ref Logger loglcf(int line = __LINE__, string file = __FILE__,
+        ref Logger loglcf(int line = __LINE__, string file = __FILE__,
             string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(const LogLevel logLevel,
@@ -1718,7 +1854,7 @@ defaultLogger = new StdIOLogger;
 -------------
 The example sets a new $(D StdIOLogger) as new $(D defaultLogger).
 */
-public @property ref Logger defaultLogger() @trusted
+@property ref Logger defaultLogger() @trusted
 {
     static __gshared Logger logger;
     if (logger is null)
@@ -1736,7 +1872,7 @@ private ref LogLevel globalLogLevelImpl() @trusted
 }
 
 /** This method returns the global $(D LogLevel). */
-public @property LogLevel globalLogLevel() @trusted
+@property LogLevel globalLogLevel() @trusted
 {
     return globalLogLevelImpl();
 }
@@ -1746,7 +1882,7 @@ public @property LogLevel globalLogLevel() @trusted
 Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
 will be discarded before it reaches $(D writeLogMessage) method.
 */
-public @property void globalLogLevel(LogLevel ll) @trusted
+@property void globalLogLevel(LogLevel ll) @trusted
 {
     if (defaultLogger !is null)
     {
@@ -1789,12 +1925,12 @@ version(unittest)
         string msg = null;
         LogLevel lvl;
 
-        public this(string n = "", const LogLevel lv = LogLevel.info) @safe
+        this(string n = "", const LogLevel lv = LogLevel.info) @safe
         {
             super(n, lv);
         }
 
-        public override void writeLogMsg(ref LoggerPayload payload) @safe
+        override void writeLogMsg(ref LoggerPayload payload) @safe
         {
             this.line = payload.line;
             this.file = payload.file;
