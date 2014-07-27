@@ -7,14 +7,14 @@ import std.range : isRandomAccessRange;
 import std.functional : binaryFun;
 
 ptrdiff_t binarySearchIndex(Range, V, alias pred = "a < b")
-	(Range _input, V value) if (isRandomAccessRange!Range)
+    (Range _input, V value) if (isRandomAccessRange!Range)
 {
-	return binarySearchIndex!(Range, V, pred, pred)(_input, value);
+    return binarySearchIndex!(Range, V, pred, pred)(_input, value);
 }
 
-ptrdiff_t binarySearchIndex(Range, V, 
-	alias predA = "a < b", alias predB = "a < b")(Range _input, V value) 
-	if (isRandomAccessRange!Range)
+ptrdiff_t binarySearchIndex(Range, V,
+    alias predA = "a < b", alias predB = "a < b")(Range _input, V value)
+    if (isRandomAccessRange!Range)
 {
     alias predFunA = binaryFun!predA;
     alias predFunB = binaryFun!predB;
@@ -45,11 +45,11 @@ ptrdiff_t binarySearchIndex(Range, V,
 
 unittest
 {
-	auto a = [1,2,3,4,5,6];
-	auto idx = a.binarySearchIndex(1);
-	assert(idx == 0);
-	idx = a.binarySearchIndex(6);
-	assert(idx == 5);
+    auto a = [1,2,3,4,5,6];
+    auto idx = a.binarySearchIndex(1);
+    assert(idx == 0);
+    idx = a.binarySearchIndex(6);
+    assert(idx == 5);
 }
 
 abstract class MultiLoggerBase : Logger
@@ -87,7 +87,7 @@ abstract class MultiLoggerBase : Logger
     this(string name, const LogLevel lv = LogLevel.info) @trusted
     {
         super(name, lv);
-		this.logger.reserve(16);
+        this.logger.reserve(16);
     }
 
     /** This member holds all important data of the $(D MultiLogger).
@@ -96,9 +96,9 @@ abstract class MultiLoggerBase : Logger
     the mapping.
     */
     //Logger[string] logger;
-	Array!Logger logger;
+    Array!Logger logger;
 
-	void insertLogger(Logger);
+    void insertLogger(Logger);
     Logger removeLogger(Logger loggerName);
 
     override void writeLogMsg(ref LoggerPayload payload) @trusted {
@@ -173,8 +173,8 @@ class MultiLogger : MultiLoggerBase {
     override void insertLogger(Logger newLogger) @trusted
     {
         import std.array;
-		import std.range : assumeSorted;
-		import std.algorithm : sort, isSorted;
+        import std.range : assumeSorted;
+        import std.algorithm : sort, isSorted;
         if (newLogger.name.empty)
         {
             throw new Exception("A Logger must have a name to be inserted " ~
@@ -189,9 +189,9 @@ class MultiLogger : MultiLoggerBase {
         else
         {
             //logger[newLogger.name] = newLogger;
-			this.logger.insertBack(newLogger);
-			this.logger[].sort();
-			assert(this.logger[].isSorted);
+            this.logger.insertBack(newLogger);
+            this.logger[].sort();
+            assert(this.logger[].isSorted);
         }
     }
 
@@ -208,7 +208,7 @@ class MultiLogger : MultiLoggerBase {
 
     unittest
     {
-		import std.exception : assertThrown;
+        import std.exception : assertThrown;
         auto l1 = new MultiLogger;
         auto l2 = new StdioLogger();
         assertThrown(l1.insertLogger(l2));
@@ -220,14 +220,14 @@ class MultiLogger : MultiLoggerBase {
     */
     override Logger removeLogger(Logger toRemove) @trusted
     {
-		import std.range : assumeSorted;
-		import std.stdio;
+        import std.range : assumeSorted;
+        import std.stdio;
 
-		auto sorted = this.logger[].assumeSorted;
+        auto sorted = this.logger[].assumeSorted;
         if (!sorted.contains(toRemove))
         {
-			foreach(it; this.logger[])
-				writeln(it.name);
+            foreach(it; this.logger[])
+                writeln(it.name);
             throw new Exception(
                 "This MultiLogger instance does not hold a Logger named '" ~
                 toRemove.name ~ "'");
@@ -235,13 +235,13 @@ class MultiLogger : MultiLoggerBase {
         else
         {
             auto found = sorted.equalRange(toRemove);
-			assert(!found.empty);
-			auto ret = found.front;
+            assert(!found.empty);
+            auto ret = found.front;
 
-			auto idx = sorted.binarySearchIndex(toRemove);
-			assert(idx < this.logger.length);
-			auto slize = this.logger[idx .. idx+1];
-			assert(!slize.empty);
+            auto idx = sorted.binarySearchIndex(toRemove);
+            assert(idx < this.logger.length);
+            auto slize = this.logger[idx .. idx+1];
+            assert(!slize.empty);
             this.logger.linearRemove(slize);
             return ret;
         }
@@ -252,12 +252,12 @@ class MultiLogger : MultiLoggerBase {
     */
     Logger opIndex(string key) @trusted
     {
-		import std.range : assumeSorted;
+        import std.range : assumeSorted;
         auto sortedArray = this.logger[].assumeSorted;
-		auto idx = binarySearchIndex!(typeof(this.logger[]), string, 
-			"a.name<b","a<b.name")(this.logger[], key);
+        auto idx = binarySearchIndex!(typeof(this.logger[]), string,
+            "a.name<b","a<b.name")(this.logger[], key);
 
-		return this.logger[idx];
+        return this.logger[idx];
     }
 
     ///
@@ -285,57 +285,57 @@ class ArrayLogger : MultiLoggerBase {
 
     override void insertLogger(Logger newLogger) @trusted
     {
-		this.logger.insertBack(newLogger);
-	}
+        this.logger.insertBack(newLogger);
+    }
 
     override Logger removeLogger(Logger toRemove) @trusted
     {
-		import std.algorithm : find;
-		import std.range : take;
-		auto r = this.logger[].find(toRemove);
-		if (r.empty)
-		{
+        import std.algorithm : find;
+        import std.range : take;
+        auto r = this.logger[].find(toRemove);
+        if (r.empty)
+        {
             throw new Exception(
                 "This MultiLogger instance does not hold a Logger named '" ~
                 toRemove.name ~ "'");
-		}
+        }
 
-		auto ret = r.front();
-		this.logger.linearRemove(r.take(1));
-		return ret;
-	}
+        auto ret = r.front();
+        this.logger.linearRemove(r.take(1));
+        return ret;
+    }
 }
 
 unittest
 {
-	import std.logger.nulllogger;
-	import std.exception : assertThrown;
-	auto a = new ArrayLogger;
-	auto n0 = new NullLogger("zero");
-	auto n1 = new NullLogger("one");
-	a.insertLogger(n0);
-	a.insertLogger(n1);
+    import std.logger.nulllogger;
+    import std.exception : assertThrown;
+    auto a = new ArrayLogger;
+    auto n0 = new NullLogger("zero");
+    auto n1 = new NullLogger("one");
+    a.insertLogger(n0);
+    a.insertLogger(n1);
 
-	auto n0_1 = a.removeLogger(n0);
-	assert(n0_1 is n0);
+    auto n0_1 = a.removeLogger(n0);
+    assert(n0_1 is n0);
     assertThrown!Exception(a.removeLogger(n0));
 
-	auto n1_1 = a.removeLogger(n1);
-	assert(n1_1 is n1);
+    auto n1_1 = a.removeLogger(n1);
+    assert(n1_1 is n1);
     assertThrown!Exception(a.removeLogger(n1));
 }
 
 unittest
 {
-	auto a = new ArrayLogger;
-	auto n0 = new TestLogger("zero");
-	auto n1 = new TestLogger("one");
-	a.insertLogger(n0);
-	a.insertLogger(n1);
+    auto a = new ArrayLogger;
+    auto n0 = new TestLogger("zero");
+    auto n1 = new TestLogger("one");
+    a.insertLogger(n0);
+    a.insertLogger(n1);
 
-	a.log("Hello TestLogger"); int line = __LINE__;
-	assert(n0.msg == "Hello TestLogger");
-	assert(n0.line == line);
-	assert(n1.msg == "Hello TestLogger");
-	assert(n0.line == line);
+    a.log("Hello TestLogger"); int line = __LINE__;
+    assert(n0.msg == "Hello TestLogger");
+    assert(n0.line == line);
+    assert(n1.msg == "Hello TestLogger");
+    assert(n0.line == line);
 }
