@@ -199,7 +199,7 @@ class MultiLogger : MultiLoggerBase {
     unittest
     {
         auto l1 = new MultiLogger;
-        auto l2 = new StdIOLogger("some_logger");
+        auto l2 = new StdioLogger("some_logger");
 
         l1.insertLogger(l2);
 
@@ -210,7 +210,7 @@ class MultiLogger : MultiLoggerBase {
     {
 		import std.exception : assertThrown;
         auto l1 = new MultiLogger;
-        auto l2 = new StdIOLogger();
+        auto l2 = new StdioLogger();
         assertThrown(l1.insertLogger(l2));
     }
 
@@ -264,7 +264,7 @@ class MultiLogger : MultiLoggerBase {
     unittest
     {
         auto ml = new MultiLogger();
-        auto sl = new StdIOLogger("some_name");
+        auto sl = new StdioLogger("some_name");
 
         ml.insertLogger(sl);
 

@@ -104,7 +104,7 @@ Even though the idea behind this logging module is to provide a common
 interface and easy extensibility certain specific Logger are already
 implemented.
 
-$(LI StdIOLogger = This $(D Logger) logs data to $(D stdout).)
+$(LI StdioLogger = This $(D Logger) logs data to $(D stdout).)
 $(LI FileLogger = This $(D Logger) logs data to files.)
 $(LI MulitLogger = This $(D Logger) logs data to multiple $(D Logger).)
 $(LI NullLogger = This $(D Logger) will never do anything.)
@@ -127,6 +127,7 @@ import std.concurrency;
 import std.format;
 
 import std.logger.stdiologger;
+import std.logger.stderrlogger;
 import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
@@ -1083,7 +1084,7 @@ abstract class Logger
     Params:
         payload = All information associated with call to log function.
     */
-    void writeLogMsg(ref LoggerPayload payload);
+    void writeLogMsg(ref LoggerPayload payload) {}
 
 	/* The default implementation will use an $(D std.array.appender) 
 	internally to construct the message string. This means dynamic, 
@@ -1093,8 +1094,8 @@ abstract class Logger
 	to $(D logMsgPart) and one call to $(D finishLogMsg).
 	*/
     public void logHeader(string file, int line, string funcName,
-        string prettyFuncName, string moduleName, LogLevel logLevel,
-        bool cond)
+        string prettyFuncName, string moduleName, LogLevel logLevel, 
+		Tid threadId, SysTime timestamp)
         @trusted
     {
         version(DisableLogging)
@@ -1103,7 +1104,7 @@ abstract class Logger
         else
         {
             header = LoggerPayload(file, line, funcName, prettyFuncName,
-                moduleName, logLevel, thisTid, Clock.currTime, null);
+                moduleName, logLevel, threadId, timestamp, null);
         }
     }
 
@@ -1119,7 +1120,8 @@ abstract class Logger
         }
     }
 
-    /** Signals that the message has been written and no more calls to $(D logMsgPart) follow. */
+    /** Signals that the message has been written and no more calls to 
+	$(D logMsgPart) follow. */
     public void finishLogMsg()
     {
         version(DisableLogging)
@@ -1139,7 +1141,8 @@ abstract class Logger
     message, and all other parameter are passed to the abstract method
     $(D writeLogMsg).
     */
-    void logMessage(string file, int line, string funcName,
+    /+
+	void logMessage(string file, int line, string funcName,
             string prettyFuncName, string moduleName, LogLevel logLevel,
             string msg)
         @trusted
@@ -1154,6 +1157,7 @@ abstract class Logger
             this.writeLogMsg(lp);
         }
     }
+	+/
 
     /** Get the $(D LogLevel) of the logger. */
     @property final LogLevel logLevel() const pure nothrow @safe
@@ -1224,7 +1228,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
                 this.logHeader(file, line, funcName, prettyFuncName,
-                    moduleName, ll, null);
+                    moduleName, ll, thisTid, Clock.currTime);
 
 				auto writer = MsgRange(this);
 				formatString(writer, args);
@@ -1273,7 +1277,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
                 this.logHeader(file, line, funcName, prettyFuncName,
-                    moduleName, ll, null);
+                    moduleName, ll, thisTid, Clock.currTime);
 
 				auto writer = MsgRange(this);
 				formatString(writer, args);
@@ -1322,7 +1326,7 @@ abstract class Logger
             {
 
                 this.logHeader(file, line, funcName, prettyFuncName,
-                    moduleName, ll, null);
+                    moduleName, ll, thisTid, Clock.currTime);
 
 				auto writer = MsgRange(this);
 				formattedWrite(writer, msg, args);
@@ -1371,8 +1375,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, ll, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, ll, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
 
                 static if (ll == LogLevel.fatal)
                     fatalHandler();
@@ -1570,7 +1579,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.log(1337);
     --------------------
     */
@@ -1595,9 +1604,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, thisTid, Clock.currTime);
 
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, text(args));
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1619,7 +1632,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.logc(false, 1337);
     --------------------
     */
@@ -1645,8 +1658,14 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, text(args));
+
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1668,7 +1687,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.logl(LogLevel.error, "Hello World");
     --------------------
     */
@@ -1696,8 +1715,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, logLevel, text(args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1721,7 +1745,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.loglc(LogLevel.info, someCondition, 13, 37, "Hello World");
     --------------------
     */
@@ -1749,8 +1773,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, logLevel, text(args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1771,7 +1800,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.logf("Hello World %f", 3.1415);
     --------------------
     */
@@ -1799,8 +1828,13 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
 
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1823,7 +1857,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.logcf(false, "%d", 1337);
     --------------------
     */
@@ -1850,8 +1884,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1874,7 +1913,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.loglf(LogLevel.critical, "%d", 1337);
     --------------------
     */
@@ -1902,8 +1941,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, logLevel, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1928,7 +1972,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto l = new StdIOLogger();
+    auto l = new StdioLogger();
     l.loglcf(LogLevel.trace, false, "%d %s", 1337, "is number");
     --------------------
     */
@@ -1956,8 +2000,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, logLevel, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, logLevel, thisTid, Clock.currTime);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
             }
 
             return this;
@@ -1998,17 +2047,16 @@ thus changing the $(D defaultLogger).
 
 Example:
 -------------
-defaultLogger = new StdIOLogger;
+defaultLogger = new StdioLogger;
 -------------
-The example sets a new $(D StdIOLogger) as new $(D defaultLogger).
+The example sets a new $(D StdioLogger) as new $(D defaultLogger).
 */
 @property ref Logger defaultLogger() @trusted
 {
     static __gshared Logger logger;
     if (logger is null)
     {
-        logger = new
-            StdIOLogger(globalLogLevel());
+        logger = new StderrLogger(globalLogLevel());
     }
     return logger;
 }
