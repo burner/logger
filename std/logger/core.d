@@ -1272,7 +1272,6 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-
                 this.logHeader(file, line, funcName, prettyFuncName,
                     moduleName, ll, null);
 
@@ -1322,8 +1321,13 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
 
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, ll, format(msg, args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, ll, null);
+
+				auto writer = MsgRange(this);
+				formattedWrite(writer, msg, args);
+
+				this.finishLogMsg();
 
                 static if (ll == LogLevel.fatal)
                     fatalHandler();
