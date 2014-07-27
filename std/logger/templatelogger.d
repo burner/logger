@@ -12,10 +12,21 @@ $(D std.logger).
 */
 public void defaultFormatter(T,F)(ref T t, ref F payload) @trusted
 {
-    size_t fnIdx = payload.file.lastIndexOf('/') + 1;
-    size_t funIdx = payload.funcName.lastIndexOf('.') + 1;
+    ptrdiff_t fnIdx = payload.file.lastIndexOf('/') + 1;
+    ptrdiff_t funIdx = payload.funcName.lastIndexOf('.') + 1;
+
     auto time = payload.timestamp.toISOExtString();
-    formattedWrite(t, "%s:%s:%s:%u %s\n", time[0 .. 25],
+	size_t timeLen = time.length;
+	ptrdiff_t timeIdx = time.lastIndexOf('.');
+
+	if (timeIdx - timeLen > 5)
+	{
+		time = time[0 .. timeIdx+5];
+	}
+
+	timeIdx+=5;
+	
+    formattedWrite(t, "%*s:%s:%s:%u %s\n", timeIdx, time,
         payload.file[fnIdx .. $], payload.funcName[funIdx .. $],
         payload.line, payload.msg);
 }

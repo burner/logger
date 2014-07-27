@@ -156,7 +156,7 @@ version(DisableFatal)
 else
     immutable FatalLoggingDisabled = false;
 
-pure bool isLoggingEnabled(LogLevel ll)() @safe nothrow
+pure bool isLoggingEnabled(LogLevel ll) @safe nothrow
 {
     version(DisableLogging)
     {
@@ -164,15 +164,15 @@ pure bool isLoggingEnabled(LogLevel ll)() @safe nothrow
     }
     else
     {
-        static if (ll == LogLevel.trace)
+        if (ll == LogLevel.trace)
             return !TraceLoggingDisabled;
-        else static if (ll == LogLevel.info)
+        else if (ll == LogLevel.info)
             return !InfoLoggingDisabled;
-        else static if (ll == LogLevel.warning)
+        else if (ll == LogLevel.warning)
             return !WarningLoggingDisabled;
-        else static if (ll == LogLevel.critical)
+        else if (ll == LogLevel.critical)
             return !CriticalLoggingDisabled;
-        else static if (ll == LogLevel.fatal)
+        else if (ll == LogLevel.fatal)
             return !FatalLoggingDisabled;
         else
             return true;
@@ -212,7 +212,8 @@ else
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy A args) @trusted
     {
-        if (defaultLogger.logLevel >= globalLogLevel
+        if (isLoggingEnabled(defaultLogger.logLevel) 
+				&& defaultLogger.logLevel >= globalLogLevel
                 && globalLogLevel != LogLevel.off
                 && defaultLogger.logLevel != LogLevel.off)
         {
@@ -260,7 +261,8 @@ else
         string moduleName = __MODULE__, A...)(const LogLevel logLevel,
         lazy A args) @trusted
     {
-        if (logLevel >= globalLogLevel
+        if (isLoggingEnabled(defaultLogger.logLevel) 
+				&& logLevel >= globalLogLevel
                 && logLevel >= defaultLogger.logLevel
                 && globalLogLevel != LogLevel.off
                 && defaultLogger.logLevel != LogLevel.off )
@@ -306,12 +308,14 @@ else
     ref Logger logc(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool condition, lazy A args)
+        string moduleName = __MODULE__, A...)(lazy bool condition, lazy A args)
         @trusted
     {
-        if (condition && defaultLogger.logLevel >= globalLogLevel
+        if (isLoggingEnabled(defaultLogger.logLevel) 
+				&& defaultLogger.logLevel >= globalLogLevel
                 && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off )
+                && defaultLogger.logLevel != LogLevel.off 
+				&& condition)
         {
             defaultLogger.logc!(line, file, funcName,prettyFuncName,
                 moduleName)(condition, args);
@@ -358,12 +362,14 @@ else
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(const LogLevel logLevel,
-        const bool condition, lazy A args) @trusted
+        lazy bool condition, lazy A args) @trusted
     {
-        if (condition && logLevel >= globalLogLevel
+        if (isLoggingEnabled(logLevel) 
+				&& logLevel >= globalLogLevel
                 && logLevel >= defaultLogger.logLevel
                 && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off )
+                && defaultLogger.logLevel != LogLevel.off 
+				&& condition)
         {
             defaultLogger.loglc!(line, file, funcName,prettyFuncName,
                 moduleName)(logLevel, condition, args);
@@ -408,9 +414,10 @@ else
         string moduleName = __MODULE__, A...)(string msg,
         lazy A args) @trusted
     {
-        if (defaultLogger.logLevel >= globalLogLevel
+        if (isLoggingEnabled(defaultLogger.logLevel) 
+				&& defaultLogger.logLevel >= globalLogLevel
                 && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off )
+                && defaultLogger.logLevel != LogLevel.off)
         {
             defaultLogger.logf!(line, file, funcName,prettyFuncName,
                 moduleName)(msg, args);
@@ -458,7 +465,8 @@ else
         string moduleName = __MODULE__, A...)(const LogLevel logLevel,
         string msg, lazy A args) @trusted
     {
-        if (logLevel >= globalLogLevel
+        if (isLoggingEnabled(logLevel) 
+				&& logLevel >= globalLogLevel
                 && logLevel >= defaultLogger.logLevel
                 && globalLogLevel != LogLevel.off
                 && defaultLogger.logLevel != LogLevel.off )
@@ -495,8 +503,8 @@ version(DisableLogging)
     ref Logger logcf(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool condition,
-        string msg, lazy A args) @trusted
+        string moduleName = __MODULE__, A...)(const bool,
+        string, A) @trusted
     {
         return defaultLogger;
     }
@@ -506,12 +514,14 @@ else
     ref Logger logcf(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool condition,
+        string moduleName = __MODULE__, A...)(lazy bool condition,
         string msg, lazy A args) @trusted
     {
-        if (condition && defaultLogger.logLevel >= globalLogLevel
+        if (isLoggingEnabled(defaultLogger.logLevel) 
+				&& defaultLogger.logLevel >= globalLogLevel
                 && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off )
+                && defaultLogger.logLevel != LogLevel.off 
+				&& condition)
         {
             defaultLogger.logcf!(line, file, funcName,prettyFuncName,
                 moduleName)(condition, msg, args);
@@ -560,12 +570,14 @@ else
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(const LogLevel logLevel,
-        bool condition, string msg, lazy A args) @trusted
+        lazy bool condition, string msg, lazy A args) @trusted
     {
-        if (condition && logLevel >= globalLogLevel
+        if (isLoggingEnabled(logLevel) 
+				&& logLevel >= globalLogLevel
                 && logLevel >= defaultLogger.logLevel
-                &&globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off )
+                && globalLogLevel != LogLevel.off
+                && defaultLogger.logLevel != LogLevel.off
+				&& condition)
         {
             defaultLogger.loglcf!(line, file, funcName,prettyFuncName,
                 moduleName)(logLevel, condition, msg, args);
@@ -693,7 +705,7 @@ template DefaultLogFunctionc(LogLevel ll)
     ref Logger DefaultLogFunctionc(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool condition,
+        string moduleName = __MODULE__, A...)(lazy bool condition,
         lazy A args) @trusted
     {
         if (condition && ll >= globalLogLevel
@@ -879,7 +891,7 @@ template DefaultLogFunctioncf(LogLevel ll)
     ref Logger DefaultLogFunctioncf(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
-        string moduleName = __MODULE__, A...)(const bool condition,
+        string moduleName = __MODULE__, A...)(lazy bool condition,
         string msg, lazy A args) @trusted
     {
         if (condition && ll >= defaultLogger.logLevel
@@ -902,7 +914,7 @@ template DefaultLogFunctionDisablecf(LogLevel ll)
 	ref Logger DefaultLogFunctioncf(int line = __LINE__,
 	    string file = __FILE__, string funcName = __FUNCTION__,
 	    string prettyFuncName = __PRETTY_FUNCTION__,
-	    string moduleName = __MODULE__, A...)(const bool,
+	    string moduleName = __MODULE__, A...)(lazy bool,
 	    string, A) @trusted
 	{
 	    return defaultLogger;
@@ -944,6 +956,55 @@ version(FatalLoggingDisabled)
 else
 	alias fatalcf = DefaultLogFunctioncf!(LogLevel.fatal);
 
+private struct MsgRange
+{
+    private Logger log;
+
+    this(Logger log)
+    {
+        this.log = log;
+    }
+
+    void put(const(char)[] msg)
+    {
+        log.logMsgPart(msg);
+    }
+}
+
+private void formatString(A...)(MsgRange oRange, A args)
+{
+    import std.format : formattedWrite;
+
+    foreach (arg; args)
+    {
+        alias A = typeof(arg);
+        static if (isAggregateType!A || is(A == enum))
+        {
+            std.format.formattedWrite(oRange, "%s", arg);
+        }
+        else static if (isSomeString!A)
+        {
+            std.format.formattedWrite(oRange, "%s", arg);
+        }
+        else static if (isIntegral!A)
+        {
+            toTextRange(arg, oRange);
+        }
+        else static if (isBoolean!A)
+        {
+            std.format.formattedWrite(oRange, "%s", arg ? "true" : "false");
+        }
+        else static if (isSomeChar!A)
+        {
+            std.format.formattedWrite(oRange, "%c", arg);
+        }
+        else
+        {
+            // Most general case
+            std.format.formattedWrite(oRange, "%s", arg);
+        }
+    }
+}
 
 /**
 There are eight usable logging level. These level are $(I all), $(I trace),
@@ -1014,6 +1075,8 @@ abstract class Logger
         this.fatalHandler = delegate() {
             throw new Error("A Fatal Log Message was logged");
         };
+
+        this.msgAppender = appender!string();
     }
 
     /** A custom logger needs to implement this method.
@@ -1021,6 +1084,54 @@ abstract class Logger
         payload = All information associated with call to log function.
     */
     void writeLogMsg(ref LoggerPayload payload);
+
+	/* The default implementation will use an $(D std.array.appender) 
+	internally to construct the message string. This means dynamic, 
+	GC memory allocation. A logger can avoid this allocation by 
+	reimplementing $(D logHeader), $(D logMsgPart) and $(D finishLogMsg).
+	$(D logHeader) is always called first, followed by any number of calls 
+	to $(D logMsgPart) and one call to $(D finishLogMsg).
+	*/
+    public void logHeader(string file, int line, string funcName,
+        string prettyFuncName, string moduleName, LogLevel logLevel,
+        bool cond)
+        @trusted
+    {
+        version(DisableLogging)
+        {
+        }
+        else
+        {
+            header = LoggerPayload(file, line, funcName, prettyFuncName,
+                moduleName, logLevel, thisTid, Clock.currTime, null);
+        }
+    }
+
+    /** Logs a part of the log message. */
+    public void logMsgPart(const(char)[] msg)
+    {
+        version(DisableLogging)
+        {
+        }
+        else
+        {
+            msgAppender.put(msg);
+        }
+    }
+
+    /** Signals that the message has been written and no more calls to $(D logMsgPart) follow. */
+    public void finishLogMsg()
+    {
+        version(DisableLogging)
+        {
+        }
+        else
+        {
+            header.msg = msgAppender.data;
+            this.writeLogMsg(header);
+            msgAppender = appender!string();
+        }
+    }
 
     /** This method is the entry point into each logger. It compares the given
     $(D LogLevel) with the $(D LogLevel) of the $(D Logger), and the global
@@ -1112,8 +1223,13 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, ll, text(args));
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, ll, null);
+
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
 
                 static if (ll == LogLevel.fatal)
                     fatalHandler();
@@ -1149,15 +1265,21 @@ abstract class Logger
         ref Logger logImplc(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool condition,
+            string moduleName = __MODULE__, A...)(lazy bool condition,
             lazy A args) @trusted
         {
             if (condition && ll >= globalLogLevel
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logMessage(file, line, funcName, prettyFuncName,
-                    moduleName, ll, text(args));
+
+                this.logHeader(file, line, funcName, prettyFuncName,
+                    moduleName, ll, null);
+
+				auto writer = MsgRange(this);
+				formatString(writer, args);
+
+				this.finishLogMsg();
 
                 static if (ll == LogLevel.fatal)
                     fatalHandler();
@@ -1238,7 +1360,7 @@ abstract class Logger
         ref Logger logImplcf(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(const bool condition,
+            string moduleName = __MODULE__, A...)(lazy bool condition,
             string msg, lazy A args) @trusted
         {
             if (condition && ll >= globalLogLevel
@@ -1286,8 +1408,8 @@ abstract class Logger
         ref Logger logImplcf(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(lazy const bool,
-            string, A) @trusted
+            string moduleName = __MODULE__, A...)(const bool, string, A) 
+			@trusted
         {
             return this;
         }
@@ -1838,9 +1960,31 @@ abstract class Logger
         }
     }
 
+	final override bool opEquals(Object o) const @safe nothrow
+	{
+		Logger other = cast(Logger)o;
+		if (other is null)
+			return false;
+
+		return this.name_ == other.name_;
+	}
+
+	final override int opCmp(Object o) const @safe
+	{
+		Logger other = cast(Logger)o;
+		if (other is null)
+			throw new Exception("Passed Object not of type Logger");
+
+		return this.name_ < other.name ? -1
+			: this.name_ == other.name ? 0
+			: 1;
+	}
+
     private LogLevel logLevel_ = LogLevel.info;
     private string name_;
     private void delegate() fatalHandler;
+    protected Appender!string msgAppender;
+    protected LoggerPayload header;
 }
 
 /** This method returns the default $(D Logger).
@@ -1991,9 +2135,9 @@ unittest
     assert(tl2.msg == msg);
     assert(tl2.line == lineNumber);
 
-    ml.removeLogger(tl1.name);
-    ml.removeLogger(tl2.name);
-    assertThrown!Exception(ml.removeLogger(tl1.name));
+    ml.removeLogger(tl1);
+    ml.removeLogger(tl2);
+    assertThrown!Exception(ml.removeLogger(tl1));
 }
 
 @safe unittest
