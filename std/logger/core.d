@@ -185,6 +185,11 @@ pure bool isLoggingEnabled(LogLevel ll) @safe nothrow
     }
 }
 
+unittest
+{
+	static assert(isLogLevelCond(LogLevel.info, false));
+}
+		
 
 /** This function logs data.
 
@@ -218,19 +223,63 @@ else
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy A args) @trusted
     {
-        if (isLoggingEnabled(defaultLogger.logLevel)
-                && defaultLogger.logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off)
-        {
-            defaultLogger.log!(line, file, funcName,prettyFuncName,
-                moduleName)(args);
-        }
+		static if (args.length > 2 && is(A[0] == LogLevel) 
+			&& is(Unqaul!A[1] == bool))
+		{
+        	if (isLoggingEnabled(a[0])
+        	        && args[0] >= globalLogLevel
+        	        && args[0] >= defaultLogger.logLevel
+					&& defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off 
+					&& a[1])
+        	{
+        	    defaultLogger.log!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		} 
+		else static if (args.length > 1 && is(A[0] == LogLevel))
+		{
+        	if (isLoggingEnabled(a[0])
+        	        && args[0] >= globalLogLevel
+        	        && args[0] >= defaultLogger.logLevel
+					&& defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off )
+        	{
+        	    defaultLogger.log!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
+		else static if (args.length > 1 && is(Unqual!(A[0]) == bool))
+		{
+        	if (isLoggingEnabled(defaultLogger.logLevel)
+        	        && defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off
+					&& args[0])
+        	{
+        	    defaultLogger.log!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
+		else
+		{
+        	if (isLoggingEnabled(defaultLogger.logLevel)
+        	        && defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off)
+        	{
+        	    defaultLogger.log!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
 
         return defaultLogger;
     }
 }
 
+/+
 /** This function logs data depending on a $(D LogLevel) passed
 explicitly.
 
@@ -384,6 +433,7 @@ else
         return defaultLogger;
     }
 }
++/
 
 /** This function logs data in a $(D printf)-style manner.
 
@@ -420,19 +470,61 @@ else
         string moduleName = __MODULE__, A...)(string msg,
         lazy A args) @trusted
     {
-        if (isLoggingEnabled(defaultLogger.logLevel)
-                && defaultLogger.logLevel >= globalLogLevel
-                && globalLogLevel != LogLevel.off
-                && defaultLogger.logLevel != LogLevel.off)
-        {
-            defaultLogger.logf!(line, file, funcName,prettyFuncName,
-                moduleName)(msg, args);
-        }
 
+		static if (args.length > 2 && is(A[0] == LogLevel) 
+			&& is(Unqaul!A[1] == bool))
+		{
+        	if (isLoggingEnabled(a[0])
+        	        && logLevel >= globalLogLevel
+        	        && logLevel >= defaultLogger.logLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off 
+					&& a[1])
+        	{
+        	    defaultLogger.logf!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		} 
+		else static if (args.length > 1 && is(A[0] == LogLevel))
+		{
+        	if (isLoggingEnabled(a[0])
+        	        && logLevel >= globalLogLevel
+        	        && logLevel >= defaultLogger.logLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off )
+        	{
+        	    defaultLogger.logf!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
+		else static if (args.length > 1 && is(Unqual!(A[0]) == bool))
+		{
+        	if (isLoggingEnabled(defaultLogger.logLevel)
+        	        && defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off
+					&& args[0])
+        	{
+        	    defaultLogger.logf!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
+		else
+		{
+        	if (isLoggingEnabled(defaultLogger.logLevel)
+        	        && defaultLogger.logLevel >= globalLogLevel
+        	        && globalLogLevel != LogLevel.off
+        	        && defaultLogger.logLevel != LogLevel.off)
+        	{
+        	    defaultLogger.logf!(line, file, funcName,prettyFuncName,
+        	        moduleName)(args);
+        	}
+		}
         return defaultLogger;
     }
 }
 
+/+
 /** This function logs data in a $(D printf)-style manner depending on a
 $(D condition) and a $(D LogLevel) passed explicitly.
 
@@ -592,6 +684,7 @@ else
         return defaultLogger;
     }
 }
++/
 
 ///
 template DefaultLogFunction(LogLevel ll)
@@ -1605,23 +1698,81 @@ abstract class Logger
             string prettyFuncName = __PRETTY_FUNCTION__,
             string moduleName = __MODULE__, A...)(lazy A args) @trusted
         {
-            if (this.logLevel_ >= globalLogLevel
-                    && globalLogLevel != LogLevel.off
-                    && this.logLevel_ != LogLevel.off)
-            {
-                this.logHeader(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+			static if (args.length > 2 && is(A[0] == LogLevel) 
+				&& is(Unqaul!A[1] == bool))
+			{
+        		if (isLoggingEnabled(args[0])
+        		        && args[0] >= globalLogLevel
+        		        && args[0] >= defaultLogger.logLevel
+        		        && globalLogLevel != LogLevel.off
+        		        && this.logLevel_ != LogLevel.off 
+						&& args[1])
+        		{
+                	this.logHeader(file, line, funcName, prettyFuncName,
+                	    moduleName, args[0], thisTid, Clock.currTime);
 
-                auto writer = MsgRange(this);
-                formatString(writer, args);
+                	auto writer = MsgRange(this);
+                	formatString(writer, args[2 .. $]);
 
-                this.finishLogMsg();
+                	this.finishLogMsg();
+        		}
+			} 
+			else static if (args.length > 1 && is(A[0] == LogLevel))
+			{
+        		if (isLoggingEnabled(args[0])
+        		        && args[0] >= globalLogLevel
+        		        && args[0] >= defaultLogger.logLevel
+        		        && globalLogLevel != LogLevel.off
+        		        && this.logLevel_ != LogLevel.off)
+        		{
+                	this.logHeader(file, line, funcName, prettyFuncName,
+                	    moduleName, args[0], thisTid, Clock.currTime);
+
+                	auto writer = MsgRange(this);
+                	formatString(writer, args[1 .. $]);
+
+                	this.finishLogMsg();
+        		}
+			}
+			else static if (args.length > 1 && is(Unqual!(A[0]) == bool))
+			{
+        		if (isLoggingEnabled(this.logLevel_)
+        		        && this.logLevel_ >= globalLogLevel
+        		        && globalLogLevel != LogLevel.off
+        		        && this.logLevel_ != LogLevel.off
+						&& args[0])
+        		{
+                	this.logHeader(file, line, funcName, prettyFuncName,
+                	    moduleName, this.logLevel_, thisTid, Clock.currTime);
+
+                	auto writer = MsgRange(this);
+                	formatString(writer, args[1 .. $]);
+
+                	this.finishLogMsg();
+        		}
+			}
+			else
+			{
+        		if (isLoggingEnabled(this.logLevel_)
+        		        && this.logLevel_ >= globalLogLevel
+        		        && globalLogLevel != LogLevel.off
+        		        && this.logLevel_ != LogLevel.off
+						&& args[0])
+        		{
+                	this.logHeader(file, line, funcName, prettyFuncName,
+                	    moduleName, this.logLevel_, thisTid, Clock.currTime);
+
+                	auto writer = MsgRange(this);
+                	formatString(writer, args);
+
+                	this.finishLogMsg();
             }
 
             return this;
         }
     }
 
+	/+
     /** This method logs data depending on a $(D condition) passed
     explicitly.
 
@@ -1790,7 +1941,7 @@ abstract class Logger
             return this;
         }
     }
-
+	+/
 
     /** This method logs data in a $(D printf)-style manner.
 

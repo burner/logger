@@ -70,14 +70,36 @@ class FileLogger : Logger
 
     Example:
     -------------
-    auto l1 = new FileLogger("logFile", "loggerName");
-    auto l2 = new FileLogger("logFile", "loggerName", LogLevel.fatal);
+	auto file = File("logFile.log", "w");
+    auto l1 = new FileLogger(file, "LoggerName");
+    auto l2 = new FileLogger(file, "LoggerName", LogLevel.fatal);
     -------------
     */
     public @trusted this(ref File file, string name,
             const LogLevel lv = LogLevel.info)
     {
         super(name, lv);
+        this.filePtr = &file;
+        this.mutex = cast(shared Mutex)new Mutex;
+    }
+
+    /** A constructor for the $(D FileLogger) Logger.
+
+    Params:
+      file = The file used for logging.
+      lv = The $(D LogLevel) for the $(D FileLogger). By default the
+      $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
+
+    Example:
+    -------------
+	auto file = File("logFile.log", "w");
+    auto l1 = new FileLogger(file);
+    auto l2 = new FileLogger(file, LogLevel.fatal);
+    -------------
+    */
+    public @trusted this(ref File file, const LogLevel lv = LogLevel.info)
+    {
+        super("", lv);
         this.filePtr = &file;
         this.mutex = cast(shared Mutex)new Mutex;
     }
@@ -175,6 +197,36 @@ unittest
     destroy(l);
 
     auto file = File(filename, "r");
+    string readLine = file.readln();
+    assert(readLine.indexOf(written) != -1, readLine);
+    readLine = file.readln();
+    assert(readLine.indexOf(notWritten) == -1, readLine);
+}
+
+unittest
+{
+    import std.file : remove;
+    import std.array : empty;
+    import std.string : indexOf;
+
+    string filename = randomString(32) ~ ".tempLogFile";
+	auto file = File(filename, "w");
+    auto l = new FileLogger(file);
+
+    scope(exit)
+    {
+        remove(filename);
+    }
+
+    string notWritten = "this should not be written to file";
+    string written = "this should be written to file";
+
+    l.logLevel = LogLevel.critical;
+    l.logl(LogLevel.warning, notWritten);
+    l.logl(LogLevel.critical, written);
+	file.close();
+
+    file = File(filename, "r");
     string readLine = file.readln();
     assert(readLine.indexOf(written) != -1, readLine);
     readLine = file.readln();
