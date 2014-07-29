@@ -75,7 +75,7 @@ class FileLogger : Logger
     auto l2 = new FileLogger(file, "LoggerName", LogLevel.fatal);
     -------------
     */
-    public @trusted this(ref File file, string name,
+    public this(ref File file, string name,
             const LogLevel lv = LogLevel.info)
     {
         super(name, lv);
