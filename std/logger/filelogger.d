@@ -192,8 +192,8 @@ unittest
     string written = "this should be written to file";
 
     l.logLevel = LogLevel.critical;
-    l.logl(LogLevel.warning, notWritten);
-    l.logl(LogLevel.critical, written);
+    l.log(LogLevel.warning, notWritten);
+    l.log(LogLevel.critical, written);
     destroy(l);
 
     auto file = File(filename, "r");
@@ -222,8 +222,8 @@ unittest
     string written = "this should be written to file";
 
     l.logLevel = LogLevel.critical;
-    l.logl(LogLevel.warning, notWritten);
-    l.logl(LogLevel.critical, written);
+    l.log(LogLevel.warning, notWritten);
+    l.log(LogLevel.critical, written);
 	file.close();
 
     file = File(filename, "r");
