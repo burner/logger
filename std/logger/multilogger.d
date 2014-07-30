@@ -339,3 +339,11 @@ unittest
     assert(n1.msg == "Hello TestLogger");
     assert(n0.line == line);
 }
+
+unittest
+{
+	auto dl = defaultLogger;
+	assert(dl !is null);
+	assert(dl.logLevel == LogLevel.all);
+	assert(globalLogLevel == LogLevel.all);
+}

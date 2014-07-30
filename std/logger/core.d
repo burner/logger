@@ -313,7 +313,7 @@ void log(int line = __LINE__, string file = __FILE__,
                 && defaultLogger.logLevel != LogLevel.off )
         {
             defaultLogger.log!(line, file, funcName,prettyFuncName,
-                moduleName)(args);
+                moduleName)(ll, args);
         }
 	}
 }
@@ -1810,7 +1810,6 @@ unittest
     assert(l.logLevel == LogLevel.info);
 }
 
-/+
 unittest // default logger
 {
     import std.file;
@@ -1872,7 +1871,6 @@ unittest
 
     log(LogLevel.critical, false, notWritten);
     log(LogLevel.fatal, true, written);
-
     destroy(l);
 
     auto file = File(filename, "r");
@@ -1883,7 +1881,6 @@ unittest
     assert(nextFile.indexOf(notWritten) == -1);
     file.close();
 }
-+/
 
 @safe unittest
 {
@@ -2011,11 +2008,14 @@ unittest
                                 string valueStr = to!string(value);
                                 ++value;
 
-                                bool shouldLog = ((gll != LogLevel.off)
-                                    && (ll != LogLevel.off)
-                                    && (cond ? condValue : true)
-                                    && (ll2 >= gll)
-                                    && (ll2 >= ll));
+                                bool gllOff = (gll != LogLevel.off);
+                                bool llOff = (ll != LogLevel.off);
+                                bool condFalse = (cond ? condValue : true);
+                                bool ll2VSgll = (ll2 >= gll);
+                                bool ll2VSll = (ll2 >= ll); 
+
+								bool shouldLog = gllOff && llOff && condFalse
+									&& ll2VSgll && ll2VSll;
 
                                 /*
                                 writefln(
@@ -2031,10 +2031,12 @@ unittest
                                     assert(mem.msg == valueStr, format(
                                         "lineCall(%d) gll(%u) ll(%u) ll2(%u) " ~
                                         "cond(%b) condValue(%b)" ~
-                                        " memOrG(%b) shouldLog(%b) %s == %s",
+                                        " memOrG(%b) shouldLog(%b) %s == %s" ~
+										" %b %b %b %b %b",
                                         lineCall, gll, ll, ll2, cond,
                                         condValue, memOrG, shouldLog, mem.msg,
-                                        valueStr
+                                        valueStr, gllOff, llOff, condFalse,
+										ll2VSgll, ll2VSll
                                     ));
                                 }
                                 else
@@ -2266,4 +2268,12 @@ unittest
     import std.exception : assertThrown;
     auto tl = new TestLogger();
     assertThrown!Throwable(tl.fatal("fatal"));
+}
+
+unittest
+{
+	auto dl = cast(StderrLogger)defaultLogger;
+	assert(dl !is null);
+	assert(dl.logLevel == LogLevel.all);
+	assert(globalLogLevel == LogLevel.all);
 }

@@ -232,3 +232,11 @@ unittest
     readLine = file.readln();
     assert(readLine.indexOf(notWritten) == -1, readLine);
 }
+
+unittest
+{
+	auto dl = defaultLogger;
+	assert(dl !is null);
+	assert(dl.logLevel == LogLevel.all);
+	assert(globalLogLevel == LogLevel.all);
+}
