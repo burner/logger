@@ -14,30 +14,11 @@ is already present new log messages will be append at its end.
 */
 class FileLogger : Logger
 {
-    import std.format : formattedWrite;
-    /** Default constructor for the $(D StdIOLogger) Logger.
-
-    Params:
-      fn = The filename of the output file of the $(D FileLogger).
-      lv = The $(D LogLevel) for the $(D FileLogger). By default the
-      $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-    auto l1 = new FileLogger;
-    auto l2 = new FileLogger("logFile", LogLevel.fatal);
-    -------------
-    */
-    public @trusted this(const string fn, const LogLevel lv = LogLevel.info)
-    {
-        this(fn, "", lv);
-    }
-
+	import std.format : formattedWrite;
     /** A constructor for the $(D FileLogger) Logger.
 
     Params:
       fn = The filename of the output file of the $(D FileLogger).
-      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
       lv = The $(D LogLevel) for the $(D FileLogger). By default the
       $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
 
@@ -47,17 +28,16 @@ class FileLogger : Logger
     auto l2 = new FileLogger("logFile", "loggerName", LogLevel.fatal);
     -------------
     */
-    public @trusted this(const string fn, string name,
-            const LogLevel lv = LogLevel.info)
+    public @trusted this(const string fn, const LogLevel lv = LogLevel.info)
     {
         import std.exception : enforce;
-        super(name, lv);
+        super(lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
         enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
             "\" for logging.");
         this.filePtr = &this.file_;
-        this.mutex = cast(shared Mutex)new Mutex;
+        this.mutex = new Mutex;
     }
 
     /** A constructor for the $(D FileLogger) Logger.
@@ -75,34 +55,13 @@ class FileLogger : Logger
     auto l2 = new FileLogger(file, "LoggerName", LogLevel.fatal);
     -------------
     */
-    public this(ref File file, string name,
-            const LogLevel lv = LogLevel.info)
+    public this(ref File file, const LogLevel lv = LogLevel.info)
     {
-        super(name, lv);
+        super(lv);
         this.filePtr = &file;
-        this.mutex = cast(shared Mutex)new Mutex;
+        this.mutex = new Mutex;
     }
 
-    /** A constructor for the $(D FileLogger) Logger.
-
-    Params:
-      file = The file used for logging.
-      lv = The $(D LogLevel) for the $(D FileLogger). By default the
-      $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
-
-    Example:
-    -------------
-	auto file = File("logFile.log", "w");
-    auto l1 = new FileLogger(file);
-    auto l2 = new FileLogger(file, LogLevel.fatal);
-    -------------
-    */
-    public @trusted this(ref File file, const LogLevel lv = LogLevel.info)
-    {
-        super("", lv);
-        this.filePtr = &file;
-        this.mutex = cast(shared Mutex)new Mutex;
-    }
 
     /** The file written to is accessible by this method.*/
     public @property ref File file() @trusted
@@ -115,42 +74,30 @@ class FileLogger : Logger
         Tid threadId, SysTime timestamp)
         @trusted
     {
-        version(DisableLogging)
+        ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
+        ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
+
+        auto time = timestamp.toISOExtString();
+        size_t timeLen = time.length;
+        ptrdiff_t timeIdx = time.lastIndexOf('.');
+
+        if (timeIdx - timeLen > 5)
         {
+            time = time[0 .. timeIdx+5];
         }
-        else
-        {
-            ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
-            ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
 
-            auto time = timestamp.toISOExtString();
-            size_t timeLen = time.length;
-            ptrdiff_t timeIdx = time.lastIndexOf('.');
+        timeIdx+=5;
 
-            if (timeIdx - timeLen > 5)
-            {
-                time = time[0 .. timeIdx+5];
-            }
-
-            timeIdx+=5;
-
-            auto mu = cast()(this.mutex);
-            mu.lock();
-            formattedWrite(this.filePtr.lockingTextWriter(), "%*s:%s:%s:%u ",
-                timeIdx, time, file[fnIdx .. $], funcName[funIdx .. $], line);
-        }
+        auto mu = cast()(this.mutex);
+        mu.lock();
+        formattedWrite(this.filePtr.lockingTextWriter(), "%*s:%s:%s:%u ",
+            timeIdx, time, file[fnIdx .. $], funcName[funIdx .. $], line);
     }
 
     /** Logs a part of the log message. */
     public override void logMsgPart(const(char)[] msg)
     {
-        version(DisableLogging)
-        {
-        }
-        else
-        {
-            formattedWrite(this.filePtr.lockingTextWriter(), "%s", msg);
-        }
+        formattedWrite(this.filePtr.lockingTextWriter(), "%s", msg);
     }
 
     /** Signals that the message has been written and no more calls to
@@ -168,7 +115,7 @@ class FileLogger : Logger
             this.filePtr.flush();
         }
     }
-    private shared Mutex mutex;
+    private Mutex mutex;
     private File file_;
     private File* filePtr;
     private string filename;

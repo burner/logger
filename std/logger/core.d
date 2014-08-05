@@ -131,8 +131,8 @@ import std.exception;
 import std.concurrency;
 import std.format;
 
-import std.logger.stdiologger;
-import std.logger.stderrlogger;
+//import std.logger.stdiologger;
+//import std.logger.stderrlogger;
 import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
@@ -769,10 +769,9 @@ abstract class Logger
     creates a fatal handler. The fatal handler will throw an $(D Error) if a
     log call is made with a $(D LogLevel) $(D LogLevel.fatal).
     */
-    this(string newName, LogLevel lv) @safe
+    this(LogLevel lv) @safe
     {
         this.logLevel = lv;
-        this.name = newName;
         this.fatalHandler = delegate() {
             throw new Error("A Fatal Log Message was logged");
         };
@@ -870,18 +869,6 @@ abstract class Logger
     @property final void logLevel(const LogLevel lv) pure nothrow @safe
     {
         this.logLevel_ = lv;
-    }
-
-    /** Get the $(D name) of the logger. */
-    @property final string name() const pure nothrow @safe
-    {
-        return this.name_;
-    }
-
-    /** Set the name of the logger. */
-    @property final void name(string newName) pure nothrow @safe
-    {
-        this.name_ = newName;
     }
 
     /** This methods sets the $(D delegate) called in case of a log message
@@ -1284,98 +1271,6 @@ abstract class Logger
 	        }
 	    }
 	}
-    /+
-	version(DisableLogging)
-    {
-        ref Logger log(int line = __LINE__, string file = __FILE__,
-            string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(A args) @trusted
-        {
-            return this;
-        }
-    }
-    else
-    {
-        ref Logger log(int line = __LINE__, string file = __FILE__,
-            string funcName = __FUNCTION__,
-            string prettyFuncName = __PRETTY_FUNCTION__,
-            string moduleName = __MODULE__, A...)(lazy A args) @trusted
-        {
-            static if (args.length > 1 && is(A[0] == LogLevel)
-                && is(A[1] : bool))
-            {
-                if (isLoggingEnabled(args[0])
-                        && args[0] >= this.logLevel_
-                        && args[0] >= globalLogLevel
-                        && this.logLevel_ != LogLevel.off
-                        && globalLogLevel != LogLevel.off
-                        && args[1])
-                {
-                    this.logHeader(file, line, funcName, prettyFuncName,
-                        moduleName, args[0], thisTid, Clock.currTime);
-
-                    auto writer = MsgRange(this);
-                    formatString(writer, args[2 .. $]);
-
-                    this.finishLogMsg();
-                }
-            }
-            else static if (args.length > 0 && is(A[0] == LogLevel))
-            {
-                if (isLoggingEnabled(args[0])
-                        && args[0] >= this.logLevel_
-                        && args[0] >= globalLogLevel
-                        && this.logLevel_ != LogLevel.off
-                        && globalLogLevel != LogLevel.off)
-                {
-                    this.logHeader(file, line, funcName, prettyFuncName,
-                        moduleName, args[0], thisTid, Clock.currTime);
-
-                    auto writer = MsgRange(this);
-                    formatString(writer, args[1 .. $]);
-
-                    this.finishLogMsg();
-                }
-            }
-            else static if (args.length > 0 && is(A[0] : bool))
-            {
-                if (isLoggingEnabled(this.logLevel_)
-                        && this.logLevel_ >= globalLogLevel
-                        && this.logLevel_ != LogLevel.off
-                        && globalLogLevel != LogLevel.off
-                        && args[0])
-                {
-                    this.logHeader(file, line, funcName, prettyFuncName,
-                        moduleName, this.logLevel_, thisTid, Clock.currTime);
-
-                    auto writer = MsgRange(this);
-                    formatString(writer, args[1 .. $]);
-
-                    this.finishLogMsg();
-                }
-            }
-            else
-            {
-                if (isLoggingEnabled(this.logLevel_)
-                        && this.logLevel_ >= globalLogLevel
-                        && globalLogLevel != LogLevel.off
-                        && this.logLevel_ != LogLevel.off)
-                {
-                    this.logHeader(file, line, funcName, prettyFuncName,
-                        moduleName, this.logLevel_, thisTid, Clock.currTime);
-
-                    auto writer = MsgRange(this);
-                    formatString(writer, args);
-
-                    this.finishLogMsg();
-                }
-            }
-
-            return this;
-        }
-    }
-	+/
 
     /** This method logs data in a $(D printf)-style manner.
 
@@ -1486,28 +1381,7 @@ abstract class Logger
         }
     }
 
-    final override bool opEquals(Object o) const @safe nothrow
-    {
-        Logger other = cast(Logger)o;
-        if (other is null)
-            return false;
-
-        return this.name_ == other.name_;
-    }
-
-    final override int opCmp(Object o) const @safe
-    {
-        Logger other = cast(Logger)o;
-        if (other is null)
-            throw new Exception("Passed Object not of type Logger");
-
-        return this.name_ < other.name ? -1
-            : this.name_ == other.name ? 0
-            : 1;
-    }
-
     private LogLevel logLevel_ = LogLevel.info;
-    private string name_;
     private void delegate() fatalHandler;
     protected Appender!string msgAppender;
     protected LoggerPayload header;
@@ -1529,7 +1403,7 @@ The example sets a new $(D StdioLogger) as new $(D defaultLogger).
     static __gshared Logger logger;
     if (logger is null)
     {
-        logger = new StderrLogger(globalLogLevel());
+        logger = new FileLogger(stderr, globalLogLevel());
     }
     return logger;
 }
@@ -1594,9 +1468,9 @@ version(unittest)
         string msg = null;
         LogLevel lvl;
 
-        this(string n = "", const LogLevel lv = LogLevel.info) @safe
+        this(const LogLevel lv = LogLevel.info) @safe
         {
-            super(n, lv);
+            super(lv);
         }
 
         override void writeLogMsg(ref LoggerPayload payload) @safe
@@ -1617,7 +1491,7 @@ version(unittest)
 
 unittest
 {
-    auto tl1 = new TestLogger("one");
+    auto tl1 = new TestLogger();
     testFuncNames(tl1);
     assert(tl1.func == "std.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
@@ -1635,7 +1509,7 @@ unittest
         globalLogLevel = oldLogLevel;
     }
 
-    defaultLogger = new TestLogger("testlogger");
+    defaultLogger = new TestLogger();
 
     auto ll = [LogLevel.trace, LogLevel.info, LogLevel.warning,
          LogLevel.error, LogLevel.critical, LogLevel.fatal, LogLevel.off];
@@ -1644,13 +1518,13 @@ unittest
 
 @safe unittest
 {
-    auto tl1 = new TestLogger("one");
-    auto tl2 = new TestLogger("two");
+    auto tl1 = new TestLogger;
+    auto tl2 = new TestLogger;
 
     auto ml = new MultiLogger();
-    ml.insertLogger(tl1);
-    ml.insertLogger(tl2);
-    assertThrown!Exception(ml.insertLogger(tl1));
+    ml.insertLogger("one", tl1);
+    ml.insertLogger("two", tl2);
+    assertThrown!Exception(ml.insertLogger("one", tl1));
 
     string msg = "Hello Logger World";
     ml.log(msg);
@@ -1660,15 +1534,15 @@ unittest
     assert(tl2.msg == msg);
     assert(tl2.line == lineNumber);
 
-    ml.removeLogger(tl1);
-    ml.removeLogger(tl2);
-    assertThrown!Exception(ml.removeLogger(tl1));
+    ml.removeLogger("one");
+    ml.removeLogger("two");
+    assertThrown!Exception(ml.removeLogger("one"));
 }
 
 @safe unittest
 {
     bool errorThrown = false;
-    auto tl = new TestLogger("one");
+    auto tl = new TestLogger;
     auto dele = delegate() {
         errorThrown = true;
     };
@@ -1679,7 +1553,7 @@ unittest
 
 @safe unittest
 {
-    auto l = new TestLogger("_", LogLevel.info);
+    auto l = new TestLogger(LogLevel.info);
     string msg = "Hello Logger World";
     l.log(msg);
     int lineNumber = __LINE__ - 1;
@@ -1867,24 +1741,23 @@ unittest
 
     auto l = new FileLogger(filename);
     defaultLogger = l;
-    defaultLogger.logLevel = LogLevel.fatal;
+    defaultLogger.logLevel = LogLevel.critical;
 
-    log(LogLevel.critical, false, notWritten);
-    log(LogLevel.fatal, true, written);
+    log(LogLevel.error, false, notWritten);
+    log(LogLevel.critical, true, written);
     destroy(l);
 
     auto file = File(filename, "r");
     auto readLine = file.readln();
-    string nextFile = file.readln();
-    assert(!nextFile.empty, nextFile);
-    assert(nextFile.indexOf(written) != -1);
-    assert(nextFile.indexOf(notWritten) == -1);
+    assert(!readLine.empty, readLine);
+    assert(readLine.indexOf(written) != -1);
+    assert(readLine.indexOf(notWritten) == -1);
     file.close();
 }
 
 @safe unittest
 {
-    auto tl = new TestLogger("tl", LogLevel.all);
+    auto tl = new TestLogger(LogLevel.all);
     int l = __LINE__;
     tl.info("a");
     assert(tl.line == l+1);
@@ -1904,7 +1777,7 @@ unittest
 {
     auto oldunspecificLogger = defaultLogger;
 
-    auto mem = new TestLogger("tl");
+    auto mem = new TestLogger;
     defaultLogger = mem;
 
     scope(exit)
@@ -2061,7 +1934,7 @@ unittest
 // testing more possible log conditions
 @safe unittest
 {
-    auto mem = new TestLogger("tl");
+    auto mem = new TestLogger;
     auto oldunspecificLogger = defaultLogger;
 
     defaultLogger = mem;
@@ -2229,7 +2102,7 @@ unittest
         globalLogLevel = LogLevel.all;
     }
 
-    auto tl = new TestLogger("required name", LogLevel.info);
+    auto tl = new TestLogger(LogLevel.info);
     defaultLogger = tl;
 
     trace("trace");
@@ -2251,8 +2124,8 @@ unittest
 
     auto logger = new MultiLogger(LogLevel.error);
 
-    auto tl = new TestLogger("required name", LogLevel.info);
-    logger.insertLogger(tl);
+    auto tl = new TestLogger(LogLevel.info);
+    logger.insertLogger("required", tl);
     defaultLogger = logger;
 
     trace("trace");
@@ -2272,7 +2145,7 @@ unittest
 
 unittest
 {
-	auto dl = cast(StderrLogger)defaultLogger;
+	auto dl = cast(FileLogger)defaultLogger;
 	assert(dl !is null);
 	assert(dl.logLevel == LogLevel.all);
 	assert(globalLogLevel == LogLevel.all);
