@@ -1,6 +1,10 @@
 all: std/logger/*.d main.d
 	dmd -unittest -debug -cov -g std/logger/*.d main.d -oflog -D -w
 	./log
+
+profile: std/logger/*.d main.d
+	dmd -unittest -O -release -g std/logger/*.d main.d -oflog -D -w -profile
+	./log
 	
 concur: std/logger/*.d concur.d
 	dmd -unittest -debug -cov -gc std/logger/*.d concur.d -oflog -D -I.

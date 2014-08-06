@@ -44,7 +44,6 @@ class FileLogger : Logger
 
     Params:
       file = The file used for logging.
-      name = The name of the logger. Compare to $(D FileLogger.insertLogger).
       lv = The $(D LogLevel) for the $(D FileLogger). By default the
       $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
 
@@ -77,21 +76,12 @@ class FileLogger : Logger
         ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
         ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
 
-        auto time = timestamp.toISOExtString();
-        size_t timeLen = time.length;
-        ptrdiff_t timeIdx = time.lastIndexOf('.');
-
-        if (timeIdx - timeLen > 5)
-        {
-            time = time[0 .. timeIdx+5];
-        }
-
-        timeIdx+=5;
-
-        auto mu = cast()(this.mutex);
+        auto mu = this.mutex;
         mu.lock();
-        formattedWrite(this.filePtr.lockingTextWriter(), "%*s:%s:%s:%u ",
-            timeIdx, time, file[fnIdx .. $], funcName[funIdx .. $], line);
+		auto lt = this.filePtr.lockingTextWriter();
+		systimeToISOString(lt, timestamp);
+        formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $], 
+			funcName[funIdx .. $], line);
     }
 
     /** Logs a part of the log message. */
@@ -104,12 +94,9 @@ class FileLogger : Logger
     $(D logMsgPart) follow. */
     public override void finishLogMsg()
     {
-        version(DisableLogging)
+		static if (isLoggingActive())
         {
-        }
-        else
-        {
-            auto mu = cast()this.mutex;
+            auto mu = this.mutex;
             scope(exit) mu.unlock();
             this.filePtr.lockingTextWriter().put("\n");
             this.filePtr.flush();
