@@ -1516,7 +1516,7 @@ unittest
 
 }
 
-@safe unittest
+unittest
 {
     auto tl1 = new TestLogger;
     auto tl2 = new TestLogger;

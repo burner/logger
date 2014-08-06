@@ -84,7 +84,7 @@ abstract class MultiLoggerBase : Logger
     auto l2 = new MultiLogger("loggerName", LogLevel.fatal);
     -------------
     */
-    this(const LogLevel lv = LogLevel.info) @trusted
+    this(const LogLevel lv = LogLevel.info)
     {
         super(lv);
         this.logger.reserve(16);
@@ -152,14 +152,14 @@ node.insert(c);
 --------------
 */
 class MultiLogger : MultiLoggerBase {
-    this(const LogLevel lv = LogLevel.info) @safe
+    this(const LogLevel lv = LogLevel.info)
     {
         super(lv);
     }
 
     /** This method inserts a new Logger into the Multilogger.
     */
-    override void insertLogger(string name, Logger newLogger) @trusted
+    override void insertLogger(string name, Logger newLogger)
     {
         import std.array;
         import std.range : assumeSorted;
@@ -207,7 +207,7 @@ class MultiLogger : MultiLoggerBase {
 
     See_Also: std.logger.MultiLogger.insertLogger
     */
-    override Logger removeLogger(string toRemove) @trusted
+    override Logger removeLogger(string toRemove)
     {
         import std.range : assumeSorted;
         import std.stdio;
@@ -247,7 +247,7 @@ class MultiLogger : MultiLoggerBase {
     /** This method returns a $(D Logger) if it is present in the $(D
     MultiLogger), otherwise a $(D RangeError) will be thrown.
     */
-    Logger opIndex(string key) @trusted
+    Logger opIndex(string key)
     {
         import std.range : assumeSorted;
         auto sortedArray = this.logger[].assumeSorted!"a.name < b.name";
@@ -270,17 +270,17 @@ class MultiLogger : MultiLoggerBase {
 }
 
 class ArrayLogger : MultiLoggerBase {
-    this(const LogLevel lv = LogLevel.info) @safe
+    this(const LogLevel lv = LogLevel.info)
     {
         super(lv);
     }
 
-    override void insertLogger(string name, Logger newLogger) @trusted
+    override void insertLogger(string name, Logger newLogger)
     {
         this.logger.insertBack(MultiLoggerEntry(name, newLogger));
     }
 
-    override Logger removeLogger(string toRemove) @trusted
+    override Logger removeLogger(string toRemove)
     {
         import std.algorithm : find;
         import std.range : take;
