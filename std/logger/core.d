@@ -85,7 +85,7 @@ The additional $(B f) enables $(D printf)-style logging for call combinations of
 explicit $(D LogLevel) and conditional logging functions and methods. The
 $(B f) is always to be placed last.
 
-To customize the logger behaviour, create a new $(D class) that inherits from
+To customize the logger behavior, create a new $(D class) that inherits from
 the abstract $(D Logger) $(D class), and implements the $(D writeLogMsg)
 method.
 -------------
@@ -95,7 +95,7 @@ class MyCustomLogger : Logger {
         super(newName, lv);
     }
 
-    override void writeLogMsg(ref LoggerPayload payload)
+    override void writeLogMsg(ref LogEntry payload)
     {
         // log message in my custom way
     }
@@ -116,7 +116,7 @@ $(LI NullLogger = This $(D Logger) will never do anything.)
 $(LI TemplateLogger = This $(D Logger) can be used to create simple custom
 $(D Logger).)
 
-In order to disable logging at compile time, pass $(D DisableLogger) as a
+In order to disable logging at compile time, pass $(D DisableLogging) as a
 version argument to the $(D D) compiler.
 */
 module std.logger.core;
@@ -141,7 +141,7 @@ import std.logger.nulllogger;
 pure bool isLoggingActive(LogLevel ll)() @safe nothrow
 {
     static assert(__ctfe);
-    version(DisableLogging)
+    version (DisableLogging)
     {
         return false;
     }
@@ -149,27 +149,27 @@ pure bool isLoggingActive(LogLevel ll)() @safe nothrow
     {
         static if (ll == LogLevel.trace)
         {
-            version(DisableTrace) return false;
+            version (DisableTrace) return false;
         }
         else static if (ll == LogLevel.info)
         {
-            version(DisableInfo) return false;
+            version (DisableInfo) return false;
         }
         else static if (ll == LogLevel.warning)
         {
-            version(DisableWarning) return false;
+            version (DisableWarning) return false;
         }
         else static if (ll == LogLevel.error)
         {
-            version(DisableError) return false;
+            version (DisableError) return false;
         }
         else static if (ll == LogLevel.critical)
         {
-            version(DisableCritical) return false;
+            version (DisableCritical) return false;
         }
         else static if (ll == LogLevel.fatal)
         {
-            version(DisableFatal) return false;
+            version (DisableFatal) return false;
         }
         return true;
     }
@@ -182,22 +182,22 @@ pure bool isLoggingActive()() @safe nothrow
 
 pure bool isLoggingEnabled()(LogLevel ll) @safe nothrow
 {
-    switch(ll)
+    switch (ll)
     {
         case LogLevel.trace:
-            version(DisableTrace) return false;
+            version (DisableTrace) return false;
             else break;
         case LogLevel.info:
-            version(DisableInfo) return false;
+            version (DisableInfo) return false;
             else break;
         case LogLevel.warning:
-            version(DisableWarning) return false;
+            version (DisableWarning) return false;
             else break;
         case LogLevel.critical:
-            version(DisableCritical) return false;
+            version (DisableCritical) return false;
             else break;
         case LogLevel.fatal:
-            version(DisableFatal) return false;
+            version (DisableFatal) return false;
             else break;
         default: break;
     }
@@ -417,7 +417,7 @@ void logf(int line = __LINE__, string file = __FILE__,
     }
 }
 
-template DefaultLogFunction(LogLevel ll)
+template defaultLogFunction(LogLevel ll)
 {
     /** This function logs data in a writeln style manner to the
     $(D defaultLogger).
@@ -440,7 +440,7 @@ template DefaultLogFunction(LogLevel ll)
     fatal(1337, "is number");
     --------------------
     */
-    void DefaultLogFunction(int line = __LINE__,
+    void defaultLogFunction(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy A args) @trusted
@@ -454,13 +454,13 @@ template DefaultLogFunction(LogLevel ll)
                     && globalLogLevel != LogLevel.off
                     && defaultLogger.logLevel != LogLevel.off)
             {
-                defaultLogger.MemLogFunctions!(ll).logImpl!(line, file,
+                defaultLogger.memLogFunctions!(ll).logImpl!(line, file,
                        funcName, prettyFuncName, moduleName)(args);
             }
         }
     }
 
-    void DefaultLogFunction(int line = __LINE__,
+    void defaultLogFunction(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy bool condition, lazy A args)
@@ -475,22 +475,22 @@ template DefaultLogFunction(LogLevel ll)
                     && defaultLogger.logLevel != LogLevel.off
                     && condition)
             {
-                defaultLogger.MemLogFunctions!(ll).logImpl!(line, file,
+                defaultLogger.memLogFunctions!(ll).logImpl!(line, file,
                        funcName, prettyFuncName, moduleName)(args);
             }
         }
     }
 }
 
-alias trace = DefaultLogFunction!(LogLevel.trace);
-alias info = DefaultLogFunction!(LogLevel.info);
-alias warning = DefaultLogFunction!(LogLevel.warning);
-alias error = DefaultLogFunction!(LogLevel.error);
-alias critical = DefaultLogFunction!(LogLevel.critical);
-alias fatal = DefaultLogFunction!(LogLevel.fatal);
+alias trace = defaultLogFunction!(LogLevel.trace);
+alias info = defaultLogFunction!(LogLevel.info);
+alias warning = defaultLogFunction!(LogLevel.warning);
+alias error = defaultLogFunction!(LogLevel.error);
+alias critical = defaultLogFunction!(LogLevel.critical);
+alias fatal = defaultLogFunction!(LogLevel.fatal);
 
 ///
-template DefaultLogFunctionf(LogLevel ll)
+template defaultLogFunctionf(LogLevel ll)
 {
     /** This function logs data in a writefln style manner to the
     $(D defaultLogger).
@@ -514,7 +514,7 @@ template DefaultLogFunctionf(LogLevel ll)
     fatalf("%d %s", 1337, "is number");
     --------------------
     */
-    void DefaultLogFunctionf(int line = __LINE__,
+    void defaultLogFunctionf(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy string msg, lazy A args)
@@ -528,13 +528,13 @@ template DefaultLogFunctionf(LogLevel ll)
                     && globalLogLevel != LogLevel.off
                     && defaultLogger.logLevel != LogLevel.off)
             {
-                defaultLogger.MemLogFunctions!(ll).logImplf!(line, file,
+                defaultLogger.memLogFunctions!(ll).logImplf!(line, file,
                        funcName, prettyFuncName, moduleName)(msg, args);
             }
         }
     }
 
-    void DefaultLogFunctionf(int line = __LINE__,
+    void defaultLogFunctionf(int line = __LINE__,
         string file = __FILE__, string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
         string moduleName = __MODULE__, A...)(lazy bool condition,
@@ -549,19 +549,19 @@ template DefaultLogFunctionf(LogLevel ll)
                     && defaultLogger.logLevel != LogLevel.off
                     && condition)
             {
-                defaultLogger.MemLogFunctions!(ll).logImplf!(line, file,
+                defaultLogger.memLogFunctions!(ll).logImplf!(line, file,
                        funcName, prettyFuncName, moduleName)(msg, args);
             }
         }
     }
 }
 
-alias tracef = DefaultLogFunctionf!(LogLevel.trace);
-alias infof = DefaultLogFunctionf!(LogLevel.info);
-alias warningf = DefaultLogFunctionf!(LogLevel.warning);
-alias errorf = DefaultLogFunctionf!(LogLevel.error);
-alias criticalf = DefaultLogFunctionf!(LogLevel.critical);
-alias fatalf = DefaultLogFunctionf!(LogLevel.fatal);
+alias tracef = defaultLogFunctionf!(LogLevel.trace);
+alias infof = defaultLogFunctionf!(LogLevel.info);
+alias warningf = defaultLogFunctionf!(LogLevel.warning);
+alias errorf = defaultLogFunctionf!(LogLevel.error);
+alias criticalf = defaultLogFunctionf!(LogLevel.critical);
+alias fatalf = defaultLogFunctionf!(LogLevel.fatal);
 
 private struct MsgRange
 {
@@ -584,7 +584,7 @@ private void formatString(A...)(MsgRange oRange, A args)
 
     foreach (arg; args)
     {
-        std.format.formattedWrite(oRange, "%s", arg);
+        std.format.formattedWrite!(MsgRange,char)(oRange, "%s", arg);
     }
 }
 
@@ -606,7 +606,7 @@ enum LogLevel : ubyte
                    level.*/
     critical = 160, /** Messages that inform about critical errors should be
                     logged with this level. */
-    fatal = 192,   /** Log messages that describe fatel errors should use this
+    fatal = 192,   /** Log messages that describe fatal errors should use this
                   level. */
     off = ubyte.max /** Highest possible $(D LogLevel). */
 }
@@ -616,11 +616,11 @@ logger a deriving class needs to implement the $(D writeLogMsg) method.
 */
 abstract class Logger
 {
-    /** LoggerPayload is a aggregation combining all information associated
+    /** LogEntry is a aggregation combining all information associated
     with a log message. This aggregation will be passed to the method
     writeLogMsg.
     */
-    protected struct LoggerPayload
+    protected struct LogEntry
     {
         /// the filename the log function was called from
         string file;
@@ -631,15 +631,15 @@ abstract class Logger
         /// the pretty formatted name of the function the log function was
         /// called from
         string prettyFuncName;
-        /// the name of the module
+        /// the name of the module the log message is coming from
         string moduleName;
         /// the $(D LogLevel) associated with the log message
         LogLevel logLevel;
-        /// thread id
+        /// thread id of the log message
         Tid threadId;
         /// the time the message was logged.
         SysTime timestamp;
-        /// the message
+        /// the message of the log message
         string msg;
     }
 
@@ -654,7 +654,7 @@ abstract class Logger
     {
         this.logLevel = lv;
         this.fatalHandler = delegate() {
-            throw new Error("A Fatal Log Message was logged");
+            throw new Error("A fatal log message was logged");
         };
 
         this.msgAppender = appender!string();
@@ -664,7 +664,7 @@ abstract class Logger
     Params:
         payload = All information associated with call to log function.
     */
-    void writeLogMsg(ref LoggerPayload payload) {}
+    void writeLogMsg(ref LogEntry payload);
 
     /* The default implementation will use an $(D std.array.appender)
     internally to construct the message string. This means dynamic,
@@ -673,20 +673,20 @@ abstract class Logger
     $(D logHeader) is always called first, followed by any number of calls
     to $(D logMsgPart) and one call to $(D finishLogMsg).
     */
-    public void logHeader(string file, int line, string funcName,
+    protected void logHeader(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp)
         @trusted
     {
         static if (isLoggingActive())
         {
-            header = LoggerPayload(file, line, funcName, prettyFuncName,
+            header = LogEntry(file, line, funcName, prettyFuncName,
                 moduleName, logLevel, threadId, timestamp, null);
         }
     }
 
     /** Logs a part of the log message. */
-    public void logMsgPart(const(char)[] msg)
+    protected void logMsgPart(const(char)[] msg)
     {
         static if (isLoggingActive())
         {
@@ -696,7 +696,7 @@ abstract class Logger
 
     /** Signals that the message has been written and no more calls to
     $(D logMsgPart) follow. */
-    public void finishLogMsg()
+    protected void finishLogMsg()
     {
         static if (isLoggingActive())
         {
@@ -706,14 +706,17 @@ abstract class Logger
         }
     }
 
-    /** Get the $(D LogLevel) of the logger. */
+    /** The $(D LogLevel) determines if the log call are processed or dropped
+    by the $(D Logger). In order for the log call to be processed the
+    $(D LogLevel) of the log call must be greater or equal to the $(D LogLevel)
+       of the $(D logger).
+    */
     @property final LogLevel logLevel() const pure nothrow @safe
     {
         return this.logLevel_;
     }
 
-    /** Set the $(D LogLevel) of the logger. The $(D LogLevel) can not be set
-    to $(D LogLevel.unspecific).*/
+    /// Ditto
     @property final void logLevel(const LogLevel lv) pure nothrow @safe
     {
         this.logLevel_ = lv;
@@ -729,7 +732,7 @@ abstract class Logger
     }
 
     ///
-    template MemLogFunctions(LogLevel ll)
+    template memLogFunctions(LogLevel ll)
     {
         /** This function logs data in a writeln style manner to the
         used logger.
@@ -893,29 +896,29 @@ abstract class Logger
     }
 
     /// Ditto
-    alias trace = MemLogFunctions!(LogLevel.trace).logImpl;
+    alias trace = memLogFunctions!(LogLevel.trace).logImpl;
     /// Ditto
-    alias tracef = MemLogFunctions!(LogLevel.trace).logImplf;
+    alias tracef = memLogFunctions!(LogLevel.trace).logImplf;
     /// Ditto
-    alias info = MemLogFunctions!(LogLevel.info).logImpl;
+    alias info = memLogFunctions!(LogLevel.info).logImpl;
     /// Ditto
-    alias infof = MemLogFunctions!(LogLevel.info).logImplf;
+    alias infof = memLogFunctions!(LogLevel.info).logImplf;
     /// Ditto
-    alias warning = MemLogFunctions!(LogLevel.warning).logImpl;
+    alias warning = memLogFunctions!(LogLevel.warning).logImpl;
     /// Ditto
-    alias warningf = MemLogFunctions!(LogLevel.warning).logImplf;
+    alias warningf = memLogFunctions!(LogLevel.warning).logImplf;
     /// Ditto
-    alias error = MemLogFunctions!(LogLevel.error).logImpl;
+    alias error = memLogFunctions!(LogLevel.error).logImpl;
     /// Ditto
-    alias errorf = MemLogFunctions!(LogLevel.error).logImplf;
+    alias errorf = memLogFunctions!(LogLevel.error).logImplf;
     /// Ditto
-    alias critical = MemLogFunctions!(LogLevel.critical).logImpl;
+    alias critical = memLogFunctions!(LogLevel.critical).logImpl;
     /// Ditto
-    alias criticalf = MemLogFunctions!(LogLevel.critical).logImplf;
+    alias criticalf = memLogFunctions!(LogLevel.critical).logImplf;
     /// Ditto
-    alias fatal = MemLogFunctions!(LogLevel.fatal).logImpl;
+    alias fatal = memLogFunctions!(LogLevel.fatal).logImpl;
     /// Ditto
-    alias fatalf = MemLogFunctions!(LogLevel.fatal).logImplf;
+    alias fatalf = memLogFunctions!(LogLevel.fatal).logImplf;
 
     /** This method logs data with the $(D LogLevel) of the used $(D Logger).
 
@@ -1161,12 +1164,12 @@ abstract class Logger
     private LogLevel logLevel_ = LogLevel.info;
     private void delegate() fatalHandler;
     protected Appender!string msgAppender;
-    protected LoggerPayload header;
+    protected LogEntry header;
 }
 
 /** This method returns the default $(D Logger).
 
-The Logger is returned as a reference. This means it can be rassigned,
+The Logger is returned as a reference. This means it can be reassigned,
 thus changing the $(D defaultLogger).
 
 Example:
@@ -1211,7 +1214,7 @@ will be discarded before it reaches $(D writeLogMessage) method.
     globalLogLevelImpl() = ll;
 }
 
-version(unittest)
+version (unittest)
 {
     import std.array;
     import std.ascii;
@@ -1234,7 +1237,7 @@ version(unittest)
     globalLogLevel = ll;
 }
 
-version(unittest)
+version (unittest)
 {
     class TestLogger : Logger
     {
@@ -1250,7 +1253,7 @@ version(unittest)
             super(lv);
         }
 
-        override void writeLogMsg(ref LoggerPayload payload) @safe
+        override void writeLogMsg(ref LogEntry payload) @safe
         {
             this.line = payload.line;
             this.file = payload.file;
@@ -1262,7 +1265,8 @@ version(unittest)
     }
 
     void testFuncNames(Logger logger) {
-        logger.log("I'm here");
+        string s = "I'm here";
+        logger.log(s);
     }
 }
 

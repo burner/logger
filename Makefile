@@ -2,6 +2,10 @@ all: std/logger/*.d main.d
 	dmd -unittest -debug -cov -g std/logger/*.d main.d -oflog -D -w
 	./log
 
+gdc: std/logger/*.d main.d
+	ldc2 -unittest -O3 -g std/logger/*.d main.d -oflog
+	./log
+
 profile: std/logger/*.d main.d
 	dmd -unittest -O -release -g std/logger/*.d main.d -oflog -D -w -profile
 	./log

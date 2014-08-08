@@ -14,7 +14,7 @@ is already present new log messages will be append at its end.
 */
 class FileLogger : Logger
 {
-	import std.format : formattedWrite;
+    import std.format : formattedWrite;
     /** A constructor for the $(D FileLogger) Logger.
 
     Params:
@@ -28,7 +28,7 @@ class FileLogger : Logger
     auto l2 = new FileLogger("logFile", "loggerName", LogLevel.fatal);
     -------------
     */
-    public @trusted this(const string fn, const LogLevel lv = LogLevel.info)
+    @trusted this(const string fn, const LogLevel lv = LogLevel.info)
     {
         import std.exception : enforce;
         super(lv);
@@ -36,7 +36,7 @@ class FileLogger : Logger
         this.file_.open(this.filename, "a");
         enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
             "\" for logging.");
-        this.filePtr = &this.file_;
+        this.filePtr_ = &this.file_;
         this.mutex = new Mutex;
     }
 
@@ -49,26 +49,30 @@ class FileLogger : Logger
 
     Example:
     -------------
-	auto file = File("logFile.log", "w");
+    auto file = File("logFile.log", "w");
     auto l1 = new FileLogger(file, "LoggerName");
     auto l2 = new FileLogger(file, "LoggerName", LogLevel.fatal);
     -------------
     */
-    public this(ref File file, const LogLevel lv = LogLevel.info)
+    this(ref File file, const LogLevel lv = LogLevel.info)
     {
         super(lv);
-        this.filePtr = &file;
+        this.filePtr_ = &file;
         this.mutex = new Mutex;
     }
 
-
     /** The file written to is accessible by this method.*/
-    public @property ref File file() @trusted
+    @property File* filePtr()
+    {
+        return this.filePtr_;
+    }
+
+    @property File file()
     {
         return this.file_;
     }
 
-    public override void logHeader(string file, int line, string funcName,
+    override void logHeader(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp)
         @trusted
@@ -78,33 +82,43 @@ class FileLogger : Logger
 
         auto mu = this.mutex;
         mu.lock();
-		auto lt = this.filePtr.lockingTextWriter();
-		systimeToISOString(lt, timestamp);
-        formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $], 
-			funcName[funIdx .. $], line);
+        auto lt = this.filePtr_.lockingTextWriter();
+        systimeToISOString(lt, timestamp);
+        formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $],
+            funcName[funIdx .. $], line);
     }
 
     /** Logs a part of the log message. */
-    public override void logMsgPart(const(char)[] msg)
+    override void logMsgPart(const(char)[] msg)
     {
         formattedWrite(this.filePtr.lockingTextWriter(), "%s", msg);
     }
 
     /** Signals that the message has been written and no more calls to
     $(D logMsgPart) follow. */
-    public override void finishLogMsg()
+    override void finishLogMsg()
     {
-		static if (isLoggingActive())
+        static if (isLoggingActive())
         {
             auto mu = this.mutex;
             scope(exit) mu.unlock();
-            this.filePtr.lockingTextWriter().put("\n");
-            this.filePtr.flush();
+            this.filePtr_.lockingTextWriter().put("\n");
+            this.filePtr_.flush();
         }
     }
+
+    override void writeLogMsg(ref LogEntry payload)
+    {
+        this.logHeader(payload.file, payload.line, payload.funcName,
+            payload.prettyFuncName, payload.moduleName, payload.logLevel,
+            payload.threadId, payload.timestamp);
+        this.logMsgPart(payload.msg);
+        this.finishLogMsg();
+    }
+
     private Mutex mutex;
     private File file_;
-    private File* filePtr;
+    private File* filePtr_;
     private string filename;
 }
 
@@ -144,7 +158,7 @@ unittest
     import std.string : indexOf;
 
     string filename = randomString(32) ~ ".tempLogFile";
-	auto file = File(filename, "w");
+    auto file = File(filename, "w");
     auto l = new FileLogger(file);
 
     scope(exit)
@@ -158,7 +172,7 @@ unittest
     l.logLevel = LogLevel.critical;
     l.log(LogLevel.warning, notWritten);
     l.log(LogLevel.critical, written);
-	file.close();
+    file.close();
 
     file = File(filename, "r");
     string readLine = file.readln();
@@ -169,8 +183,8 @@ unittest
 
 unittest
 {
-	auto dl = defaultLogger;
-	assert(dl !is null);
-	assert(dl.logLevel == LogLevel.all);
-	assert(globalLogLevel == LogLevel.all);
+    auto dl = defaultLogger;
+    assert(dl !is null);
+    assert(dl.logLevel == LogLevel.all);
+    assert(globalLogLevel == LogLevel.all);
 }

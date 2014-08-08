@@ -1,11 +1,11 @@
 module std.logger.multilogger;
 
+import std.container : Array;
+import std.functional : binaryFun;
 import std.logger.core;
 import std.logger.filelogger;
-import std.stdio : stdout;
-import std.container : Array;
 import std.range : isRandomAccessRange;
-import std.functional : binaryFun;
+import std.stdio : stdout;
 
 ptrdiff_t binarySearchIndex(Range, V, alias pred = "a < b")
     (Range _input, V value) if (isRandomAccessRange!Range)
@@ -55,18 +55,8 @@ unittest
 
 struct MultiLoggerEntry
 {
-	string name;
-	Logger logger;
-
-	/*bool opCmp(const ref MultiLoggerEntry other) const @safe pure nothrow
-	{
-		if(this.name < other.name)
-			return -1;
-		else if(this.name > other.name)
-			return 1;
-		else
-			return 0;
-	}*/
+    string name;
+    Logger logger;
 }
 
 abstract class MultiLoggerBase : Logger
@@ -101,11 +91,11 @@ abstract class MultiLoggerBase : Logger
     void insertLogger(string name, Logger logger);
     Logger removeLogger(string loggerName);
 
-    override void writeLogMsg(ref LoggerPayload payload) @trusted {
+    override void writeLogMsg(ref LogEntry payload) @trusted {
         foreach (it; logger)
         {
             /* The LogLevel of the Logger must be >= than the LogLevel of
-            the payload. Usally this is handled by the log functions. As
+            the payload. Usually this is handled by the log functions. As
             they are not called in this case, we have to handle it by hand
             here.
             */
@@ -211,7 +201,7 @@ class MultiLogger : MultiLoggerBase {
     {
         import std.range : assumeSorted;
         import std.stdio;
-		import std.algorithm : canFind;
+        import std.algorithm : canFind;
 
         auto sorted = this.logger[].assumeSorted!"a.name < b.name";
         if (!sorted.canFind!"a.name == b"(toRemove))
@@ -224,17 +214,17 @@ class MultiLogger : MultiLoggerBase {
         }
         else
         {
-			MultiLoggerEntry dummy;
-			dummy.name = toRemove;
+            MultiLoggerEntry dummy;
+            dummy.name = toRemove;
             auto found = sorted.equalRange(dummy);
             assert(!found.empty);
             auto ret = found.front;
 
-    		alias predFunA = binaryFun!"a.name < b";
-    		alias predFunB = binaryFun!"a < b.name";
+            alias predFunA = binaryFun!"a.name < b";
+            alias predFunB = binaryFun!"a < b.name";
 
-        	auto idx = binarySearchIndex2!(typeof(this.logger[]), string,
-        	    "a.name<b","a<b.name")(this.logger[], toRemove);
+            auto idx = binarySearchIndex2!(typeof(this.logger[]), string,
+                "a.name<b","a<b.name")(this.logger[], toRemove);
 
             assert(idx < this.logger.length);
             auto slize = this.logger[idx .. idx+1];
@@ -332,10 +322,53 @@ unittest
     assert(n0.line == line);
 }
 
+unittest // issue 16
+{
+    import std.stdio : File;
+    import std.string : indexOf;
+    auto logName = randomString(32) ~ ".log";
+    auto logFileOutput = File(logName, "w");
+    scope(exit)
+    {
+        import std.file : remove;
+        logFileOutput.close();
+        remove(logName);
+    }
+    auto traceLog = new FileLogger(logFileOutput, LogLevel.all);
+    auto infoLog  = new TestLogger(LogLevel.info);
+
+    auto root = new MultiLogger(LogLevel.all);
+    root.insertLogger("fileLogger", traceLog);
+    root.insertLogger("stdoutLogger", infoLog);
+
+    string tMsg = "A trace message";
+    root.trace(tMsg); int line1 = __LINE__;
+
+    assert(infoLog.line != line1);
+    assert(infoLog.msg != tMsg);
+
+    string iMsg = "A info message";
+    root.info(iMsg); int line2 = __LINE__;
+
+    assert(infoLog.line == line2);
+    assert(infoLog.msg == iMsg, infoLog.msg ~ ":" ~ iMsg);
+
+    logFileOutput.close();
+    logFileOutput = File(logName, "r");
+    assert(logFileOutput.isOpen);
+    assert(!logFileOutput.eof);
+
+    auto line = logFileOutput.readln();
+    assert(line.indexOf(tMsg) != -1, line ~ ":" ~ tMsg);
+    assert(!logFileOutput.eof);
+    line = logFileOutput.readln();
+    assert(line.indexOf(iMsg) != -1, line ~ ":" ~ tMsg);
+}
+
 unittest
 {
-	auto dl = defaultLogger;
-	assert(dl !is null);
-	assert(dl.logLevel == LogLevel.all);
-	assert(globalLogLevel == LogLevel.all);
+    auto dl = defaultLogger;
+    assert(dl !is null);
+    assert(dl.logLevel == LogLevel.all);
+    assert(globalLogLevel == LogLevel.all);
 }

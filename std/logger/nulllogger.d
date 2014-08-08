@@ -9,19 +9,19 @@ In case of a log message with $(D LogLevel.fatal) nothing will happen.
 class NullLogger : Logger {
     /** The default constructor for the $(D NullLogger).
 
-    Independend of the parameter this Logger will never log a message.
+    Independent of the parameter this Logger will never log a message.
 
     Params:
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the $(D LogLevel)
       for $(D MultiLogger) is $(D LogLevel.info).
     */
-    public this(const LogLevel lv = LogLevel.info) @safe
+    this(const LogLevel lv = LogLevel.info) @safe
     {
         super(lv);
         this.setFatalHandler = delegate() {};
     }
 
-    public override void writeLogMsg(ref LoggerPayload payload) @safe {
+    override void writeLogMsg(ref LogEntry payload) @safe {
     }
 }
 
