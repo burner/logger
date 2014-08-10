@@ -221,8 +221,8 @@ void systimeToISOString(OutputRange)(OutputRange o, const ref SysTime time)
 
 /** This function logs data.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
-be greater or equal to the $(D LogLevel) of the $(D stdlog) and the 
+In order for the data to be processed the $(D LogLevel) of the log call must
+be greater or equal to the $(D LogLevel) of the $(D stdlog) and the
 $(D defaultLogLevel) additionally the condition passed must be $(D true).
 
 Params:
@@ -258,7 +258,7 @@ void log(int line = __LINE__, string file = __FILE__,
 
 /** This function logs data.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
+In order for the data to be processed the $(D LogLevel) of the log call must
 be greater or equal to the $(D LogLevel) of the $(D stdlog).
 
 Params:
@@ -294,7 +294,7 @@ void log(int line = __LINE__, string file = __FILE__,
 /** This function logs data.
 
 In order for the data to be processed the $(D LogLevel) of the
-$(D stdlog) must be greater or equal to the $(D defaultLogLevel) 
+$(D stdlog) must be greater or equal to the $(D defaultLogLevel)
 add the condition passed must be $(D true).
 
 Params:
@@ -363,8 +363,8 @@ void log(int line = __LINE__, string file = __FILE__,
 
 /** This function logs data in a $(D printf)-style manner.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
-be greater or equal to the $(D LogLevel) of the $(D stdlog) and the 
+In order for the data to be processed the $(D LogLevel) of the log call must
+be greater or equal to the $(D LogLevel) of the $(D stdlog) and the
 $(D defaultLogLevel) additionally the condition passed must be $(D true).
 
 Params:
@@ -401,8 +401,8 @@ void logf(int line = __LINE__, string file = __FILE__,
 
 /** This function logs data in a $(D printf)-style manner.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
-be greater or equal to the $(D LogLevel) of the $(D stdlog) and the 
+In order for the data to be processed the $(D LogLevel) of the log call must
+be greater or equal to the $(D LogLevel) of the $(D stdlog) and the
 $(D defaultLogLevel).
 
 Params:
@@ -438,8 +438,8 @@ void logf(int line = __LINE__, string file = __FILE__,
 
 /** This function logs data in a $(D printf)-style manner.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
-be greater or equal to the $(D defaultLogLevel) additionally the condition 
+In order for the data to be processed the $(D LogLevel) of the log call must
+be greater or equal to the $(D defaultLogLevel) additionally the condition
 passed must be $(D true).
 
 Params:
@@ -475,7 +475,7 @@ void logf(int line = __LINE__, string file = __FILE__,
 
 /** This function logs data in a $(D printf)-style manner.
 
-In order for the data to be processed the $(D LogLevel) of the log call must 
+In order for the data to be processed the $(D LogLevel) of the log call must
 be greater or equal to the $(D defaultLogLevel).
 
 Params:
@@ -552,10 +552,10 @@ template defaultLogFunction(LogLevel ll)
     In order for the resulting log message to be logged the $(D LogLevel) must
     be greater or equal than the $(D LogLevel) of the $(D stdlog) and
     must be greater or equal than the global $(D LogLevel) additionally the
-	condition passed must be $(D true).
+    condition passed must be $(D true).
 
     Params:
-	condition = The condition must be $(D true) for the data to be logged.
+    condition = The condition must be $(D true) for the data to be logged.
     args = The data that should be logged.
 
     Examples:
@@ -606,14 +606,14 @@ alias fatal = defaultLogFunction!(LogLevel.fatal);
 template defaultLogFunctionf(LogLevel ll)
 {
     /** This function logs data to the $(D stdlog) in a $(D printf)-style
-	manner.
+    manner.
 
     In order for the resulting log message to be logged the $(D LogLevel) must
     be greater or equal than the $(D LogLevel) of the $(D stdlog) and
     must be greater or equal than the global $(D LogLevel).
 
     Params:
-	msg = The $(D printf)-style string.
+    msg = The $(D printf)-style string.
     args = The data that should be logged.
 
     Examples:
@@ -646,15 +646,15 @@ template defaultLogFunctionf(LogLevel ll)
     }
 
     /** This function logs data to the $(D stdlog) in a $(D printf)-style
-	manner.
+    manner.
 
     In order for the resulting log message to be logged the $(D LogLevel) must
     be greater or equal than the $(D LogLevel) of the $(D stdlog) and
     must be greater or equal than the global $(D LogLevel).
 
     Params:
- 	condition = The condition must be $(D true) for the data to be logged.
-	msg = The $(D printf)-style string.
+     condition = The condition must be $(D true) for the data to be logged.
+    msg = The $(D printf)-style string.
     args = The data that should be logged.
 
     Examples:
@@ -872,25 +872,25 @@ abstract class Logger
     ///
     template memLogFunctions(LogLevel ll)
     {
-    	/** This function logs data to the used $(D Logger).
+        /** This function logs data to the used $(D Logger).
 
-    	In order for the resulting log message to be logged the $(D LogLevel) 
-		must be greater or equal than the $(D LogLevel) of the used $(D Logger) 
-		and must be greater or equal than the global $(D LogLevel).
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater or equal than the $(D LogLevel) of the used $(D Logger)
+        and must be greater or equal than the global $(D LogLevel).
 
-    	Params:
-    	args = The data that should be logged.
+        Params:
+        args = The data that should be logged.
 
-    	Examples:
-    	--------------------
-		auto s = new FileLogger(stdout);
-    	s.trace(1337, "is number");
-    	s.info(1337, "is number");
-    	s.error(1337, "is number");
-    	s.critical(1337, "is number");
-    	s.fatal(1337, "is number");
-    	--------------------
-    	*/
+        Examples:
+        --------------------
+        auto s = new FileLogger(stdout);
+        s.trace(1337, "is number");
+        s.info(1337, "is number");
+        s.error(1337, "is number");
+        s.critical(1337, "is number");
+        s.fatal(1337, "is number");
+        --------------------
+        */
         void logImpl(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
@@ -919,28 +919,28 @@ abstract class Logger
             }
         }
 
-    	/** This function logs data to the used $(D Logger) depending on a 
-		condition.
+        /** This function logs data to the used $(D Logger) depending on a
+        condition.
 
-    	In order for the resulting log message to be logged the $(D LogLevel) must
-    	be greater or equal than the $(D LogLevel) of the used $(D Logger) and
-    	must be greater or equal than the global $(D LogLevel) additionally the
-		condition passed must be $(D true).
+        In order for the resulting log message to be logged the $(D LogLevel) must
+        be greater or equal than the $(D LogLevel) of the used $(D Logger) and
+        must be greater or equal than the global $(D LogLevel) additionally the
+        condition passed must be $(D true).
 
-    	Params:
-		condition = The condition must be $(D true) for the data to be logged.
-    	args = The data that should be logged.
+        Params:
+        condition = The condition must be $(D true) for the data to be logged.
+        args = The data that should be logged.
 
-    	Examples:
-    	--------------------
-		auto s = new FileLogger(stdout);
-    	s.trace(true, 1337, "is number");
-    	s.info(false, 1337, "is number");
-    	s.error(true, 1337, "is number");
-    	s.critical(false, 1337, "is number");
-    	s.fatal(true, 1337, "is number");
-    	--------------------
-    	*/
+        Examples:
+        --------------------
+        auto s = new FileLogger(stdout);
+        s.trace(true, 1337, "is number");
+        s.info(false, 1337, "is number");
+        s.error(true, 1337, "is number");
+        s.critical(false, 1337, "is number");
+        s.fatal(true, 1337, "is number");
+        --------------------
+        */
         void logImpl(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
@@ -970,29 +970,29 @@ abstract class Logger
             }
         }
 
-    	/** This function logs data to the used $(D Logger) in a 
-		$(D printf)-style manner.
+        /** This function logs data to the used $(D Logger) in a
+        $(D printf)-style manner.
 
-    	In order for the resulting log message to be logged the $(D LogLevel) 
-		must be greater or equal than the $(D LogLevel) of the used $(D Logger)
-	   	and must be greater or equal than the global $(D LogLevel)
-		additionally the passed condition must be $(D true).
+        In order for the resulting log message to be logged the $(D LogLevel)
+        must be greater or equal than the $(D LogLevel) of the used $(D Logger)
+           and must be greater or equal than the global $(D LogLevel)
+        additionally the passed condition must be $(D true).
 
-    	Params:
- 		condition = The condition must be $(D true) for the data to be logged.
-		msg = The $(D printf)-style string.
-    	args = The data that should be logged.
+        Params:
+         condition = The condition must be $(D true) for the data to be logged.
+        msg = The $(D printf)-style string.
+        args = The data that should be logged.
 
-    	Examples:
-    	--------------------
-		auto s = new FileLogger(stderr);
-    	s.trace("is number %d", 1);
-    	s.info("is number %d", 2);
-    	s.error("is number %d", 3);
-    	s.critical("is number %d", 4);
-    	s.fatal("is number %d", 5);
-    	--------------------
-    	*/
+        Examples:
+        --------------------
+        auto s = new FileLogger(stderr);
+        s.trace("is number %d", 1);
+        s.info("is number %d", 2);
+        s.error("is number %d", 3);
+        s.critical("is number %d", 4);
+        s.fatal("is number %d", 5);
+        --------------------
+        */
         void logImplf(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
@@ -1022,27 +1022,27 @@ abstract class Logger
             }
         }
 
-    	/** This function logs data to the used $(D Logger) in a 
-		$(D printf)-style manner.
+        /** This function logs data to the used $(D Logger) in a
+        $(D printf)-style manner.
 
-    	In order for the resulting log message to be logged the $(D LogLevel) must
-    	be greater or equal than the $(D LogLevel) of the used $(D Logger) and
-    	must be greater or equal than the global $(D LogLevel).
+        In order for the resulting log message to be logged the $(D LogLevel) must
+        be greater or equal than the $(D LogLevel) of the used $(D Logger) and
+        must be greater or equal than the global $(D LogLevel).
 
-    	Params:
-		msg = The $(D printf)-style string.
-    	args = The data that should be logged.
+        Params:
+        msg = The $(D printf)-style string.
+        args = The data that should be logged.
 
-    	Examples:
-    	--------------------
-		auto s = new FileLogger(stderr);
-    	s.trace("is number %d", 1);
-    	s.info("is number %d", 2);
-    	s.error("is number %d", 3);
-    	s.critical("is number %d", 4);
-    	s.fatal("is number %d", 5);
-    	--------------------
-    	*/
+        Examples:
+        --------------------
+        auto s = new FileLogger(stderr);
+        s.trace("is number %d", 1);
+        s.info("is number %d", 2);
+        s.error("is number %d", 3);
+        s.critical("is number %d", 4);
+        s.fatal("is number %d", 5);
+        --------------------
+        */
         void logImplf(int line = __LINE__,
             string file = __FILE__, string funcName = __FUNCTION__,
             string prettyFuncName = __PRETTY_FUNCTION__,
