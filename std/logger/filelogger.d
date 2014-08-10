@@ -179,11 +179,12 @@ unittest
     assert(readLine.indexOf(written) != -1, readLine);
     readLine = file.readln();
     assert(readLine.indexOf(notWritten) == -1, readLine);
+    file.close();
 }
 
 unittest
 {
-    auto dl = defaultLogger;
+    auto dl = stdlog;
     assert(dl !is null);
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);

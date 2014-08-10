@@ -322,7 +322,8 @@ unittest
     assert(n0.line == line);
 }
 
-unittest // issue 16
+// Issue #16
+unittest 
 {
     import std.stdio : File;
     import std.string : indexOf;
@@ -367,7 +368,7 @@ unittest // issue 16
 
 unittest
 {
-    auto dl = defaultLogger;
+    auto dl = stdlog;
     assert(dl !is null);
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);
