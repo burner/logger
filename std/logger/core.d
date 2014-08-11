@@ -1142,6 +1142,27 @@ abstract class Logger
         }
     }
 
+    /** This function logs data to the used $(D Logger) with a specific 
+	$(D LogLevel).
+
+    In order for the resulting log message to be logged the $(D LogLevel)
+    must be greater or equal than the $(D LogLevel) of the used $(D Logger)
+    and must be greater or equal than the global $(D LogLevel).
+
+    Params:
+	ll = The specific $(D LogLevel) used for logging the log message.
+    args = The data that should be logged.
+
+    Examples:
+    --------------------
+    auto s = new FileLogger(stdout);
+    s.log(LogLevel.trace, 1337, "is number");
+    s.log(LogLevel.info, 1337, "is number");
+    s.log(LogLevel.warning, 1337, "is number");
+    s.log(LogLevel.error, 1337, "is number");
+    s.log(LogLevel.fatal, 1337, "is number");
+    --------------------
+    */
     void log(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
@@ -1168,6 +1189,27 @@ abstract class Logger
         }
     }
 
+    /** This function logs data to the used $(D Logger) depending on a
+	condition passed explicitly.
+
+    In order for the resulting log message to be logged the $(D LogLevel)
+    of the used $(D Logger) must be greater or equal than the global 
+	$(D LogLevel).
+
+    Params:
+	ll = The specific $(D LogLevel) used for logging the log message.
+    args = The data that should be logged.
+
+    Examples:
+    --------------------
+    auto s = new FileLogger(stdout);
+    s.log(LogLevel.trace, 1337, "is number");
+    s.log(LogLevel.info, 1337, "is number");
+    s.log(LogLevel.warning, 1337, "is number");
+    s.log(LogLevel.error, 1337, "is number");
+    s.log(LogLevel.fatal, 1337, "is number");
+    --------------------
+    */
     void log(int line = __LINE__, string file = __FILE__,
         string funcName = __FUNCTION__,
         string prettyFuncName = __PRETTY_FUNCTION__,
