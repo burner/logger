@@ -753,7 +753,8 @@ enum LogLevel : ubyte
 logger a deriving class needs to implement the $(D writeLogMsg) method.
 
 In is also possible to $(D override) the three methods $(D logHeader), 
-$(D logMsgPart) and $(D finishLogMsg).
+$(D logMsgPart) and $(D finishLogMsg) together, this option gives more
+flexibility.
 */
 abstract class Logger
 {
@@ -1141,6 +1142,9 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
+
+                if (ll == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1188,6 +1192,9 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
+
+                if (ll == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1235,6 +1242,9 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
+
+                if (this.logLevel_ == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1282,6 +1292,9 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
+
+                if (this.logLevel_ == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1332,6 +1345,9 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
+
+                if (ll == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1380,6 +1396,9 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
+
+                if (ll == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1428,6 +1447,9 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
+
+                if (this.logLevel_ == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1472,6 +1494,9 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
+
+                if (this.logLevel_ == LogLevel.fatal)
+                	fatalHandler();
             }
         }
     }
@@ -1648,7 +1673,7 @@ unittest
     assert(errorThrown);
 }
 
-@safe unittest
+unittest
 {
     auto l = new TestLogger(LogLevel.info);
     string msg = "Hello Logger World";
@@ -1688,19 +1713,19 @@ unittest
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, msg, "Yet");
+    assertThrown!Throwable(l.logf(LogLevel.fatal, msg, "Yet"));
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, true, msg, "Yet");
+    assertThrown!Throwable(l.logf(LogLevel.fatal, true, msg, "Yet"));
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    l.logf(LogLevel.fatal, false, msg, "Yet");
+    assertNotThrown(l.logf(LogLevel.fatal, false, msg, "Yet"));
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1762,19 +1787,19 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     msg = "%s Another message";
-    logf(LogLevel.fatal, msg, "Yet");
+    assertThrown!Throwable(logf(LogLevel.fatal, msg, "Yet"));
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(LogLevel.fatal, true, msg, "Yet");
+    assertThrown!Throwable(logf(LogLevel.fatal, true, msg, "Yet"));
     lineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
-    logf(LogLevel.fatal, false, msg, "Yet");
+    assertNotThrown(logf(LogLevel.fatal, false, msg, "Yet"));
     nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
@@ -1875,6 +1900,7 @@ unittest
     auto oldunspecificLogger = stdlog;
 
     auto mem = new TestLogger;
+	mem.setFatalHandler = delegate() {};
     stdlog = mem;
 
     scope(exit)
