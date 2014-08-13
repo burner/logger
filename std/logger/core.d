@@ -7,7 +7,7 @@ $(D D) provides a standard interface for logging.
 
 The easiest way to create a log message is to write
 $(D import std.logger; log("I am here");) this will print a message to the
-$(D stdout) device.  The message will contain the filename, the linenumber, the
+$(D stderr) device.  The message will contain the filename, the linenumber, the
 name of the surrounding function, the time and the message.
 
 Copyright: Copyright Robert "burner" Schadek 2013 --
@@ -42,9 +42,9 @@ $(LI $(D info))
 $(LI $(D warning))
 $(LI $(D critical))
 $(LI $(D fatal))
-The default $(D Logger) will by default log to $(D stdout) and has a default
+The default $(D Logger) will by default log to $(D stderr) and has a default
 $(D LogLevel) of $(D LogLevel.all). The default Logger can be accessed by
-using a property call $(D stdlog). This property a reference to the
+using the property called $(D stdlog). This property a reference to the
 current default $(D Logger). This reference can be used to assign a new
 default $(D Logger).
 -------------
@@ -52,29 +52,32 @@ stdlog = new FileLogger("New_Default_Log_File.log");
 -------------
 
 Additional $(D Logger) can be created by creating a new instance of the
-required $(D Logger). These $(D Logger) have the same methodes as the
-$(D stdlog).
+required $(D Logger).
 
 The $(D LogLevel) of an log call can be defined in two ways. The first is by
-calling $(D logl) and passing the $(D LogLevel) explicit. Notice the
-additional $(B l) after log. The $(D LogLevel) is to be passed as first
-argument to the function. The second way of setting the $(D LogLevel) of a
+calling $(D log) and passing the $(D LogLevel) explicit as the first argument.
+The second way of setting the $(D LogLevel) of a
 log call, is by calling either $(D trace), $(D info), $(D warning),
 $(D critical), or $(D fatal). The log call will than have the respective
-$(D LogLevel).
+$(D LogLevel). If no $(D LogLevel) is defined the log call will use the
+current $(D LogLevel) of the used $(D Logger). If data is logged with
+$(D LogLevel) $(D fatal) by default an $(D Error) will be thrown.
+This behaviour can be modified by using the method $(D setFatalHandler) to
+assign a custom delegate to handle log call with $(D LogLevel) $(D fatal).
 
-Conditional logging can be achived be appending a $(B c) to the function
-identifier and passing a $(D bool) as first argument to the function.
-If conditional logging is used the condition must be $(D true) in order to
-have the log message logged.
+Conditional logging can be achieved be appending passing a $(D bool) as first
+argument to a log function.  If conditional logging is used the condition must
+be $(D true) in order to have the log message logged.
 
-In order to combine a explicit $(D LogLevel) passing with conditional logging
-call the function or method $(D loglc). The first required argument to the
-call then becomes the $(D LogLevel) and the second argument is the $(D bool).
+In order to combine an explicit $(D LogLevel) passing with conditional
+logging, the $(D LogLevel) has to be passed as first argument followed by the
+$(D bool).
 
 Messages are logged if the $(D LogLevel) of the log message is greater than or
 equal to than the $(D LogLevel) of the used $(D Logger) and additionally if the
 $(D LogLevel) of the log message is greater equal to the global $(D LogLevel).
+If a condition is passed into the log call, this condition must be true.
+
 The global $(D LogLevel) is accessible by using $(D globalLogLevel).
 To assign the $(D LogLevel) of a $(D Logger) use the $(D logLevel) property of
 the logger.
@@ -82,10 +85,9 @@ the logger.
 If $(D printf)-style logging is needed add a $(B f) to the logging call, such as
 $(D myLogger.infof("Hello %s", "world");) or $(fatalf("errno %d", 1337))
 The additional $(B f) enables $(D printf)-style logging for call combinations of
-explicit $(D LogLevel) and conditional logging functions and methods. The
-$(B f) is always to be placed last.
+explicit $(D LogLevel) and conditional logging functions and methods.
 
-To customize the logger behavior, create a new $(D class) that inherits from
+To customize the $(D Logger) behavior, create a new $(D class) that inherits from
 the abstract $(D Logger) $(D class), and implements the $(D writeLogMsg)
 method.
 -------------
@@ -105,19 +107,39 @@ auto logger = new MyCustomLogger();
 logger.log("Awesome log message");
 -------------
 
-Even though the idea behind this logging module is to provide a common
-interface and easy extensibility certain specific Logger are already
-implemented.
-
-$(LI StdioLogger = This $(D Logger) logs data to $(D stdout).)
-$(LI FileLogger = This $(D Logger) logs data to files.)
-$(LI MulitLogger = This $(D Logger) logs data to multiple $(D Logger).)
-$(LI NullLogger = This $(D Logger) will never do anything.)
-$(LI TemplateLogger = This $(D Logger) can be used to create simple custom
-$(D Logger).)
+To gain more precise control over the logging process, additionally to
+overwriting the $(D writeLogMsg) method the methods $(D logHeader),
+$(D logMsgPart) and $(D finishLogMsg) can be overwritten.
 
 In order to disable logging at compile time, pass $(D DisableLogging) as a
-version argument to the $(D D) compiler.
+version argument to the $(D D) compiler when compiling your program code.
+This will disable all logging functionality.
+Specific $(D LogLevel) can be disabled at compile time as well.
+In order to disable logging with the $(D trace) $(D LogLevel) pass
+$(D DisableTrace) as a version.
+The following table shows which version statement disables which
+$(D LogLevel).
+$(TABLE
+    $(TR $(TD $(D LogLevel.trace) ) $(TD DisableTrace))
+    $(TR $(TD $(D LogLevel.info) ) $(TD DisableInfo))
+    $(TR $(TD $(D LogLevel.warning) ) $(TD DisableWarning))
+    $(TR $(TD $(D LogLevel.error) ) $(TD DisableError))
+    $(TR $(TD $(D LogLevel.critical) ) $(TD DisableCritical))
+    $(TR $(TD $(D LogLevel.fatal) ) $(TD DisableFatal))
+)
+Such a version statement will only disable logging in the associated compile
+unit.
+
+By default four $(D Logger) implementations are given. The $(D FileLogger)
+logs data to files. It can also be used to log to $(D stdout) and $(D stderr)
+as these devices are files as well. A $(D Logger) that logs to $(D stdout) can
+therefore be created by $(D new FileLogger(stdout)).
+The $(D MultiLogger) is basically an associative array of $(D string)s to
+$(D Logger). It propagates log calls to its stored $(D Logger). The
+$(D ArrayLogger) contains an array of $(D Logger) and also propagates log
+calls to its stored $(D Logger). The $(D NullLogger) does not do anything. It
+will never log a message and will never throw on a log call with $(D LogLevel)
+$(D error).
 */
 module std.logger.core;
 
@@ -136,6 +158,12 @@ import std.logger.multilogger;
 import std.logger.filelogger;
 import std.logger.nulllogger;
 
+/** This compile time only function evaluates if the passed $(D LogLevel) is
+active. The previously described version statements are used to decide if the
+$(D LogLevel) is active. The version statements only influence the compile
+unit they are used with, therefore this function can only disable logging this
+specific compile unit.
+*/
 pure bool isLoggingActive(LogLevel ll)() @safe nothrow
 {
     static assert(__ctfe);
@@ -173,11 +201,17 @@ pure bool isLoggingActive(LogLevel ll)() @safe nothrow
     }
 }
 
+///
 pure bool isLoggingActive()() @safe nothrow
 {
     return isLoggingActive!(LogLevel.all)();
 }
 
+/** This functions is used at runtime to determine if a $(D LogLevel) is
+active. The same previously defined version statements are used to disable
+certain levels. Again the version statements are associated with a compile
+unit and can therefore not disable logging in other compile units.
+*/
 pure bool isLoggingEnabled()(LogLevel ll) @safe nothrow
 {
     switch (ll)
@@ -752,7 +786,7 @@ enum LogLevel : ubyte
 /** This class is the base of every logger. In order to create a new kind of
 logger a deriving class needs to implement the $(D writeLogMsg) method.
 
-In is also possible to $(D override) the three methods $(D logHeader), 
+In is also possible to $(D override) the three methods $(D logHeader),
 $(D logMsgPart) and $(D finishLogMsg) together, this option gives more
 flexibility.
 */
@@ -980,7 +1014,7 @@ abstract class Logger
         In order for the resulting log message to be logged the $(D LogLevel)
         must be greater or equal than the $(D LogLevel) of the used $(D Logger)
         and must be greater or equal than the global $(D LogLevel) additionally
-	   	the passed condition must be $(D true).
+           the passed condition must be $(D true).
 
         Params:
          condition = The condition must be $(D true) for the data to be logged.
@@ -1144,20 +1178,20 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
-    /** This function logs data to the used $(D Logger) with a specific 
-	$(D LogLevel).
+    /** This function logs data to the used $(D Logger) with a specific
+    $(D LogLevel).
 
     In order for the resulting log message to be logged the $(D LogLevel)
     must be greater or equal than the $(D LogLevel) of the used $(D Logger)
     and must be greater or equal than the global $(D LogLevel).
 
     Params:
-	ll = The specific $(D LogLevel) used for logging the log message.
+    ll = The specific $(D LogLevel) used for logging the log message.
     args = The data that should be logged.
 
     Examples:
@@ -1194,18 +1228,18 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
     /** This function logs data to the used $(D Logger) depending on a
-	explicitly passed condition with the $(D LogLevel) of the used 
-	$(D Logger).
+    explicitly passed condition with the $(D LogLevel) of the used
+    $(D Logger).
 
     In order for the resulting log message to be logged the $(D LogLevel)
-    of the used $(D Logger) must be greater or equal than the global 
-	$(D LogLevel) and the condition must be $(D true).
+    of the used $(D Logger) must be greater or equal than the global
+    $(D LogLevel) and the condition must be $(D true).
 
     Params:
     condition = The condition must be $(D true) for the data to be logged.
@@ -1244,17 +1278,17 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
     /** This function logs data to the used $(D Logger) with the $(D LogLevel)
-	of the used $(D Logger).
+    of the used $(D Logger).
 
     In order for the resulting log message to be logged the $(D LogLevel)
-    of the used $(D Logger) must be greater or equal than the global 
-	$(D LogLevel).
+    of the used $(D Logger) must be greater or equal than the global
+    $(D LogLevel).
 
     Params:
     args = The data that should be logged.
@@ -1294,22 +1328,22 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
-    /** This function logs data to the used $(D Logger) with a specific 
-	$(D LogLevel) and depending on a condition in a $(D printf)-style manner.
+    /** This function logs data to the used $(D Logger) with a specific
+    $(D LogLevel) and depending on a condition in a $(D printf)-style manner.
 
     In order for the resulting log message to be logged the $(D LogLevel)
     must be greater or equal than the $(D LogLevel) of the used $(D Logger)
     and must be greater or equal than the global $(D LogLevel) and the
-	condition must be $(D true).
+    condition must be $(D true).
 
     Params:
-	ll = The specific $(D LogLevel) used for logging the log message.
-	condition = The condition must be $(D true) for the data to be logged.
+    ll = The specific $(D LogLevel) used for logging the log message.
+    condition = The condition must be $(D true) for the data to be logged.
     msg = The format string used for this log call.
     args = The data that should be logged.
 
@@ -1347,20 +1381,20 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
-    /** This function logs data to the used $(D Logger) with a specific 
-	$(D LogLevel) in a $(D printf)-style manner.
+    /** This function logs data to the used $(D Logger) with a specific
+    $(D LogLevel) in a $(D printf)-style manner.
 
     In order for the resulting log message to be logged the $(D LogLevel)
     must be greater or equal than the $(D LogLevel) of the used $(D Logger)
     and must be greater or equal than the global $(D LogLevel).
 
     Params:
-	ll = The specific $(D LogLevel) used for logging the log message.
+    ll = The specific $(D LogLevel) used for logging the log message.
     msg = The format string used for this log call.
     args = The data that should be logged.
 
@@ -1398,21 +1432,21 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
-    /** This function logs data to the used $(D Logger) depending on a 
-	condition with the $(D LogLevel) of the used $(D Logger) in a 
-	$(D printf)-style manner.
+    /** This function logs data to the used $(D Logger) depending on a
+    condition with the $(D LogLevel) of the used $(D Logger) in a
+    $(D printf)-style manner.
 
     In order for the resulting log message to be logged the $(D LogLevel)
-    of the used $(D Logger) must be greater or equal than the global 
-	$(D LogLevel) and the condition must be $(D true).
+    of the used $(D Logger) must be greater or equal than the global
+    $(D LogLevel) and the condition must be $(D true).
 
     Params:
-	condition = The condition must be $(D true) for the data to be logged.
+    condition = The condition must be $(D true) for the data to be logged.
     msg = The format string used for this log call.
     args = The data that should be logged.
 
@@ -1449,13 +1483,13 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
 
     /** This method logs data to the used $(D Logger) with the $(D LogLevel)
-	of the this $(D Logger) in a $(D printf)-style manner.
+    of the this $(D Logger) in a $(D printf)-style manner.
 
     In order for the data to be processed the $(D LogLevel) of the $(D Logger)
     must be greater or equal to the global $(D LogLevel).
@@ -1496,7 +1530,7 @@ abstract class Logger
                 this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
-                	fatalHandler();
+                    fatalHandler();
             }
         }
     }
@@ -1537,7 +1571,7 @@ private ref LogLevel globalLogLevelImpl() @trusted
 /** This methods get and set the global $(D LogLevel).
 
 Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
-will be discarded before it reaches $(D writeLogMessage) method of any 
+will be discarded before it reaches $(D writeLogMessage) method of any
 $(D Logger)
 */
 @property LogLevel globalLogLevel() @trusted
@@ -1900,7 +1934,7 @@ unittest
     auto oldunspecificLogger = stdlog;
 
     auto mem = new TestLogger;
-	mem.setFatalHandler = delegate() {};
+    mem.setFatalHandler = delegate() {};
     stdlog = mem;
 
     scope(exit)
