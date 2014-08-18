@@ -28,7 +28,7 @@ class FileLogger : Logger
     auto l2 = new FileLogger("logFile", "loggerName", LogLevel.fatal);
     -------------
     */
-    @trusted this(const string fn, const LogLevel lv = LogLevel.info)
+    @trusted this(in string fn, const LogLevel lv = LogLevel.info)
     {
         import std.exception : enforce;
         super(lv);
@@ -40,7 +40,12 @@ class FileLogger : Logger
         this.mutex = new Mutex;
     }
 
-    /** A constructor for the $(D FileLogger) Logger.
+    /** A constructor for the $(D FileLogger) Logger that takes a reference to
+    a $(D File).
+
+    The $(D File) passed must be open for all the log call to the
+    $(D FileLogger). If the $(D File) gets out of scope, using the
+    $(D FileLogger) for logging will result in undefined behaviour.
 
     Params:
       file = The file used for logging.
@@ -61,18 +66,28 @@ class FileLogger : Logger
         this.mutex = new Mutex;
     }
 
-    /** The file written to is accessible by this method.*/
+    /** The returned $(D File) pointer is the file that the $(D Logger) writes
+    to.
+    */
     @property File* filePtr()
     {
         return this.filePtr_;
     }
 
-    @property File file()
+    /** If the $(D FileLogger) is managing the $(D File) it logs to, this
+    method will return a reference to this File. Otherwise a default
+    initialized $(D File) reference will be returned.
+    */
+    @property ref File file()
     {
         return this.file_;
     }
 
-    override void logHeader(string file, int line, string funcName,
+    /* This method overrides the base class method in order to log to a file
+    without requiring heap allocated memory. Additionally, the $(D FileLogger)
+    local mutex is logged to serialize the log calls.
+    */
+    override void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp)
         @trusted
@@ -80,36 +95,38 @@ class FileLogger : Logger
         ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
         ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
 
-        auto mu = this.mutex;
-        mu.lock();
+        this.mutex.lock();
         auto lt = this.filePtr_.lockingTextWriter();
         systimeToISOString(lt, timestamp);
         formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $],
             funcName[funIdx .. $], line);
     }
 
-    /** Logs a part of the log message. */
+    /* This methods overrides the base class method and writes the parts of
+    the log call directly to the file.
+    */
     override void logMsgPart(const(char)[] msg)
     {
         formattedWrite(this.filePtr.lockingTextWriter(), "%s", msg);
     }
 
-    /** Signals that the message has been written and no more calls to
-    $(D logMsgPart) follow. */
+    /* This methods overrides the base class method and finalizes the active
+    log call. This requires flushing the $(D File) and releasing the
+    $(D FileLogger) local mutex.
+    */
     override void finishLogMsg()
     {
-        static if (isLoggingActive())
-        {
-            auto mu = this.mutex;
-            scope(exit) mu.unlock();
-            this.filePtr_.lockingTextWriter().put("\n");
-            this.filePtr_.flush();
-        }
+        scope(exit) this.mutex.unlock();
+        this.filePtr_.lockingTextWriter().put("\n");
+        this.filePtr_.flush();
     }
 
+    /* This methods overrides the base class method and delegates the
+    $(D LogEntry) data to the actual implementation.
+    */
     override void writeLogMsg(ref LogEntry payload)
     {
-        this.logHeader(payload.file, payload.line, payload.funcName,
+        this.beginLogMsg(payload.file, payload.line, payload.funcName,
             payload.prettyFuncName, payload.moduleName, payload.logLevel,
             payload.threadId, payload.timestamp);
         this.logMsgPart(payload.msg);

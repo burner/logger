@@ -91,7 +91,8 @@ To customize the $(D Logger) behavior, create a new $(D class) that inherits fro
 the abstract $(D Logger) $(D class), and implements the $(D writeLogMsg)
 method.
 -------------
-class MyCustomLogger : Logger {
+class MyCustomLogger : Logger
+{
     this(string newName, LogLevel lv) @safe
     {
         super(newName, lv);
@@ -108,7 +109,7 @@ logger.log("Awesome log message");
 -------------
 
 To gain more precise control over the logging process, additionally to
-overwriting the $(D writeLogMsg) method the methods $(D logHeader),
+overwriting the $(D writeLogMsg) method the methods $(D beginLogMsg),
 $(D logMsgPart) and $(D finishLogMsg) can be overwritten.
 
 In order to disable logging at compile time, pass $(D DisableLogging) as a
@@ -201,7 +202,7 @@ pure bool isLoggingActive(LogLevel ll)() @safe nothrow
     }
 }
 
-///
+/// Ditto
 pure bool isLoggingActive()() @safe nothrow
 {
     return isLoggingActive!(LogLevel.all)();
@@ -540,7 +541,15 @@ void logf(int line = __LINE__, string file = __FILE__,
     }
 }
 
-///
+/** This template provides the global log functions with the $(D LogLevel)
+is encoded in the function name.
+
+For further information see the the two functions defined inside of this
+template.
+
+The aliases following this template create the public names of these log
+functions.
+*/
 template defaultLogFunction(LogLevel ll)
 {
     /** This function logs data to the $(D stdlog).
@@ -636,7 +645,15 @@ alias critical = defaultLogFunction!(LogLevel.critical);
 // Ditto
 alias fatal = defaultLogFunction!(LogLevel.fatal);
 
-///
+/** This template provides the global $(D printf)-style log functions with
+the $(D LogLevel) is encoded in the function name.
+
+For further information see the the two functions defined inside of this
+template.
+
+The aliases following this template create the public names of the log
+functions.
+*/
 template defaultLogFunctionf(LogLevel ll)
 {
     /** This function logs data to the $(D stdlog) in a $(D printf)-style
@@ -786,7 +803,7 @@ enum LogLevel : ubyte
 /** This class is the base of every logger. In order to create a new kind of
 logger a deriving class needs to implement the $(D writeLogMsg) method.
 
-In is also possible to $(D override) the three methods $(D logHeader),
+In is also possible to $(D override) the three methods $(D beginLogMsg),
 $(D logMsgPart) and $(D finishLogMsg) together, this option gives more
 flexibility.
 */
@@ -845,11 +862,11 @@ abstract class Logger
     /* The default implementation will use an $(D std.array.appender)
     internally to construct the message string. This means dynamic,
     GC memory allocation. A logger can avoid this allocation by
-    reimplementing $(D logHeader), $(D logMsgPart) and $(D finishLogMsg).
-    $(D logHeader) is always called first, followed by any number of calls
+    reimplementing $(D beginLogMsg), $(D logMsgPart) and $(D finishLogMsg).
+    $(D beginLogMsg) is always called first, followed by any number of calls
     to $(D logMsgPart) and one call to $(D finishLogMsg).
     */
-    protected void logHeader(string file, int line, string funcName,
+    protected void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp)
         @trusted
@@ -886,6 +903,15 @@ abstract class Logger
     by the $(D Logger). In order for the log call to be processed the
     $(D LogLevel) of the log call must be greater or equal to the $(D LogLevel)
     of the $(D logger).
+
+    These two methods set and get the $(D LogLevel) of the used $(D Logger).
+
+    Example:
+    -----------
+    auto f = new FileLogger(stdout);
+    f.logLevel = LogLevel.info;
+    assert(f.logLevel == LogLevel.info);
+    -----------
     */
     @property final LogLevel logLevel() const pure nothrow @safe
     {
@@ -898,16 +924,15 @@ abstract class Logger
         this.logLevel_ = lv;
     }
 
-    /** This methods sets the $(D delegate) called in case of a log message
-    with $(D LogLevel.fatal) gets logged.
+    /** This template provides the log functions for the $(D Logger) $(D class)
+    with the $(D LogLevel) encoded in the function name.
 
-    By default an $(D Error) will be thrown.
+    For further information see the the two functions defined inside of this
+    template.
+
+    The aliases following this template create the public names of these log
+    functions.
     */
-    final void setFatalHandler(void delegate() dg) @safe {
-        this.fatalHandler = dg;
-    }
-
-    ///
     template memLogFunctions(LogLevel ll)
     {
         /** This function logs data to the used $(D Logger).
@@ -943,7 +968,7 @@ abstract class Logger
                         && globalLogLevel != LogLevel.off
                         && this.logLevel_ != LogLevel.off)
                 {
-                    this.logHeader(file, line, funcName, prettyFuncName,
+                    this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime);
 
                     auto writer = MsgRange(this);
@@ -994,7 +1019,7 @@ abstract class Logger
                         && this.logLevel_ != LogLevel.off
                         && condition)
                 {
-                    this.logHeader(file, line, funcName, prettyFuncName,
+                    this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime);
 
                     auto writer = MsgRange(this);
@@ -1046,7 +1071,7 @@ abstract class Logger
                         && this.logLevel_ != LogLevel.off
                         && condition)
                 {
-                    this.logHeader(file, line, funcName, prettyFuncName,
+                    this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime);
 
                     auto writer = MsgRange(this);
@@ -1095,7 +1120,7 @@ abstract class Logger
                         && globalLogLevel != LogLevel.off
                         && this.logLevel_ != LogLevel.off)
                 {
-                    this.logHeader(file, line, funcName, prettyFuncName,
+                    this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime);
 
                     auto writer = MsgRange(this);
@@ -1169,7 +1194,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off
                     && condition)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1219,7 +1244,7 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off )
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1269,7 +1294,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off
                     && condition)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1319,7 +1344,7 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1372,7 +1397,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off
                     && condition)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1423,7 +1448,7 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off )
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1474,7 +1499,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off
                     && condition)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1521,7 +1546,7 @@ abstract class Logger
                     && globalLogLevel != LogLevel.off
                     && this.logLevel_ != LogLevel.off)
             {
-                this.logHeader(file, line, funcName, prettyFuncName,
+                this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime);
 
                 auto writer = MsgRange(this);
@@ -1536,7 +1561,14 @@ abstract class Logger
     }
 
     private LogLevel logLevel_ = LogLevel.info;
-    private void delegate() fatalHandler;
+
+    /** This member stores the $(D delegate) that is called in case of a log
+    message with $(D LogLevel.fatal) gets logged.
+
+    By default an $(D Error) will be thrown.
+    */
+    void delegate() fatalHandler;
+
     protected Appender!string msgAppender;
     protected LogEntry header;
 }
@@ -1586,7 +1618,7 @@ $(D Logger)
     {
         stdlog.logLevel = ll;
     }
-    globalLogLevelImpl() = ll;
+    globalLogLevelImpl = ll;
 }
 
 version (unittest)
@@ -1655,23 +1687,6 @@ unittest
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
-@safe unittest
-{
-    auto oldunspecificLogger = stdlog;
-    LogLevel oldLogLevel = globalLogLevel;
-    scope(exit)
-    {
-        stdlog = oldunspecificLogger;
-        globalLogLevel = oldLogLevel;
-    }
-
-    stdlog = new TestLogger();
-
-    auto ll = [LogLevel.trace, LogLevel.info, LogLevel.warning,
-         LogLevel.error, LogLevel.critical, LogLevel.fatal, LogLevel.off];
-
-}
-
 unittest
 {
     auto tl1 = new TestLogger;
@@ -1702,7 +1717,7 @@ unittest
     auto dele = delegate() {
         errorThrown = true;
     };
-    tl.setFatalHandler(dele);
+    tl.fatalHandler = dele;
     tl.fatal();
     assert(errorThrown);
 }
@@ -1742,7 +1757,6 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     l.logf(false, msg, "Yet");
-    int nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1760,7 +1774,6 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     assertNotThrown(l.logf(LogLevel.fatal, false, msg, "Yet"));
-    nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1815,7 +1828,6 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     logf(false, msg, "Yet");
-    nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1834,7 +1846,6 @@ unittest
     assert(l.logLevel == LogLevel.info);
 
     assertNotThrown(logf(LogLevel.fatal, false, msg, "Yet"));
-    nLineNumber = __LINE__ - 1;
     assert(l.msg == msg.format("Yet"));
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
@@ -1843,7 +1854,6 @@ unittest
 unittest // default logger
 {
     import std.file;
-    string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
     FileLogger l = new FileLogger(filename);
     auto oldunspecificLogger = stdlog;
@@ -1881,7 +1891,6 @@ unittest
 {
     import std.file;
     import core.memory;
-    string name = randomString(32);
     string filename = randomString(32) ~ ".tempLogFile";
     auto oldunspecificLogger = stdlog;
 
@@ -1926,15 +1935,13 @@ unittest
     assert(tl.line == l+1, to!string(tl.line));
 }
 
-//pragma(msg, buildLogFunction(true, false, true, LogLevel.unspecific, true));
-
 // testing possible log conditions
 @safe unittest
 {
     auto oldunspecificLogger = stdlog;
 
     auto mem = new TestLogger;
-    mem.setFatalHandler = delegate() {};
+    mem.fatalHandler = delegate() {};
     stdlog = mem;
 
     scope(exit)

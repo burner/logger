@@ -6,7 +6,8 @@ import std.logger.core;
 
 In case of a log message with $(D LogLevel.fatal) nothing will happen.
 */
-class NullLogger : Logger {
+class NullLogger : Logger
+{
     /** The default constructor for the $(D NullLogger).
 
     Independent of the parameter this Logger will never log a message.
@@ -18,16 +19,18 @@ class NullLogger : Logger {
     this(const LogLevel lv = LogLevel.info) @safe
     {
         super(lv);
-        this.setFatalHandler = delegate() {};
+        this.fatalHandler = delegate() {};
     }
 
-    override void writeLogMsg(ref LogEntry payload) @safe {
+    override void writeLogMsg(ref LogEntry payload) @safe
+    {
     }
 }
 
 ///
-unittest {
+unittest
+{
     auto nl1 = new NullLogger(LogLevel.all);
     nl1.info("You will never read this.");
-    nl1.fatal("You will never read this, either.");
+    nl1.fatal("You will never read this, either and it will not throw");
 }
