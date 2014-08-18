@@ -830,10 +830,12 @@ abstract class Logger
         LogLevel logLevel;
         /// thread id of the log message
         Tid threadId;
-        /// the time the message was logged.
+        /// the time the message was logged
         SysTime timestamp;
         /// the message of the log message
         string msg;
+		/// A refernce to the $(D Logger) used to create this $(D LogEntry)
+		Logger logger;
     }
 
     /** This constructor takes a name of type $(D string), and a $(D LogLevel).
@@ -874,7 +876,7 @@ abstract class Logger
         static if (isLoggingActive())
         {
             header = LogEntry(file, line, funcName, prettyFuncName,
-                moduleName, logLevel, threadId, timestamp, null);
+                moduleName, logLevel, threadId, timestamp, null, this);
         }
     }
 
