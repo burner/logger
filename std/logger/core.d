@@ -62,7 +62,7 @@ $(D critical), or $(D fatal). The log call will than have the respective
 $(D LogLevel). If no $(D LogLevel) is defined the log call will use the
 current $(D LogLevel) of the used $(D Logger). If data is logged with
 $(D LogLevel) $(D fatal) by default an $(D Error) will be thrown.
-This behaviour can be modified by using the method $(D setFatalHandler) to
+This behaviour can be modified by using the member $(D fatalHandler) to
 assign a custom delegate to handle log call with $(D LogLevel) $(D fatal).
 
 Conditional logging can be achieved be appending passing a $(D bool) as first
@@ -632,17 +632,17 @@ template defaultLogFunction(LogLevel ll)
     }
 }
 
-// Ditto
+/// Ditto
 alias trace = defaultLogFunction!(LogLevel.trace);
-// Ditto
+/// Ditto
 alias info = defaultLogFunction!(LogLevel.info);
-// Ditto
+/// Ditto
 alias warning = defaultLogFunction!(LogLevel.warning);
-// Ditto
+/// Ditto
 alias error = defaultLogFunction!(LogLevel.error);
-// Ditto
+/// Ditto
 alias critical = defaultLogFunction!(LogLevel.critical);
-// Ditto
+/// Ditto
 alias fatal = defaultLogFunction!(LogLevel.fatal);
 
 /** This template provides the global $(D printf)-style log functions with
@@ -855,9 +855,12 @@ abstract class Logger
         this.msgAppender = appender!string();
     }
 
-    /** A custom logger needs to implement this method.
+    /** A custom logger must implement this method in order to work in a 
+	$(D MultiLogger) and $(D ArrayLogger).
+
     Params:
         payload = All information associated with call to log function.
+	See_Also: beginLogMsg, logMsgPart, finishLogMsg
     */
     void writeLogMsg(ref LogEntry payload);
 
@@ -867,16 +870,48 @@ abstract class Logger
     reimplementing $(D beginLogMsg), $(D logMsgPart) and $(D finishLogMsg).
     $(D beginLogMsg) is always called first, followed by any number of calls
     to $(D logMsgPart) and one call to $(D finishLogMsg).
+
+	As an example for such a custom $(D Logger) compare this:
+	----------------
+	class CLogger : Logger {
+		override void beginLogMsg(string file, int line, string funcName,
+        	string prettyFuncName, string moduleName, LogLevel logLevel,
+        	Tid threadId, SysTime timestamp)
+		{
+			... logic here
+		}
+
+		override void logMsgPart(const(char)[] msg)
+		{
+			... logic here
+		}
+
+		override void finishLogMsg()
+		{
+			... logic here
+		}
+
+		void writeLogMsg(ref LogEntry payload)
+		{
+			this.beginLogMsg(payload.file, payload.line, payload.funcName,
+				payload.prettyFuncName, payload.moduleName, payload.logLevel,
+				payload.threadId, payload.timestamp, payload.logger);
+
+			this.logMsgPart(payload.msg);
+			this.finishLogMsg();
+		}
+	}
+	----------------
     */
     protected void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
-        Tid threadId, SysTime timestamp)
+        Tid threadId, SysTime timestamp, Logger logger)
         @trusted
     {
         static if (isLoggingActive())
         {
             header = LogEntry(file, line, funcName, prettyFuncName,
-                moduleName, logLevel, threadId, timestamp, null, this);
+                moduleName, logLevel, threadId, timestamp, null, logger);
         }
     }
 
@@ -910,7 +945,7 @@ abstract class Logger
 
     Example:
     -----------
-    auto f = new FileLogger(stdout);
+    auto f = new FileLogger(&stdout);
     f.logLevel = LogLevel.info;
     assert(f.logLevel == LogLevel.info);
     -----------
@@ -948,7 +983,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(stdout);
+        auto s = new FileLogger(&stdout);
         s.trace(1337, "is number");
         s.info(1337, "is number");
         s.error(1337, "is number");
@@ -971,7 +1006,7 @@ abstract class Logger
                         && this.logLevel_ != LogLevel.off)
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
-                        moduleName, ll, thisTid, Clock.currTime);
+                        moduleName, ll, thisTid, Clock.currTime, this);
 
                     auto writer = MsgRange(this);
                     formatString(writer, args);
@@ -998,7 +1033,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(stdout);
+        auto s = new FileLogger(&stdout);
         s.trace(true, 1337, "is number");
         s.info(false, 1337, "is number");
         s.error(true, 1337, "is number");
@@ -1022,7 +1057,7 @@ abstract class Logger
                         && condition)
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
-                        moduleName, ll, thisTid, Clock.currTime);
+                        moduleName, ll, thisTid, Clock.currTime, this);
 
                     auto writer = MsgRange(this);
                     formatString(writer, args);
@@ -1050,7 +1085,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(stderr);
+        auto s = new FileLogger(&stderr);
         s.trace("is number %d", 1);
         s.info("is number %d", 2);
         s.error("is number %d", 3);
@@ -1074,7 +1109,7 @@ abstract class Logger
                         && condition)
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
-                        moduleName, ll, thisTid, Clock.currTime);
+                        moduleName, ll, thisTid, Clock.currTime, this);
 
                     auto writer = MsgRange(this);
                     formattedWrite(writer, msg, args);
@@ -1100,7 +1135,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(stderr);
+        auto s = new FileLogger(&stderr);
         s.trace("is number %d", 1);
         s.info("is number %d", 2);
         s.error("is number %d", 3);
@@ -1123,7 +1158,7 @@ abstract class Logger
                         && this.logLevel_ != LogLevel.off)
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
-                        moduleName, ll, thisTid, Clock.currTime);
+                        moduleName, ll, thisTid, Clock.currTime, this);
 
                     auto writer = MsgRange(this);
                     formattedWrite(writer, msg, args);
@@ -1197,7 +1232,7 @@ abstract class Logger
                     && condition)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, ll, thisTid, Clock.currTime);
+                    moduleName, ll, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
@@ -1223,7 +1258,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.log(LogLevel.trace, 1337, "is number");
     s.log(LogLevel.info, 1337, "is number");
     s.log(LogLevel.warning, 1337, "is number");
@@ -1247,7 +1282,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off )
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, ll, thisTid, Clock.currTime);
+                    moduleName, ll, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
@@ -1274,7 +1309,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.log(true, 1337, "is number");
     s.log(true, 1337, "is number");
     s.log(true, 1337, "is number");
@@ -1297,7 +1332,7 @@ abstract class Logger
                     && condition)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+                    moduleName, this.logLevel_, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
@@ -1322,7 +1357,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.log(1337, "is number");
     s.log(info, 1337, "is number");
     s.log(1337, "is number");
@@ -1347,8 +1382,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime);
-
+                    moduleName, this.logLevel_, thisTid, Clock.currTime, this); 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
 
@@ -1376,7 +1410,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.logf(LogLevel.trace, true ,"%d %s", 1337, "is number");
     s.logf(LogLevel.info, true ,"%d %s", 1337, "is number");
     s.logf(LogLevel.warning, true ,"%d %s", 1337, "is number");
@@ -1400,7 +1434,7 @@ abstract class Logger
                     && condition)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, ll, thisTid, Clock.currTime);
+                    moduleName, ll, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
@@ -1427,7 +1461,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.logf(LogLevel.trace, "%d %s", 1337, "is number");
     s.logf(LogLevel.info, "%d %s", 1337, "is number");
     s.logf(LogLevel.warning, "%d %s", 1337, "is number");
@@ -1451,7 +1485,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off )
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, ll, thisTid, Clock.currTime);
+                    moduleName, ll, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
@@ -1479,7 +1513,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.logf(true ,"%d %s", 1337, "is number");
     s.logf(true ,"%d %s", 1337, "is number");
     s.logf(true ,"%d %s", 1337, "is number");
@@ -1502,7 +1536,7 @@ abstract class Logger
                     && condition)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+                    moduleName, this.logLevel_, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
@@ -1527,7 +1561,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(stdout);
+    auto s = new FileLogger(&stdout);
     s.logf("%d %s", 1337, "is number");
     s.logf("%d %s", 1337, "is number");
     s.logf("%d %s", 1337, "is number");
@@ -1549,7 +1583,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime);
+                    moduleName, this.logLevel_, thisTid, Clock.currTime, this);
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
@@ -1562,14 +1596,14 @@ abstract class Logger
         }
     }
 
-    private LogLevel logLevel_ = LogLevel.info;
-
     /** This member stores the $(D delegate) that is called in case of a log
     message with $(D LogLevel.fatal) gets logged.
 
     By default an $(D Error) will be thrown.
     */
     void delegate() fatalHandler;
+
+    private LogLevel logLevel_ = LogLevel.info;
 
     protected Appender!string msgAppender;
     protected LogEntry header;
@@ -1591,7 +1625,7 @@ The example sets a new $(D StdioLogger) as new $(D stdlog).
     static __gshared Logger logger;
     if (logger is null)
     {
-        logger = new FileLogger(stderr, globalLogLevel());
+        logger = new FileLogger(&stderr, globalLogLevel());
     }
     return logger;
 }

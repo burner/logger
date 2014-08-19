@@ -82,9 +82,9 @@ root -> node -> b
 auto root = new MultiLogger(LogLevel.trace);
 auto node = new MultiLogger(LogLevel.warning);
 
-auto a = new FileLogger(stdout, LogLevel.trace);
-auto b = new FileLogger(stdout, LogLevel.info);
-auto c = new FileLogger(stdout, LogLevel.info);
+auto a = new FileLogger(&stdout, LogLevel.trace);
+auto b = new FileLogger(&stdout, LogLevel.info);
+auto c = new FileLogger(&stdout, LogLevel.info);
 
 root.insert("Node", node);
 root.insert("a", a);
@@ -147,7 +147,7 @@ class MultiLogger : MultiLoggerBase
     unittest
     {
         auto l1 = new MultiLogger;
-        auto l2 = new FileLogger(stdout);
+        auto l2 = new FileLogger(&stdout);
 
         l1.insertLogger("someName", l2);
 
@@ -158,7 +158,7 @@ class MultiLogger : MultiLoggerBase
     {
         import std.exception : assertThrown;
         auto l1 = new MultiLogger;
-        auto l2 = new FileLogger(stdout);
+        auto l2 = new FileLogger(&stdout);
         assertThrown(l1.insertLogger("", l2));
     }
 
@@ -225,7 +225,7 @@ class MultiLogger : MultiLoggerBase
     unittest
     {
         auto ml = new MultiLogger;
-        auto sl = new FileLogger(stdout);
+        auto sl = new FileLogger(&stdout);
 
         ml.insertLogger("some_name", sl);
 
@@ -346,7 +346,7 @@ unittest
         logFileOutput.close();
         remove(logName);
     }
-    auto traceLog = new FileLogger(logFileOutput, LogLevel.all);
+    auto traceLog = new FileLogger(&logFileOutput, LogLevel.all);
     auto infoLog  = new TestLogger(LogLevel.info);
 
     auto root = new MultiLogger(LogLevel.all);

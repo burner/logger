@@ -18,7 +18,8 @@ class FileLogger : Logger
     /** A constructor for the $(D FileLogger) Logger.
 
     Params:
-      fn = The filename of the output file of the $(D FileLogger).
+      fn = The filename of the output file of the $(D FileLogger). If that
+	  file can not be opened for writting an exception will be thrown.
       lv = The $(D LogLevel) for the $(D FileLogger). By default the
       $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
 
@@ -34,8 +35,6 @@ class FileLogger : Logger
         super(lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
-        enforce(this.file.isOpen, "Unable to open file: \"" ~ this.filename ~
-            "\" for logging.");
         this.filePtr_ = &this.file_;
         this.mutex = new Mutex;
     }
@@ -55,14 +54,14 @@ class FileLogger : Logger
     Example:
     -------------
     auto file = File("logFile.log", "w");
-    auto l1 = new FileLogger(file, "LoggerName");
-    auto l2 = new FileLogger(file, "LoggerName", LogLevel.fatal);
+    auto l1 = new FileLogger(&file, "LoggerName");
+    auto l2 = new FileLogger(&file, "LoggerName", LogLevel.fatal);
     -------------
     */
-    this(ref File file, const LogLevel lv = LogLevel.info)
+    this(File* file, const LogLevel lv = LogLevel.info)
     {
         super(lv);
-        this.filePtr_ = &file;
+        this.filePtr_ = file;
         this.mutex = new Mutex;
     }
 
@@ -78,7 +77,7 @@ class FileLogger : Logger
     method will return a reference to this File. Otherwise a default
     initialized $(D File) reference will be returned.
     */
-    @property ref File file()
+    @property File file()
     {
         return this.file_;
     }
@@ -89,7 +88,7 @@ class FileLogger : Logger
     */
     override void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
-        Tid threadId, SysTime timestamp)
+        Tid threadId, SysTime timestamp, Logger logger)
         @trusted
     {
         ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
@@ -128,7 +127,7 @@ class FileLogger : Logger
     {
         this.beginLogMsg(payload.file, payload.line, payload.funcName,
             payload.prettyFuncName, payload.moduleName, payload.logLevel,
-            payload.threadId, payload.timestamp);
+            payload.threadId, payload.timestamp, payload.logger);
         this.logMsgPart(payload.msg);
         this.finishLogMsg();
     }
@@ -176,7 +175,7 @@ unittest
 
     string filename = randomString(32) ~ ".tempLogFile";
     auto file = File(filename, "w");
-    auto l = new FileLogger(file);
+    auto l = new FileLogger(&file);
 
     scope(exit)
     {
