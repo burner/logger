@@ -834,8 +834,8 @@ abstract class Logger
         SysTime timestamp;
         /// the message of the log message
         string msg;
-		/// A refernce to the $(D Logger) used to create this $(D LogEntry)
-		Logger logger;
+        /// A refernce to the $(D Logger) used to create this $(D LogEntry)
+        Logger logger;
     }
 
     /** This constructor takes a name of type $(D string), and a $(D LogLevel).
@@ -855,12 +855,12 @@ abstract class Logger
         this.msgAppender = appender!string();
     }
 
-    /** A custom logger must implement this method in order to work in a 
-	$(D MultiLogger) and $(D ArrayLogger).
+    /** A custom logger must implement this method in order to work in a
+    $(D MultiLogger) and $(D ArrayLogger).
 
     Params:
         payload = All information associated with call to log function.
-	See_Also: beginLogMsg, logMsgPart, finishLogMsg
+    See_Also: beginLogMsg, logMsgPart, finishLogMsg
     */
     void writeLogMsg(ref LogEntry payload);
 
@@ -871,37 +871,37 @@ abstract class Logger
     $(D beginLogMsg) is always called first, followed by any number of calls
     to $(D logMsgPart) and one call to $(D finishLogMsg).
 
-	As an example for such a custom $(D Logger) compare this:
-	----------------
-	class CLogger : Logger {
-		override void beginLogMsg(string file, int line, string funcName,
-        	string prettyFuncName, string moduleName, LogLevel logLevel,
-        	Tid threadId, SysTime timestamp)
-		{
-			... logic here
-		}
+    As an example for such a custom $(D Logger) compare this:
+    ----------------
+    class CLogger : Logger {
+        override void beginLogMsg(string file, int line, string funcName,
+            string prettyFuncName, string moduleName, LogLevel logLevel,
+            Tid threadId, SysTime timestamp)
+        {
+            ... logic here
+        }
 
-		override void logMsgPart(const(char)[] msg)
-		{
-			... logic here
-		}
+        override void logMsgPart(const(char)[] msg)
+        {
+            ... logic here
+        }
 
-		override void finishLogMsg()
-		{
-			... logic here
-		}
+        override void finishLogMsg()
+        {
+            ... logic here
+        }
 
-		void writeLogMsg(ref LogEntry payload)
-		{
-			this.beginLogMsg(payload.file, payload.line, payload.funcName,
-				payload.prettyFuncName, payload.moduleName, payload.logLevel,
-				payload.threadId, payload.timestamp, payload.logger);
+        void writeLogMsg(ref LogEntry payload)
+        {
+            this.beginLogMsg(payload.file, payload.line, payload.funcName,
+                payload.prettyFuncName, payload.moduleName, payload.logLevel,
+                payload.threadId, payload.timestamp, payload.logger);
 
-			this.logMsgPart(payload.msg);
-			this.finishLogMsg();
-		}
-	}
-	----------------
+            this.logMsgPart(payload.msg);
+            this.finishLogMsg();
+        }
+    }
+    ----------------
     */
     protected void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
@@ -1382,7 +1382,7 @@ abstract class Logger
                     && this.logLevel_ != LogLevel.off)
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
-                    moduleName, this.logLevel_, thisTid, Clock.currTime, this); 
+                    moduleName, this.logLevel_, thisTid, Clock.currTime, this);
                 auto writer = MsgRange(this);
                 formatString(writer, args);
 

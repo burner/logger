@@ -19,7 +19,7 @@ class FileLogger : Logger
 
     Params:
       fn = The filename of the output file of the $(D FileLogger). If that
-	  file can not be opened for writting an exception will be thrown.
+      file can not be opened for writting an exception will be thrown.
       lv = The $(D LogLevel) for the $(D FileLogger). By default the
       $(D LogLevel) for $(D FileLogger) is $(D LogLevel.info).
 
