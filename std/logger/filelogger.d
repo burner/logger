@@ -35,7 +35,6 @@ class FileLogger : Logger
         super(lv);
         this.filename = fn;
         this.file_.open(this.filename, "a");
-        this.filePtr_ = &this.file_;
         this.mutex = new Mutex;
     }
 
@@ -43,8 +42,8 @@ class FileLogger : Logger
     a $(D File).
 
     The $(D File) passed must be open for all the log call to the
-    $(D FileLogger). If the $(D File) gets out of scope, using the
-    $(D FileLogger) for logging will result in undefined behaviour.
+    $(D FileLogger). If the $(D File) gets closed, using the $(D FileLogger)
+    for logging will result in undefined behaviour.
 
     Params:
       file = The file used for logging.
@@ -58,19 +57,11 @@ class FileLogger : Logger
     auto l2 = new FileLogger(&file, "LoggerName", LogLevel.fatal);
     -------------
     */
-    this(File* file, const LogLevel lv = LogLevel.info)
+    this(File file, const LogLevel lv = LogLevel.info)
     {
         super(lv);
-        this.filePtr_ = file;
+        this.file_ = file;
         this.mutex = new Mutex;
-    }
-
-    /** The returned $(D File) pointer is the file that the $(D Logger) writes
-    to.
-    */
-    @property File* filePtr()
-    {
-        return this.filePtr_;
     }
 
     /** If the $(D FileLogger) is managing the $(D File) it logs to, this
@@ -95,7 +86,7 @@ class FileLogger : Logger
         ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
 
         this.mutex.lock();
-        auto lt = this.filePtr_.lockingTextWriter();
+        auto lt = this.file_.lockingTextWriter();
         systimeToISOString(lt, timestamp);
         formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $],
             funcName[funIdx .. $], line);
@@ -106,7 +97,7 @@ class FileLogger : Logger
     */
     override void logMsgPart(const(char)[] msg)
     {
-        formattedWrite(this.filePtr.lockingTextWriter(), "%s", msg);
+        formattedWrite(this.file_.lockingTextWriter(), "%s", msg);
     }
 
     /* This methods overrides the base class method and finalizes the active
@@ -116,8 +107,8 @@ class FileLogger : Logger
     override void finishLogMsg()
     {
         scope(exit) this.mutex.unlock();
-        this.filePtr_.lockingTextWriter().put("\n");
-        this.filePtr_.flush();
+        this.file_.lockingTextWriter().put("\n");
+        this.file_.flush();
     }
 
     /* This methods overrides the base class method and delegates the
@@ -134,7 +125,6 @@ class FileLogger : Logger
 
     private Mutex mutex;
     private File file_;
-    private File* filePtr_;
     private string filename;
 }
 
@@ -175,7 +165,7 @@ unittest
 
     string filename = randomString(32) ~ ".tempLogFile";
     auto file = File(filename, "w");
-    auto l = new FileLogger(&file);
+    auto l = new FileLogger(file);
 
     scope(exit)
     {

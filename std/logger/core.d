@@ -945,7 +945,7 @@ abstract class Logger
 
     Example:
     -----------
-    auto f = new FileLogger(&stdout);
+    auto f = new FileLogger(stdout);
     f.logLevel = LogLevel.info;
     assert(f.logLevel == LogLevel.info);
     -----------
@@ -983,7 +983,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(&stdout);
+        auto s = new FileLogger(stdout);
         s.trace(1337, "is number");
         s.info(1337, "is number");
         s.error(1337, "is number");
@@ -1033,7 +1033,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(&stdout);
+        auto s = new FileLogger(stdout);
         s.trace(true, 1337, "is number");
         s.info(false, 1337, "is number");
         s.error(true, 1337, "is number");
@@ -1085,7 +1085,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(&stderr);
+        auto s = new FileLogger(stderr);
         s.trace("is number %d", 1);
         s.info("is number %d", 2);
         s.error("is number %d", 3);
@@ -1135,7 +1135,7 @@ abstract class Logger
 
         Examples:
         --------------------
-        auto s = new FileLogger(&stderr);
+        auto s = new FileLogger(stderr);
         s.trace("is number %d", 1);
         s.info("is number %d", 2);
         s.error("is number %d", 3);
@@ -1258,7 +1258,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.log(LogLevel.trace, 1337, "is number");
     s.log(LogLevel.info, 1337, "is number");
     s.log(LogLevel.warning, 1337, "is number");
@@ -1309,7 +1309,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.log(true, 1337, "is number");
     s.log(true, 1337, "is number");
     s.log(true, 1337, "is number");
@@ -1357,7 +1357,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.log(1337, "is number");
     s.log(info, 1337, "is number");
     s.log(1337, "is number");
@@ -1410,7 +1410,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.logf(LogLevel.trace, true ,"%d %s", 1337, "is number");
     s.logf(LogLevel.info, true ,"%d %s", 1337, "is number");
     s.logf(LogLevel.warning, true ,"%d %s", 1337, "is number");
@@ -1461,7 +1461,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.logf(LogLevel.trace, "%d %s", 1337, "is number");
     s.logf(LogLevel.info, "%d %s", 1337, "is number");
     s.logf(LogLevel.warning, "%d %s", 1337, "is number");
@@ -1513,7 +1513,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.logf(true ,"%d %s", 1337, "is number");
     s.logf(true ,"%d %s", 1337, "is number");
     s.logf(true ,"%d %s", 1337, "is number");
@@ -1561,7 +1561,7 @@ abstract class Logger
 
     Examples:
     --------------------
-    auto s = new FileLogger(&stdout);
+    auto s = new FileLogger(stdout);
     s.logf("%d %s", 1337, "is number");
     s.logf("%d %s", 1337, "is number");
     s.logf("%d %s", 1337, "is number");
@@ -1625,7 +1625,7 @@ The example sets a new $(D StdioLogger) as new $(D stdlog).
     static __gshared Logger logger;
     if (logger is null)
     {
-        logger = new FileLogger(&stderr, globalLogLevel());
+        logger = new FileLogger(stderr, globalLogLevel());
     }
     return logger;
 }
