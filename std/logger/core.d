@@ -112,21 +112,21 @@ To gain more precise control over the logging process, additionally to
 overwriting the $(D writeLogMsg) method the methods $(D beginLogMsg),
 $(D logMsgPart) and $(D finishLogMsg) can be overwritten.
 
-In order to disable logging at compile time, pass $(D DisableLogging) as a
+In order to disable logging at compile time, pass $(D StdLoggerDisableLogging) as a
 version argument to the $(D D) compiler when compiling your program code.
 This will disable all logging functionality.
 Specific $(D LogLevel) can be disabled at compile time as well.
 In order to disable logging with the $(D trace) $(D LogLevel) pass
-$(D DisableTrace) as a version.
+$(D StdLoggerDisableTrace) as a version.
 The following table shows which version statement disables which
 $(D LogLevel).
 $(TABLE
-    $(TR $(TD $(D LogLevel.trace) ) $(TD DisableTrace))
-    $(TR $(TD $(D LogLevel.info) ) $(TD DisableInfo))
-    $(TR $(TD $(D LogLevel.warning) ) $(TD DisableWarning))
-    $(TR $(TD $(D LogLevel.error) ) $(TD DisableError))
-    $(TR $(TD $(D LogLevel.critical) ) $(TD DisableCritical))
-    $(TR $(TD $(D LogLevel.fatal) ) $(TD DisableFatal))
+    $(TR $(TD $(D LogLevel.trace) ) $(TD StdLoggerDisableTrace))
+    $(TR $(TD $(D LogLevel.info) ) $(TD StdLoggerDisableInfo))
+    $(TR $(TD $(D LogLevel.warning) ) $(TD StdLoggerDisableWarning))
+    $(TR $(TD $(D LogLevel.error) ) $(TD StdLoggerDisableError))
+    $(TR $(TD $(D LogLevel.critical) ) $(TD StdLoggerDisableCritical))
+    $(TR $(TD $(D LogLevel.fatal) ) $(TD StdLoggerDisableFatal))
 )
 Such a version statement will only disable logging in the associated compile
 unit.
@@ -168,7 +168,7 @@ specific compile unit.
 pure bool isLoggingActive(LogLevel ll)() @safe nothrow
 {
     static assert(__ctfe);
-    version (DisableLogging)
+    version (StdLoggerDisableLogging)
     {
         return false;
     }
@@ -176,27 +176,27 @@ pure bool isLoggingActive(LogLevel ll)() @safe nothrow
     {
         static if (ll == LogLevel.trace)
         {
-            version (DisableTrace) return false;
+            version (StdLoggerDisableTrace) return false;
         }
         else static if (ll == LogLevel.info)
         {
-            version (DisableInfo) return false;
+            version (StdLoggerDisableInfo) return false;
         }
         else static if (ll == LogLevel.warning)
         {
-            version (DisableWarning) return false;
+            version (StdLoggerDisableWarning) return false;
         }
         else static if (ll == LogLevel.error)
         {
-            version (DisableError) return false;
+            version (StdLoggerDisableError) return false;
         }
         else static if (ll == LogLevel.critical)
         {
-            version (DisableCritical) return false;
+            version (StdLoggerDisableCritical) return false;
         }
         else static if (ll == LogLevel.fatal)
         {
-            version (DisableFatal) return false;
+            version (StdLoggerDisableFatal) return false;
         }
         return true;
     }
@@ -218,19 +218,19 @@ pure bool isLoggingEnabled()(LogLevel ll) @safe nothrow
     switch (ll)
     {
         case LogLevel.trace:
-            version (DisableTrace) return false;
+            version (StdLoggerDisableTrace) return false;
             else break;
         case LogLevel.info:
-            version (DisableInfo) return false;
+            version (StdLoggerDisableInfo) return false;
             else break;
         case LogLevel.warning:
-            version (DisableWarning) return false;
+            version (StdLoggerDisableWarning) return false;
             else break;
         case LogLevel.critical:
-            version (DisableCritical) return false;
+            version (StdLoggerDisableCritical) return false;
             else break;
         case LogLevel.fatal:
-            version (DisableFatal) return false;
+            version (StdLoggerDisableFatal) return false;
             else break;
         default: break;
     }
