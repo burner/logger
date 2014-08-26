@@ -1719,8 +1719,8 @@ unittest
     testFuncNames(tl1);
     assert(tl1.func == "std.experimental.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
-        "void std.experimental.logger.core.testFuncNames(Logger logger)", 
-		tl1.prettyFunc);
+        "void std.experimental.logger.core.testFuncNames(Logger logger)",
+        tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
