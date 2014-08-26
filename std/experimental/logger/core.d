@@ -142,7 +142,7 @@ calls to its stored $(D Logger). The $(D NullLogger) does not do anything. It
 will never log a message and will never throw on a log call with $(D LogLevel)
 $(D error).
 */
-module std.logger.core;
+module std.experimental.logger.core;
 
 import std.array;
 import std.stdio;
@@ -155,9 +155,9 @@ import std.exception;
 import std.concurrency;
 import std.format;
 
-import std.logger.multilogger;
-import std.logger.filelogger;
-import std.logger.nulllogger;
+import std.experimental.logger.multilogger;
+import std.experimental.logger.filelogger;
+import std.experimental.logger.nulllogger;
 
 /** This compile time only function evaluates if the passed $(D LogLevel) is
 active. The previously described version statements are used to decide if the
@@ -1717,9 +1717,10 @@ unittest
 {
     auto tl1 = new TestLogger();
     testFuncNames(tl1);
-    assert(tl1.func == "std.logger.core.testFuncNames", tl1.func);
+    assert(tl1.func == "std.experimental.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
-        "void std.logger.core.testFuncNames(Logger logger)", tl1.prettyFunc);
+        "void std.experimental.logger.core.testFuncNames(Logger logger)", 
+		tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 

@@ -1,9 +1,9 @@
-module std.logger.multilogger;
+module std.experimental.logger.multilogger;
 
 import std.container : Array;
 import std.functional : binaryFun;
-import std.logger.core;
-import std.logger.filelogger;
+import std.experimental.logger.core;
+import std.experimental.logger.filelogger;
 import std.range : isRandomAccessRange;
 import std.stdio : stdout;
 
@@ -301,7 +301,7 @@ class ArrayLogger : MultiLoggerBase
 
 unittest
 {
-    import std.logger.nulllogger;
+    import std.experimental.logger.nulllogger;
     import std.exception : assertThrown;
     auto a = new ArrayLogger;
     auto n0 = new NullLogger();

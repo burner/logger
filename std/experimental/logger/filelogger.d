@@ -1,10 +1,10 @@
-module std.logger.filelogger;
+module std.experimental.logger.filelogger;
 
 import std.stdio;
 import std.string;
 import std.datetime : SysTime;
 import std.concurrency;
-public import std.logger.core;
+import std.experimental.logger.core;
 
 import core.sync.mutex;
 

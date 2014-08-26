@@ -1,6 +1,6 @@
-module std.logger.nulllogger;
+module std.experimental.logger.nulllogger;
 
-import std.logger.core;
+import std.experimental.logger.core;
 
 /** The $(D NullLogger) will not process any log messages.
 
