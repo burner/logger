@@ -154,10 +154,15 @@ import std.traits;
 import std.exception;
 import std.concurrency;
 import std.format;
+import core.sync.mutex : Mutex;
 
 import std.experimental.logger.multilogger;
 import std.experimental.logger.filelogger;
 import std.experimental.logger.nulllogger;
+
+static this() {
+    __stdloggermutex = new Mutex;
+}
 
 /** This compile time only function evaluates if the passed $(D LogLevel) is
 active. The previously described version statements are used to decide if the
@@ -165,7 +170,7 @@ $(D LogLevel) is active. The version statements only influence the compile
 unit they are used with, therefore this function can only disable logging this
 specific compile unit.
 */
-pure bool isLoggingActive(LogLevel ll)() @safe nothrow
+pure bool isLoggingActive(LogLevel ll)() @safe nothrow @nogc
 {
     static assert(__ctfe);
     version (StdLoggerDisableLogging)
@@ -203,7 +208,7 @@ pure bool isLoggingActive(LogLevel ll)() @safe nothrow
 }
 
 /// Ditto
-pure bool isLoggingActive()() @safe nothrow
+pure bool isLoggingActive()() @safe nothrow @nogc
 {
     return isLoggingActive!(LogLevel.all)();
 }
@@ -213,7 +218,7 @@ active. The same previously defined version statements are used to disable
 certain levels. Again the version statements are associated with a compile
 unit and can therefore not disable logging in other compile units.
 */
-pure bool isLoggingEnabled()(LogLevel ll) @safe nothrow
+pure bool isLoggingEnabled()(LogLevel ll) @safe nothrow @nogc
 {
     switch (ll)
     {
@@ -950,13 +955,13 @@ abstract class Logger
     assert(f.logLevel == LogLevel.info);
     -----------
     */
-    @property final LogLevel logLevel() const pure nothrow @safe
+    @property final LogLevel logLevel() const pure nothrow @safe @nogc
     {
         return this.logLevel_;
     }
 
     /// Ditto
-    @property final void logLevel(const LogLevel lv) pure nothrow @safe
+    @property final void logLevel(const LogLevel lv) pure nothrow @safe @nogc
     {
         this.logLevel_ = lv;
     }
@@ -1609,10 +1614,12 @@ abstract class Logger
     protected LogEntry header;
 }
 
+private Mutex __stdloggermutex;
+
 /** This method returns the default $(D Logger).
 
 The Logger is returned as a reference. This means it can be reassigned,
-thus changing the $(D stdlog).
+thus changing the $(D stdlog). The default $(D Logger) must be thread-safe.
 
 Example:
 -------------
@@ -1622,15 +1629,21 @@ The example sets a new $(D StdioLogger) as new $(D stdlog).
 */
 @property ref Logger stdlog() @trusted
 {
+    static __gshared bool once;
     static __gshared Logger logger;
-    if (logger is null)
+    static __gshared ubyte[__traits(classInstanceSize, FileLogger)] buffer;
+
+    __stdloggermutex.lock();
+    scope(exit) __stdloggermutex.unlock();
+    if (!once)
     {
-        logger = new FileLogger(stderr, globalLogLevel());
+        once = true;
+        logger = emplace!FileLogger(buffer, stderr, globalLogLevel());
     }
     return logger;
 }
 
-private ref LogLevel globalLogLevelImpl() @trusted
+private ref LogLevel globalLogLevelImpl() @trusted @nogc
 {
     static __gshared LogLevel ll = LogLevel.all;
     return ll;
@@ -1642,7 +1655,7 @@ Every log message with a $(D LogLevel) lower as the global $(D LogLevel)
 will be discarded before it reaches $(D writeLogMessage) method of any
 $(D Logger)
 */
-@property LogLevel globalLogLevel() @trusted
+@property LogLevel globalLogLevel() @trusted @nogc
 {
     return globalLogLevelImpl();
 }

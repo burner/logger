@@ -22,7 +22,7 @@ class NullLogger : Logger
         this.fatalHandler = delegate() {};
     }
 
-    override void writeLogMsg(ref LogEntry payload) @safe
+    override void writeLogMsg(ref LogEntry payload) @safe @nogc
     {
     }
 }
