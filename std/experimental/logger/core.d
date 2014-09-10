@@ -806,9 +806,10 @@ enum LogLevel : ubyte
 }
 
 /** This class is the base of every logger. In order to create a new kind of
-logger a deriving class needs to implement the $(D writeLogMsg) method.
+logger a deriving class needs to implement the $(D writeLogMsg) method. By
+default this is not thread-safe.
 
-In is also possible to $(D override) the three methods $(D beginLogMsg),
+It is also possible to $(D override) the three methods $(D beginLogMsg),
 $(D logMsgPart) and $(D finishLogMsg) together, this option gives more
 flexibility.
 */
@@ -907,6 +908,9 @@ abstract class Logger
         }
     }
     ----------------
+
+	By default the implementation of these three methods in this base class is
+	not thread-safe.
     */
     protected void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
