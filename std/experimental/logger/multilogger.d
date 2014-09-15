@@ -299,6 +299,51 @@ class ArrayLogger : MultiLoggerBase
     }
 }
 
+/* This function implements binary search and return the index of the found
+element. If no element is found $(D -1) is returned.
+*/
+private ptrdiff_t binarySearchIndex(Range, V,
+    alias predA = "a < b", alias predB = "a < b")(Range _input, V value)
+    if (isRandomAccessRange!Range)
+{
+    alias predFunA = binaryFun!predA;
+    alias predFunB = binaryFun!predB;
+
+    size_t first = 0, count = _input.length;
+    while (count > 0)
+    {
+        immutable step = count / 2, it = first + step;
+        if (predFunA(_input[it], value))
+        {
+            // Less than value, bump left bound up
+            first = it + 1;
+            count -= step + 1;
+        }
+        else if (predFunB(value, _input[it]))
+        {
+            // Greater than value, chop count
+            count = step;
+        }
+        else
+        {
+            // Found!!!
+            return cast(ptrdiff_t)it;
+        }
+    }
+    return -1;
+}
+
+unittest
+{
+    auto a = [1,2,3,4,5,6];
+    auto idx = a.binarySearchIndex(1);
+    assert(idx == 0);
+    idx = a.binarySearchIndex(6);
+    assert(idx == 5);
+}
+
+__EOF__
+
 unittest
 {
     import std.experimental.logger.nulllogger;
@@ -383,48 +428,5 @@ unittest
     assert(dl !is null);
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);
-}
-
-/* This function implements binary search and return the index of the found
-element. If no element is found $(D -1) is returned.
-*/
-private ptrdiff_t binarySearchIndex(Range, V,
-    alias predA = "a < b", alias predB = "a < b")(Range _input, V value)
-    if (isRandomAccessRange!Range)
-{
-    alias predFunA = binaryFun!predA;
-    alias predFunB = binaryFun!predB;
-
-    size_t first = 0, count = _input.length;
-    while (count > 0)
-    {
-        immutable step = count / 2, it = first + step;
-        if (predFunA(_input[it], value))
-        {
-            // Less than value, bump left bound up
-            first = it + 1;
-            count -= step + 1;
-        }
-        else if (predFunB(value, _input[it]))
-        {
-            // Greater than value, chop count
-            count = step;
-        }
-        else
-        {
-            // Found!!!
-            return cast(ptrdiff_t)it;
-        }
-    }
-    return -1;
-}
-
-unittest
-{
-    auto a = [1,2,3,4,5,6];
-    auto idx = a.binarySearchIndex(1);
-    assert(idx == 0);
-    idx = a.binarySearchIndex(6);
-    assert(idx == 5);
 }
 
