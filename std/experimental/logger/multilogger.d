@@ -342,8 +342,6 @@ unittest
     assert(idx == 5);
 }
 
-__EOF__
-
 unittest
 {
     import std.experimental.logger.nulllogger;
