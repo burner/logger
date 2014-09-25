@@ -17,10 +17,10 @@ unittest {
 
 unittest
 {
-	static assert( isLoggingActive!(LogLevel.trace));
-	static assert(!isLoggingActive!(LogLevel.info));
-	static assert( isLoggingActive!(LogLevel.warning));
-	static assert( isLoggingActive!(LogLevel.error));
-	static assert( isLoggingActive!(LogLevel.critical));
-	static assert( isLoggingActive!(LogLevel.fatal));
+	static assert( isLoggingActiveAt!(LogLevel.trace));
+	static assert(!isLoggingActiveAt!(LogLevel.info));
+	static assert( isLoggingActiveAt!(LogLevel.warning));
+	static assert( isLoggingActiveAt!(LogLevel.error));
+	static assert( isLoggingActiveAt!(LogLevel.critical));
+	static assert( isLoggingActiveAt!(LogLevel.fatal));
 }
