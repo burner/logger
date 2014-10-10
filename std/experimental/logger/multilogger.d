@@ -44,8 +44,10 @@ abstract class MultiLoggerBase : Logger
     */
     override protected void writeLogMsg(ref LogEntry payload) @trusted
     {
-        foreach (ref it; logger)
+        //foreach (ref it; logger) BUG
+        for (size_t i = 0; i < this.logger.length; ++i) 
         {
+            auto it = this.logger[i];
             /* We don't perform any checks here to avoid race conditions.
             Instead the child will check on its own if its log level matches
             and assume LogLevel.all for the globalLogLevel (since we already
@@ -177,8 +179,10 @@ class MultiLogger : MultiLoggerBase
         auto sorted = this.logger[].assumeSorted!"a.name < b.name";
         if (!sorted.canFind!"a.name == b"(toRemove))
         {
-            foreach(it; this.logger[])
-                writeln(it.name);
+            for (size_t i = 0; i < this.logger.length; ++i) 
+            {
+                writeln(this.logger[i].name);
+            }
             throw new Exception(
                 "This MultiLogger instance does not hold a Logger named '" ~
                 toRemove ~ "'");
@@ -418,7 +422,7 @@ unittest
 
 unittest
 {
-    auto dl = stdlogImpl;
+    auto dl = stdlog;
     assert(dl !is null);
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);
