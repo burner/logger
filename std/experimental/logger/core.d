@@ -177,7 +177,7 @@ template isLoggingActiveAt(LogLevel ll)
     }
     else
     {
-		static if (ll == LogLevel.trace)
+        static if (ll == LogLevel.trace)
         {
             version (StdLoggerDisableTrace) enum isLoggingActiveAt = false;
         }
@@ -201,12 +201,12 @@ template isLoggingActiveAt(LogLevel ll)
         {
             version (StdLoggerDisableFatal) enum isLoggingActiveAt = false;
         }
-    }
-    // If `isLoggingActiveAt` didn't get defined above to false,
-    // we default it to true.
-    static if (!is(typeof(isLoggingActiveAt) == bool))
-    {
-        enum isLoggingActiveAt = true;
+        // If `isLoggingActiveAt` didn't get defined above to false,
+        // we default it to true.
+        static if (!is(typeof(isLoggingActiveAt) == bool))
+        {
+            enum isLoggingActiveAt = true;
+        }
     }
 }
 
@@ -1829,7 +1829,6 @@ unittest
     auto ml = new MultiLogger();
     ml.insertLogger("one", tl1);
     ml.insertLogger("two", tl2);
-    assertThrown!Exception(ml.insertLogger("one", tl1));
 
     string msg = "Hello Logger World";
     ml.log(msg);
@@ -1841,7 +1840,8 @@ unittest
 
     ml.removeLogger("one");
     ml.removeLogger("two");
-    assertThrown!Exception(ml.removeLogger("one"));
+    auto n = ml.removeLogger("one");
+	assert(n is null);
 }
 
 unittest
