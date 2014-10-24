@@ -1,6 +1,6 @@
 import std.concurrency;
 
-import std.logger;
+import std.experimental.logger;
 
 void foo() { return; }
 
