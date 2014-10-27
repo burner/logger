@@ -20,15 +20,15 @@ task: std/experimental/logger/*.d task.d
 test1: test1.d std/experimental/logger/*.d
 	dmd -debug -gc test1.d -oftest1 std/experimental/logger/*.d
 
-liblogger.so: std/experimental/logger/*.d Makefile
-	dmd -lib -fPIC -release -w -ofliblogger.so std/experimental/logger/*.d -unittest -version=StdLoggerDisableInfo
+liblogger.a: std/experimental/logger/*.d Makefile
+	dmd -lib -release -w -ofliblogger.so std/experimental/logger/*.d -unittest -version=StdLoggerDisableInfo
 
 trace: tracedisable.d std/experimental/logger/*.d liblogger.so Makefile
 	dmd -debug -version=StdLoggerDisableInfo -gc tracedisable.d -oftrace -Istd/experimental/logger/ -main -unittest liblogger.so
 	./trace
 
-info: infodisable.d std/experimental/logger/*.d liblogger.so Makefile
-	dmd -debug -gc infodisable.d -ofinfo -Istd/experimental/logger/ -main -unittest liblogger.so
+info: infodisable.d std/experimental/logger/*.d liblogger.a Makefile
+	dmd -debug -gc infodisable.d -ofinfo -Istd/experimental/logger/ -main -unittest liblogger.a
 	./info
 
 warning: warningdisable.d std/experimental/logger/*.d liblogger.so Makefile
