@@ -20,30 +20,30 @@ task: std/experimental/logger/*.d task.d
 test1: test1.d std/experimental/logger/*.d
 	dmd -debug -gc test1.d -oftest1 std/experimental/logger/*.d
 
-liblogger.so: std/experimental/logger/*.d
-	dmd -lib -fPIC -release -w -ofliblogger.so std/experimental/logger/*.d -unittest
+liblogger.so: std/experimental/logger/*.d Makefile
+	dmd -lib -fPIC -release -w -ofliblogger.so std/experimental/logger/*.d -unittest -version=StdLoggerDisableInfo
 
-trace: tracedisable.d std/experimental/logger/*.d liblogger.so
-	dmd -debug -version=StdLoggerDisableTrace -gc tracedisable.d -oftrace -Istd/experimental/logger/ -main -unittest liblogger.so
+trace: tracedisable.d std/experimental/logger/*.d liblogger.so Makefile
+	dmd -debug -version=StdLoggerDisableInfo -gc tracedisable.d -oftrace -Istd/experimental/logger/ -main -unittest liblogger.so
 	./trace
 
-info: infodisable.d std/experimental/logger/*.d liblogger.so
-	dmd -debug -version=StdLoggerDisableInfo -gc infodisable.d -ofinfo -Istd/experimental/logger/ -main -unittest liblogger.so
+info: infodisable.d std/experimental/logger/*.d liblogger.so Makefile
+	dmd -debug -gc infodisable.d -ofinfo -Istd/experimental/logger/ -main -unittest liblogger.so
 	./info
 
-warning: warningdisable.d std/experimental/logger/*.d liblogger.so
+warning: warningdisable.d std/experimental/logger/*.d liblogger.so Makefile
 	dmd -debug -version=StdLoggerDisableWarning -gc warningdisable.d -ofwarning -Istd/experimental/logger/ -main -unittest liblogger.so
 	./warning
 
-error: errordisable.d std/experimental/logger/*.d liblogger.so
+error: errordisable.d std/experimental/logger/*.d liblogger.so Makefile
 	dmd -debug -version=StdLoggerDisableError -gc errordisable.d -oferror -Istd/experimental/logger/ -main -unittest liblogger.so
 	./error
 
-critical: criticaldisable.d std/experimental/logger/*.d liblogger.so
+critical: criticaldisable.d std/experimental/logger/*.d liblogger.so Makefile
 	dmd -debug -version=StdLoggerDisableCritical -gc criticaldisable.d -ofcritical -Istd/experimental/logger/ -main -unittest liblogger.so
 	./critical
 
-fatal: fataldisable.d std/experimental/logger/*.d liblogger.so
+fatal: fataldisable.d std/experimental/logger/*.d liblogger.so Makefile
 	dmd -debug -version=StdLoggerDisableFatal -gc fataldisable.d -offatal -Istd/experimental/logger/ -main -unittest liblogger.so
 	./fatal
 
