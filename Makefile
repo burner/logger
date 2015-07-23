@@ -1,4 +1,4 @@
-all: std/historical/logger/*.d main.d
+all: std/historical/logger/*.d main.d  
 	dmd -unittest -debug -cov -g std/historical/logger/*.d main.d -oflog -D -w
 	./log
 
