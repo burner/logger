@@ -142,7 +142,7 @@ calls to its stored $(D Logger). The $(D NullLogger) does not do anything. It
 will never log a message and will never throw on a log call with $(D LogLevel)
 $(D error).
 */
-module std.experimental.logger.core;
+module std.historical.logger.core;
 
 import std.array;
 import std.stdio;
@@ -157,7 +157,7 @@ import std.format;
 import core.atomic;
 import core.sync.mutex : Mutex;
 
-import std.experimental.logger.filelogger;
+import std.historical.logger.filelogger;
 
 shared static this() {
     __defaultLoggerMutex = new Mutex;
@@ -1812,16 +1812,16 @@ unittest
 {
     auto tl1 = new TestLogger();
     testFuncNames(tl1);
-    assert(tl1.func == "std.experimental.logger.core.testFuncNames", tl1.func);
+    assert(tl1.func == "std.historical.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
-        "void std.experimental.logger.core.testFuncNames(Logger logger)",
+        "void std.historical.logger.core.testFuncNames(Logger logger)",
         tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
 unittest
 {
-    import std.experimental.logger.multilogger;
+    import std.historical.logger.multilogger;
 
     auto tl1 = new TestLogger;
     auto tl2 = new TestLogger;
@@ -2764,7 +2764,7 @@ unittest
 // Issue #5
 unittest
 {
-    import std.experimental.logger.multilogger;
+    import std.historical.logger.multilogger;
 
     auto oldunspecificLogger = stdlog;
 

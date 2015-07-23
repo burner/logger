@@ -1,8 +1,8 @@
-module std.experimental.logger.multilogger;
+module std.historical.logger.multilogger;
 
 import std.array : insertInPlace, popBack;
-import std.experimental.logger.core;
-import std.experimental.logger.filelogger;
+import std.historical.logger.core;
+import std.historical.logger.filelogger;
 import std.stdio : stdout;
 
 /** This Element is stored inside the $(D MultiLogger) and associates a
@@ -103,7 +103,7 @@ class MultiLogger : Logger
 
 unittest
 {
-    import std.experimental.logger.nulllogger;
+    import std.historical.logger.nulllogger;
     import std.exception : assertThrown;
     auto a = new MultiLogger;
     auto n0 = new NullLogger();
