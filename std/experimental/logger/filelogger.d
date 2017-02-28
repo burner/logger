@@ -1,10 +1,10 @@
-module std.historical.logger.filelogger;
+module std.experimental.logger.filelogger;
 
 import std.stdio;
 import std.string;
 import std.datetime : SysTime;
 import std.concurrency;
-import std.historical.logger.core;
+import std.experimental.logger.core;
 
 import core.sync.mutex;
 
@@ -74,7 +74,7 @@ class FileLogger : Logger
     without requiring heap allocated memory. Additionally, the $(D FileLogger)
     local mutex is logged to serialize the log calls.
     */
-    override protected void beginLogMsg(string file, int line, string funcName,
+    override void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp, Logger logger)
         @trusted
@@ -91,7 +91,7 @@ class FileLogger : Logger
     /* This methods overrides the base class method and writes the parts of
     the log call directly to the file.
     */
-    override protected void logMsgPart(const(char)[] msg)
+    override void logMsgPart(const(char)[] msg)
     {
         formattedWrite(this.file_.lockingTextWriter(), "%s", msg);
     }
@@ -100,22 +100,10 @@ class FileLogger : Logger
     log call. This requires flushing the $(D File) and releasing the
     $(D FileLogger) local mutex.
     */
-    override protected void finishLogMsg()
+    override void finishLogMsg()
     {
         this.file_.lockingTextWriter().put("\n");
         this.file_.flush();
-    }
-
-    /* This methods overrides the base class method and delegates the
-    $(D LogEntry) data to the actual implementation.
-    */
-    override protected void writeLogMsg(ref LogEntry payload)
-    {
-        this.beginLogMsg(payload.file, payload.line, payload.funcName,
-            payload.prettyFuncName, payload.moduleName, payload.logLevel,
-            payload.threadId, payload.timestamp, payload.logger);
-        this.logMsgPart(payload.msg);
-        this.finishLogMsg();
     }
 
     /** If the $(D FileLogger) was constructed with a filename, this method

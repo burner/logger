@@ -142,7 +142,7 @@ calls to its stored $(D Logger). The $(D NullLogger) does not do anything. It
 will never log a message and will never throw on a log call with $(D LogLevel)
 $(D error).
 */
-module std.historical.logger.core;
+module std.experimental.logger.core;
 
 import std.array;
 import std.stdio;
@@ -157,7 +157,7 @@ import std.format;
 import core.atomic;
 import core.sync.mutex : Mutex;
 
-import std.historical.logger.filelogger;
+import std.experimental.logger.filelogger;
 
 shared static this() {
     __defaultLoggerMutex = new Mutex;
@@ -258,11 +258,11 @@ The sub second part is the upper three digest of the microsecond.
 void systimeToISOString(OutputRange)(OutputRange o, const ref SysTime time)
     if(isOutputRange!(OutputRange,string))
 {
-    auto fsec = time.fracSec.usecs / 1000;
+    auto t = time.fracSecs / 1000;
 
-    formattedWrite(o, "%04d-%02d-%02dT%02d:%02d:%02d.%03d",
+    formattedWrite(o, "%04d-%02d-%02dT%02d:%02d:%02d.%03s",
         time.year, time.month, time.day, time.hour, time.minute, time.second,
-        fsec);
+        t);
 }
 
 /** This function logs data.
@@ -827,14 +827,14 @@ abstract class Logger
         this.msgAppender = appender!string();
     }
 
-    /** A custom logger must implement this method in order to work in a
+    /+/** A custom logger must implement this method in order to work in a
     $(D MultiLogger) and $(D ArrayLogger).
 
     Params:
         payload = All information associated with call to log function.
     See_Also: beginLogMsg, logMsgPart, finishLogMsg
     */
-    abstract protected void writeLogMsg(ref LogEntry payload);
+    abstract protected void writeLogMsg(ref LogEntry payload);+/
 
     /* The default implementation will use an $(D std.array.appender)
     internally to construct the message string. This means dynamic,
@@ -875,38 +875,17 @@ abstract class Logger
     }
     ----------------
     */
-    protected void beginLogMsg(string file, int line, string funcName,
+    abstract void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp, Logger logger)
-        @trusted
-    {
-        static if (isLoggingActive)
-        {
-            header = LogEntry(file, line, funcName, prettyFuncName,
-                moduleName, logLevel, threadId, timestamp, null, logger);
-        }
-    }
+        @trusted;
 
     /** Logs a part of the log message. */
-    protected void logMsgPart(const(char)[] msg)
-    {
-        static if (isLoggingActive)
-        {
-            msgAppender.put(msg);
-        }
-    }
+    abstract void logMsgPart(const(char)[] msg);
 
     /** Signals that the message has been written and no more calls to
     $(D logMsgPart) follow. */
-    protected void finishLogMsg()
-    {
-        static if (isLoggingActive)
-        {
-            header.msg = msgAppender.data;
-            this.writeLogMsg(header);
-            msgAppender = appender!string();
-        }
-    }
+    abstract void finishLogMsg();
 
     /** The $(D LogLevel) determines if the log call are processed or dropped
     by the $(D Logger). In order for the log call to be processed the
@@ -949,7 +928,7 @@ abstract class Logger
         synchronized (mutex) this.fatalHandler_ = fh;
     }
 
-    /** This method allows forwarding log entries from one logger to another.
+    /+/** This method allows forwarding log entries from one logger to another.
 
     $(D forwardMsg) will ensure proper synchronization and then call
     $(D writeLogMsg). This is an API for implementing your own loggers and
@@ -970,7 +949,7 @@ abstract class Logger
                     this.fatalHandler_();
             }
         }
-    }
+    }+/
 
     /** This template provides the log functions for the $(D Logger) $(D class)
     with the $(D LogLevel) encoded in the function name.
@@ -1015,10 +994,10 @@ abstract class Logger
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime, this);
 
+                    scope(exit) this.finishLogMsg();
+
                     auto writer = MsgRange(this);
                     formatString(writer, args);
-
-                    this.finishLogMsg();
 
                     static if (ll == LogLevel.fatal)
                         this.fatalHandler_();
@@ -1061,11 +1040,10 @@ abstract class Logger
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime, this);
+                    scope(exit) this.finishLogMsg();
 
                     auto writer = MsgRange(this);
                     formatString(writer, args);
-
-                    this.finishLogMsg();
 
                     static if (ll == LogLevel.fatal)
                         this.fatalHandler_();
@@ -1109,11 +1087,10 @@ abstract class Logger
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime, this);
+                    scope(exit) this.finishLogMsg();
 
                     auto writer = MsgRange(this);
                     formattedWrite(writer, msg, args);
-
-                    this.finishLogMsg();
 
                     static if (ll == LogLevel.fatal)
                         this.fatalHandler_();
@@ -1154,11 +1131,10 @@ abstract class Logger
                 {
                     this.beginLogMsg(file, line, funcName, prettyFuncName,
                         moduleName, ll, thisTid, Clock.currTime, this);
+                    scope(exit) this.finishLogMsg();
 
                     auto writer = MsgRange(this);
                     formattedWrite(writer, msg, args);
-
-                    this.finishLogMsg();
 
                     static if (ll == LogLevel.fatal)
                         this.fatalHandler_();
@@ -1224,11 +1200,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1250,10 +1225,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
+
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1295,11 +1270,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1319,10 +1293,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
+
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1366,11 +1340,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1391,10 +1364,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
+
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1438,10 +1411,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
+
                 auto writer = MsgRange(this);
                 formatString(writer, args);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1461,10 +1434,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
+
                 auto writer = MsgRange(this);
                 formatString(writer, arg);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1508,11 +1481,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1554,11 +1526,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, ll, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
-
-                this.finishLogMsg();
 
                 if (ll == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1602,11 +1573,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1647,11 +1617,10 @@ abstract class Logger
             {
                 this.beginLogMsg(file, line, funcName, prettyFuncName,
                     moduleName, this.logLevel_, thisTid, Clock.currTime, this);
+                scope(exit) this.finishLogMsg();
 
                 auto writer = MsgRange(this);
                 formattedWrite(writer, msg, args);
-
-                this.finishLogMsg();
 
                 if (this.logLevel_ == LogLevel.fatal)
                     this.fatalHandler_();
@@ -1790,15 +1759,30 @@ version (unittest)
             super(lv);
         }
 
-        override protected void writeLogMsg(ref LogEntry payload) @safe
-        {
-            this.line = payload.line;
-            this.file = payload.file;
-            this.func = payload.funcName;
-            this.prettyFunc = payload.prettyFuncName;
-            this.lvl = payload.logLevel;
-            this.msg = payload.msg;
-        }
+    	protected override void beginLogMsg(string file, int line, string funcName,
+    	    string prettyFuncName, string moduleName, LogLevel logLevel,
+    	    Tid threadId, SysTime timestamp, Logger logger)
+    	    @safe
+    	{
+            this.line = line;
+            this.file = file;
+            this.func = funcName;
+            this.prettyFunc = prettyFuncName;
+            this.lvl = logLevel;
+			this.msg = "";
+    	}
+
+    	/** Logs a part of the log message. */
+    	protected override void logMsgPart(const(char)[] msg)
+    	{
+			this.msg ~= msg;
+    	}
+
+    	/** Signals that the message has been written and no more calls to
+    	$(D logMsgPart) follow. */
+    	protected override void finishLogMsg()
+    	{
+    	}
     }
 
     private void testFuncNames(Logger logger) {
@@ -1812,16 +1796,16 @@ unittest
 {
     auto tl1 = new TestLogger();
     testFuncNames(tl1);
-    assert(tl1.func == "std.historical.logger.core.testFuncNames", tl1.func);
+    assert(tl1.func == "std.experimental.logger.core.testFuncNames", tl1.func);
     assert(tl1.prettyFunc ==
-        "void std.historical.logger.core.testFuncNames(Logger logger)",
+        "void std.experimental.logger.core.testFuncNames(Logger logger)",
         tl1.prettyFunc);
     assert(tl1.msg == "I'm here", tl1.msg);
 }
 
 unittest
 {
-    import std.historical.logger.multilogger;
+    import std.experimental.logger.multilogger;
 
     auto tl1 = new TestLogger;
     auto tl2 = new TestLogger;
@@ -1868,7 +1852,7 @@ unittest
 
     l.log(true, msg);
     lineNumber = __LINE__ - 1;
-    assert(l.msg == msg);
+    assert(l.msg == msg, l.msg);
     assert(l.line == lineNumber);
     assert(l.logLevel == LogLevel.info);
 
@@ -2764,7 +2748,7 @@ unittest
 // Issue #5
 unittest
 {
-    import std.historical.logger.multilogger;
+    import std.experimental.logger.multilogger;
 
     auto oldunspecificLogger = stdlog;
 

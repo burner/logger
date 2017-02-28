@@ -1,8 +1,8 @@
-module std.historical.logger.multilogger;
+module std.experimental.logger.multilogger;
 
 import std.array : insertInPlace, popBack;
-import std.historical.logger.core;
-import std.historical.logger.filelogger;
+import std.experimental.logger.core;
+import std.experimental.logger.filelogger;
 import std.stdio : stdout;
 
 /** This Element is stored inside the $(D MultiLogger) and associates a
@@ -24,6 +24,9 @@ remove a $(D Logger) only the first occurrence with that name will be removed.
 */
 class MultiLogger : Logger
 {
+	import std.concurrency;
+	import std.datetime;
+
     /** A constructor for the $(D MultiLogger) Logger.
 
     Params:
@@ -83,27 +86,41 @@ class MultiLogger : Logger
         return null;
     }
 
-    /* The override to pass the payload to all children of the
-    $(D MultiLoggerBase).
-    */
-    override protected void writeLogMsg(ref LogEntry payload) @trusted
+    override void beginLogMsg(string file, int line, string funcName,
+        string prettyFuncName, string moduleName, LogLevel logLevel,
+        Tid threadId, SysTime timestamp, Logger logger)
+        @safe
     {
-        for (size_t i = 0; i < this.logger.length; ++i)
-        {
-            auto it = this.logger[i];
-            /* We don't perform any checks here to avoid race conditions.
-            Instead the child will check on its own if its log level matches
-            and assume LogLevel.all for the globalLogLevel (since we already
-            know the message passes this test).
-            */
-            it.logger.forwardMsg(payload);
-        }
+		foreach (ref it; this.logger)
+		{
+			it.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
+					logLevel, threadId, timestamp, logger);
+		}
+    }
+
+    /** Logs a part of the log message. */
+    override void logMsgPart(const(char)[] msg)
+    {
+		foreach (ref it; this.logger)
+		{
+			it.logger.logMsgPart(msg);
+		}
+    }
+
+    /** Signals that the message has been written and no more calls to
+    $(D logMsgPart) follow. */
+    override void finishLogMsg()
+    {
+		foreach (ref it; this.logger)
+		{
+			it.logger.finishLogMsg();
+		}
     }
 }
 
 unittest
 {
-    import std.historical.logger.nulllogger;
+    import std.experimental.logger.nulllogger;
     import std.exception : assertThrown;
     auto a = new MultiLogger;
     auto n0 = new NullLogger();
@@ -142,6 +159,7 @@ unittest
 {
     import std.stdio : File;
     import std.string : indexOf;
+	import std.format : format;
     auto logName = randomString(32) ~ ".log";
     auto logFileOutput = File(logName, "w");
     scope(exit)
@@ -160,7 +178,7 @@ unittest
     string tMsg = "A trace message";
     root.trace(tMsg); int line1 = __LINE__;
 
-    assert(infoLog.line != line1);
+    assert(infoLog.line != line1, format("%d %d", infoLog.line, line1));
     assert(infoLog.msg != tMsg);
 
     string iMsg = "A info message";
