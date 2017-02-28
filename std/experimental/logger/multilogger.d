@@ -27,6 +27,8 @@ class MultiLogger : Logger
 	import std.concurrency;
 	import std.datetime;
 
+	LogLevel curLogLevel;
+
     /** A constructor for the $(D MultiLogger) Logger.
 
     Params:
@@ -91,19 +93,33 @@ class MultiLogger : Logger
         Tid threadId, SysTime timestamp, Logger logger)
         @safe
     {
-		foreach (ref it; this.logger)
+		static if (isLoggingActive)
 		{
-			it.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
-					logLevel, threadId, timestamp, logger);
+			this.curLogLevel = logLevel;
+
+			foreach (ref it; this.logger)
+			{
+            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
+            	{
+					it.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
+							logLevel, threadId, timestamp, logger);
+				}
+			}
 		}
     }
 
     /** Logs a part of the log message. */
     override void logMsgPart(const(char)[] msg)
     {
-		foreach (ref it; this.logger)
+		static if (isLoggingActive)
 		{
-			it.logger.logMsgPart(msg);
+			foreach (ref it; this.logger)
+			{
+            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
+            	{
+					it.logger.logMsgPart(msg);
+				}
+			}
 		}
     }
 
@@ -111,9 +127,15 @@ class MultiLogger : Logger
     $(D logMsgPart) follow. */
     override void finishLogMsg()
     {
-		foreach (ref it; this.logger)
+		static if (isLoggingActive)
 		{
-			it.logger.finishLogMsg();
+			foreach (ref it; this.logger)
+			{
+            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
+				{
+					it.logger.finishLogMsg();
+				}
+			}
 		}
     }
 }
@@ -206,4 +228,3 @@ unittest
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);
 }
-

@@ -901,13 +901,13 @@ abstract class Logger
     assert(f.logLevel == LogLevel.info);
     -----------
     */
-    @property final LogLevel logLevel() const pure @trusted @nogc
+    @property LogLevel logLevel() const pure @trusted @nogc
     {
         return atomicLoad!(MemoryOrder.acq)(this.logLevel_);
     }
 
     /// Ditto
-    @property final void logLevel(const LogLevel lv) pure @safe @nogc
+    @property void logLevel(const LogLevel lv) pure @safe @nogc
     {
         synchronized (mutex) this.logLevel_ = lv;
     }
@@ -917,13 +917,13 @@ abstract class Logger
 
     By default an $(D Error) will be thrown.
     */
-    @property final void delegate() fatalHandler() const pure @safe @nogc
+    @property void delegate() fatalHandler() const pure @safe @nogc
     {
         synchronized (mutex) return this.fatalHandler_;
     }
 
     /// Ditto
-    @property final void fatalHandler(void delegate() fh) pure @safe @nogc
+    @property void fatalHandler(void delegate() fh) pure @safe @nogc
     {
         synchronized (mutex) this.fatalHandler_ = fh;
     }

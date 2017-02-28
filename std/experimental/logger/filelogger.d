@@ -79,13 +79,16 @@ class FileLogger : Logger
         Tid threadId, SysTime timestamp, Logger logger)
         @trusted
     {
-        ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
-        ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
+		static if (isLoggingActive)
+		{
+        	ptrdiff_t fnIdx = file.lastIndexOf('/') + 1;
+        	ptrdiff_t funIdx = funcName.lastIndexOf('.') + 1;
 
-        auto lt = this.file_.lockingTextWriter();
-        systimeToISOString(lt, timestamp);
-        formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $],
-            funcName[funIdx .. $], line);
+        	auto lt = this.file_.lockingTextWriter();
+        	systimeToISOString(lt, timestamp);
+        	formattedWrite(lt, ":%s:%s:%u ", file[fnIdx .. $],
+        	    funcName[funIdx .. $], line);
+		}
     }
 
     /* This methods overrides the base class method and writes the parts of
@@ -93,7 +96,8 @@ class FileLogger : Logger
     */
     override void logMsgPart(const(char)[] msg)
     {
-        formattedWrite(this.file_.lockingTextWriter(), "%s", msg);
+		static if (isLoggingActive)
+        	formattedWrite(this.file_.lockingTextWriter(), "%s", msg);
     }
 
     /* This methods overrides the base class method and finalizes the active
@@ -102,8 +106,11 @@ class FileLogger : Logger
     */
     override void finishLogMsg()
     {
-        this.file_.lockingTextWriter().put("\n");
-        this.file_.flush();
+		static if (isLoggingActive)
+		{
+        	this.file_.lockingTextWriter().put("\n");
+        	this.file_.flush();
+		}
     }
 
     /** If the $(D FileLogger) was constructed with a filename, this method
