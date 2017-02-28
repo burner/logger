@@ -3,7 +3,7 @@ module std.experimental.logger.threadsafeforwarder;
 import std.experimental.logger.core;
 
 /** The $(D ThreadSafeForwarder) will forward all log calls to its assinged
-destination, in a thread safe way. 
+destination, in a thread safe way.
 */
 class ThreadSafeForwarder : Logger
 {
@@ -136,16 +136,19 @@ unittest {
     	}
     }
 
-	class T : Thread {
+	class T : Thread
+	{
 		Logger l;
 		int i;
-		this(Logger l, int i) {
+		this(Logger l, int i)
+		{
 			super(&run);
 			this.l = l;
 			this.i = i;
 		}
 
-		void run() {
+		void run()
+		{
 			this.l.logf("%0d", this.i);
 		}
 	}
@@ -154,18 +157,21 @@ unittest {
     auto a = new ThreadSafeForwarder(t);
 
 	Thread[10] ts;
-	for(int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 10; ++i)
+	{
 		ts[i] = new T(a, i).start();
 	}
 
-	foreach(it; ts) {
+	foreach (it; ts)
+	{
 		it.join();
 	}
 
 	assert(t.i == 10);
 	sort(t.buf[]);
-	for(int i = 0; i < 10; ++i) {
-		assert(t.buf[i] == format("%0d", i), 
+	for (int i = 0; i < 10; ++i)
+	{
+		assert(t.buf[i] == format("%0d", i),
 			format("%d %0d %s", i, i, t.buf[i])
 		);
 	}
