@@ -29,26 +29,6 @@ class ThreadSafeForwarder : Logger
         this.mutex = emplace!Mutex(mutexBuffer);
     }
 	
-    override @property LogLevel logLevel() const pure @trusted @nogc
-    {
-        return this.destination.logLevel;
-    }
-
-    override @property void logLevel(const LogLevel lv) pure @safe @nogc
-    {
-		this.destination.logLevel = lv;
-    }
-
-    override @property void delegate() fatalHandler() const pure @safe @nogc
-    {
-        return this.destination.fatalHandler;
-    }
-
-    override @property void fatalHandler(void delegate() fh) pure @safe @nogc
-    {
-        this.destination.fatalHandler = fh;
-    }
-
     override void beginLogMsg(string file, int line, string funcName,
         string prettyFuncName, string moduleName, LogLevel logLevel,
         Tid threadId, SysTime timestamp, Logger logger)

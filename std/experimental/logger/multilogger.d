@@ -1,9 +1,8 @@
+///
 module std.experimental.logger.multilogger;
 
-import std.array : insertInPlace, popBack;
 import std.experimental.logger.core;
 import std.experimental.logger.filelogger;
-import std.stdio : stdout;
 
 /** This Element is stored inside the $(D MultiLogger) and associates a
 $(D Logger) to a $(D string).
@@ -14,38 +13,36 @@ struct MultiLoggerEntry
     Logger logger; /// The stored $(D Logger)
 }
 
-/** MultiLogger logs to multiple $(D Logger). The $(D Logger) are stored in an
-$(D std.container.Multi) in there order of insertion.
+/** MultiLogger logs to multiple $(D Logger). The $(D Logger)s are stored in an
+$(D Logger[]) in their order of insertion.
 
-Every data logged to this $(D MultiLogger) will be distributed to all the
-$(D Logger) inserted into inserted it. The $(D MultiLogger) can hold multiple
-$(D Logger) with the same name. If the method $(D removeLogger) is used to
-remove a $(D Logger) only the first occurrence with that name will be removed.
+Every data logged to this $(D MultiLogger) will be distributed to all the $(D
+Logger)s inserted into it. This $(D MultiLogger) implementation can
+hold multiple $(D Logger)s with the same name. If the method $(D removeLogger)
+is used to remove a $(D Logger) only the first occurrence with that name will
+be removed.
 */
 class MultiLogger : Logger
 {
-	import std.concurrency;
-	import std.datetime;
-
-	LogLevel curLogLevel;
-
+    import std.concurrency : Tid;
+	import std.datetime : SysTime;
     /** A constructor for the $(D MultiLogger) Logger.
 
     Params:
       lv = The $(D LogLevel) for the $(D MultiLogger). By default the
-      $(D LogLevel) for $(D MultiLogger) is $(D LogLevel.info).
+      $(D LogLevel) for $(D MultiLogger) is $(D LogLevel.all).
 
     Example:
     -------------
     auto l1 = new MultiLogger(LogLevel.trace);
     -------------
     */
-    this(const LogLevel lv = LogLevel.info)
+    this(const LogLevel lv = LogLevel.all) @safe
     {
         super(lv);
     }
 
-    /** This member holds all $(D Logger) stored in the $(D MultiLogger).
+    /** This member holds all $(D Logger)s stored in the $(D MultiLogger).
 
     When inheriting from $(D MultiLogger) this member can be used to gain
     access to the stored $(D Logger).
@@ -55,10 +52,10 @@ class MultiLogger : Logger
     /** This method inserts a new Logger into the $(D MultiLogger).
 
     Params:
-        name = The name of the $(D Logger) to insert.
-        newLogger = The $(D Logger) to insert.
+      name = The name of the $(D Logger) to insert.
+      newLogger = The $(D Logger) to insert.
     */
-    void insertLogger(string name, Logger newLogger)
+    void insertLogger(string name, Logger newLogger) @safe
     {
         this.logger ~= MultiLoggerEntry(name, newLogger);
     }
@@ -66,19 +63,22 @@ class MultiLogger : Logger
     /** This method removes a Logger from the $(D MultiLogger).
 
     Params:
-        toRemove = The name of the $(D Logger) to remove. If the $(D Logger)
+      toRemove = The name of the $(D Logger) to remove. If the $(D Logger)
         is not found $(D null) will be returned. Only the first occurrence of
         a $(D Logger) with the given name will be removed.
 
     Returns: The removed $(D Logger).
     */
-    Logger removeLogger(in char[] toRemove)
+    Logger removeLogger(in char[] toRemove) @safe
     {
+        import std.algorithm.mutation : copy;
+        import std.range.primitives : back, popBack;
         for (size_t i = 0; i < this.logger.length; ++i)
         {
-            if (this.logger[i].name == toRemove) {
+            if (this.logger[i].name == toRemove)
+            {
                 Logger ret = this.logger[i].logger;
-                this.logger[i .. $-1] = this.logger[i+1 .. $];
+                this.logger[i] = this.logger.back;
                 this.logger.popBack();
 
                 return ret;
@@ -93,54 +93,34 @@ class MultiLogger : Logger
         Tid threadId, SysTime timestamp, Logger logger)
         @safe
     {
-		static if (isLoggingActive)
+		foreach (log; this.logger)
 		{
-			this.curLogLevel = logLevel;
-
-			foreach (ref it; this.logger)
-			{
-            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
-            	{
-					it.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
-							logLevel, threadId, timestamp, logger);
-				}
-			}
+			log.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
+					logLevel, threadId, timestamp, logger);
 		}
     }
 
     /** Logs a part of the log message. */
-    override void logMsgPart(const(char)[] msg)
+    override void logMsgPart(const(char)[] msg) @safe
     {
-		static if (isLoggingActive)
+		foreach (log; this.logger)
 		{
-			foreach (ref it; this.logger)
-			{
-            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
-            	{
-					it.logger.logMsgPart(msg);
-				}
-			}
+			log.logger.logMsgPart(msg);
 		}
     }
 
     /** Signals that the message has been written and no more calls to
     $(D logMsgPart) follow. */
-    override void finishLogMsg()
+    override void finishLogMsg() @safe
     {
-		static if (isLoggingActive)
+		foreach (log; this.logger)
 		{
-			foreach (ref it; this.logger)
-			{
-            	if (isLoggingEnabled(this.curLogLevel, it.logger.logLevel, globalLogLevel))
-				{
-					it.logger.finishLogMsg();
-				}
-			}
+			log.logger.finishLogMsg();
 		}
     }
 }
 
-unittest
+@safe unittest
 {
     import std.experimental.logger.nulllogger;
     import std.exception : assertThrown;
@@ -161,7 +141,7 @@ unittest
     assert(n is null);
 }
 
-unittest
+@safe unittest
 {
     auto a = new MultiLogger;
     auto n0 = new TestLogger;
@@ -173,16 +153,16 @@ unittest
     assert(n0.msg == "Hello TestLogger");
     assert(n0.line == line);
     assert(n1.msg == "Hello TestLogger");
-    assert(n0.line == line);
+    assert(n1.line == line);
 }
 
 // Issue #16
-unittest
+@system unittest
 {
+    import std.file : deleteme;
     import std.stdio : File;
     import std.string : indexOf;
-	import std.format : format;
-    auto logName = randomString(32) ~ ".log";
+    string logName = deleteme ~ __FUNCTION__ ~ ".log";
     auto logFileOutput = File(logName, "w");
     scope(exit)
     {
@@ -200,7 +180,7 @@ unittest
     string tMsg = "A trace message";
     root.trace(tMsg); int line1 = __LINE__;
 
-    assert(infoLog.line != line1, format("%d %d", infoLog.line, line1));
+    assert(infoLog.line != line1);
     assert(infoLog.msg != tMsg);
 
     string iMsg = "A info message";
@@ -221,10 +201,14 @@ unittest
     assert(line.indexOf(iMsg) != -1, line ~ ":" ~ tMsg);
 }
 
-unittest
+@safe unittest
 {
-    auto dl = stdlog;
+    auto dl = cast(FileLogger) sharedLog;
     assert(dl !is null);
     assert(dl.logLevel == LogLevel.all);
     assert(globalLogLevel == LogLevel.all);
+
+    auto tl = cast(StdForwardLogger) stdThreadLocalLog;
+    assert(tl !is null);
+    stdThreadLocalLog.logLevel = LogLevel.all;
 }
