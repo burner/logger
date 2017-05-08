@@ -1729,7 +1729,6 @@ package class TestLogger : Logger
     string prettyFunc = null;
     string msg = null;
     LogLevel lvl;
-	LogLevel curMsgLogLevel;
 
     this(const LogLevel lv = LogLevel.all) @safe
     {
@@ -1889,7 +1888,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Throwable(l.logf(LogLevel.fatal, msg, "Yet"));
+        assertThrown!Exception(l.logf(LogLevel.fatal, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -1897,7 +1896,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Throwable(l.logf(LogLevel.fatal, true, msg, "Yet"));
+        assertThrown!Exception(l.logf(LogLevel.fatal, true, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
