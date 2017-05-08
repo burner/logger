@@ -744,6 +744,8 @@ abstract class Logger
         Logger logger;
     }
 
+	LogLevel curMsgLogLevel;
+
     /**
     Every subclass of `Logger` has to call this constructor from their
     constructor. It sets the `LogLevel`, and creates a fatal handler. The fatal
@@ -813,7 +815,13 @@ abstract class Logger
 
     /** Signals that the message has been written and no more calls to
     $(D logMsgPart) follow. */
-    abstract void finishLogMsg() @safe;
+    void finishLogMsg() @safe
+	{
+        if (this.logLevel == LogLevel.fatal)
+		{
+			throw new Exception("Fatal Exception was logged");
+		}
+	}
 
     /** The $(D LogLevel) determines if the log call are processed or dropped
     by the $(D Logger). In order for the log call to be processed the
@@ -1791,6 +1799,7 @@ package class TestLogger : Logger
     string prettyFunc = null;
     string msg = null;
     LogLevel lvl;
+	LogLevel curMsgLogLevel;
 
     this(const LogLevel lv = LogLevel.all) @safe
     {
@@ -1802,21 +1811,24 @@ package class TestLogger : Logger
         Tid threadId, SysTime timestamp, Logger logger)
         @safe
     {
-         this.line = line;
-         this.file = file;
-         this.func = funcName;
-         this.prettyFunc = prettyFuncName;
-         this.lvl = logLevel;
-         this.msg = "";
+        this.curMsgLogLevel = logLevel;
+        if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel))
+        {
+            this.line = line;
+            this.file = file;
+            this.func = funcName;
+            this.prettyFunc = prettyFuncName;
+            this.lvl = logLevel;
+            this.msg = "";
+		}
     }
     
     protected override void logMsgPart(const(char)[] msg)
     {
-    	this.msg ~= msg;
-    }
-    
-    protected override void finishLogMsg()
-    {
+        if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel))
+        {
+    	    this.msg ~= msg;
+		}
     }
 }
 
@@ -2036,7 +2048,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 
     msg = "%s Another message";
     () @trusted {
-        assertThrown!Throwable(logf(LogLevel.fatal, msg, "Yet"));
+        assertThrown!Exception(logf(LogLevel.fatal, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -2044,7 +2056,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Throwable(logf(LogLevel.fatal, true, msg, "Yet"));
+        assertThrown!Exception(logf(LogLevel.fatal, true, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));

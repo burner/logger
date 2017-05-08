@@ -71,9 +71,6 @@ unittest
 	assert(t.msg == "10");
 	a.logf("%s", 11);
 	assert(t.msg == "11");
-
-	a.logLevel = LogLevel.critical;
-	assert(t.logLevel == LogLevel.critical);
 }
 
 unittest {

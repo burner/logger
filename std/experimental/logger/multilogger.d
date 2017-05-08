@@ -26,6 +26,15 @@ class MultiLogger : Logger
 {
     import std.concurrency : Tid;
 	import std.datetime : SysTime;
+	import std.experimental.logger.core : isLoggingEnabled;
+
+    /** This member holds all $(D Logger)s stored in the $(D MultiLogger).
+
+    When inheriting from $(D MultiLogger) this member can be used to gain
+    access to the stored $(D Logger).
+    */
+    protected MultiLoggerEntry[] logger;
+
     /** A constructor for the $(D MultiLogger) Logger.
 
     Params:
@@ -41,13 +50,6 @@ class MultiLogger : Logger
     {
         super(lv);
     }
-
-    /** This member holds all $(D Logger)s stored in the $(D MultiLogger).
-
-    When inheriting from $(D MultiLogger) this member can be used to gain
-    access to the stored $(D Logger).
-    */
-    protected MultiLoggerEntry[] logger;
 
     /** This method inserts a new Logger into the $(D MultiLogger).
 
@@ -93,19 +95,26 @@ class MultiLogger : Logger
         Tid threadId, SysTime timestamp, Logger logger)
         @safe
     {
-		foreach (log; this.logger)
-		{
-			log.logger.beginLogMsg(file, line, funcName, prettyFuncName, moduleName,
-					logLevel, threadId, timestamp, logger);
+		this.curMsgLogLevel = logLevel;
+        if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel))
+        {
+			foreach (log; this.logger)
+			{
+				log.logger.beginLogMsg(file, line, funcName, prettyFuncName, 
+						moduleName, logLevel, threadId, timestamp, logger);
+			}
 		}
     }
 
     /** Logs a part of the log message. */
     override void logMsgPart(const(char)[] msg) @safe
     {
-		foreach (log; this.logger)
-		{
-			log.logger.logMsgPart(msg);
+        if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel))
+        {
+			foreach (log; this.logger)
+			{
+				log.logger.logMsgPart(msg);
+			}
 		}
     }
 
@@ -113,9 +122,17 @@ class MultiLogger : Logger
     $(D logMsgPart) follow. */
     override void finishLogMsg() @safe
     {
-		foreach (log; this.logger)
+        if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel))
+        {
+			foreach (log; this.logger)
+			{
+				log.logger.finishLogMsg();
+			}
+		}
+
+        if (this.logLevel == LogLevel.fatal)
 		{
-			log.logger.finishLogMsg();
+			throw new Exception("Fatal Exception was logged");
 		}
     }
 }
