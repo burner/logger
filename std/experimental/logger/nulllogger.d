@@ -22,7 +22,6 @@ class NullLogger : Logger
     this(const LogLevel lv = LogLevel.all) @safe
     {
         super(lv);
-        this.fatalHandler = delegate() {};
     }
 
     override void beginLogMsg(string file, int line, string funcName,

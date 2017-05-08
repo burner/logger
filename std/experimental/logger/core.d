@@ -758,10 +758,6 @@ abstract class Logger
     this(LogLevel lv) @safe
     {
         this.logLevel_ = lv;
-        this.fatalHandler_ = delegate() {
-            throw new Error("A fatal log message was logged");
-        };
-
         this.mutex = new Mutex();
     }
 
@@ -817,7 +813,7 @@ abstract class Logger
     $(D logMsgPart) follow. */
     void finishLogMsg() @safe
 	{
-        if (this.logLevel == LogLevel.fatal)
+        if (this.curMsgLogLevel == LogLevel.fatal)
 		{
 			throw new Exception("Fatal Exception was logged");
 		}
@@ -846,22 +842,6 @@ abstract class Logger
     @property final void logLevel(const LogLevel lv) @safe @nogc
     {
         synchronized (mutex) this.logLevel_ = lv;
-    }
-
-    /** This $(D delegate) is called in case a log message with
-    $(D LogLevel.fatal) gets logged.
-
-    By default an $(D Error) will be thrown.
-    */
-    @property final void delegate() fatalHandler() @safe @nogc
-    {
-        synchronized (mutex) return this.fatalHandler_;
-    }
-
-    /// Ditto
-    @property final void fatalHandler(void delegate() @safe fh) @safe @nogc
-    {
-        synchronized (mutex) this.fatalHandler_ = fh;
     }
 
     /** This template provides the log functions for the $(D Logger) $(D class)
@@ -912,9 +892,6 @@ abstract class Logger
                     formatString(writer, args);
 
                     this.finishLogMsg();
-
-                    static if (ll == LogLevel.fatal)
-                        this.fatalHandler_();
                 }
             }
         }
@@ -960,9 +937,6 @@ abstract class Logger
                     formatString(writer, args);
 
                     this.finishLogMsg();
-
-                    static if (ll == LogLevel.fatal)
-                        this.fatalHandler_();
                 }
             }
         }
@@ -1011,9 +985,6 @@ abstract class Logger
                     formattedWrite(writer, msg, args);
 
                     this.finishLogMsg();
-
-                    static if (ll == LogLevel.fatal)
-                        this.fatalHandler_();
                 }
             }
         }
@@ -1058,9 +1029,6 @@ abstract class Logger
                     formattedWrite(writer, msg, args);
 
                     this.finishLogMsg();
-
-                    static if (ll == LogLevel.fatal)
-                        this.fatalHandler_();
                 }
             }
         }
@@ -1128,9 +1096,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1152,9 +1117,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1197,9 +1159,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1220,9 +1179,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1267,9 +1223,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1291,9 +1244,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1338,9 +1288,6 @@ abstract class Logger
                 formatString(writer, args);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1361,9 +1308,6 @@ abstract class Logger
                 formatString(writer, arg);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1411,9 +1355,6 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1459,9 +1400,6 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
-
-                if (ll == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1509,9 +1447,6 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
@@ -1555,14 +1490,10 @@ abstract class Logger
                 formattedWrite(writer, msg, args);
 
                 this.finishLogMsg();
-
-                if (this.logLevel_ == LogLevel.fatal)
-                    this.fatalHandler_();
             }
         }
     }
 
-    private void delegate() @safe fatalHandler_;
     private shared LogLevel logLevel_ = LogLevel.info;
     private Mutex mutex;
 
@@ -1687,7 +1618,6 @@ class StdForwardLogger : Logger
     this(const LogLevel lv = LogLevel.all) @safe
     {
         super(lv);
-        this.fatalHandler = delegate() {};
     }
 
     protected override void beginLogMsg(string file, int line, string funcName,
@@ -1913,18 +1843,6 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     ml.removeLogger("two");
     auto n = ml.removeLogger("one");
     assert(n is null);
-}
-
-@safe unittest
-{
-    bool errorThrown = false;
-    auto tl = new TestLogger;
-    auto dele = delegate() {
-        errorThrown = true;
-    };
-    tl.fatalHandler = dele;
-    tl.fatal();
-    assert(errorThrown);
 }
 
 @safe unittest
@@ -2171,7 +2089,6 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     auto oldunspecificLogger = sharedLog;
 
     auto mem = new TestLogger;
-    mem.fatalHandler = delegate() {};
     sharedLog = mem;
 
     scope(exit)
@@ -2418,7 +2335,6 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     auto oldunspecificLogger = sharedLog;
 
     auto mem = new TestLogger;
-    mem.fatalHandler = delegate() {};
     sharedLog = mem;
 
     scope(exit)
@@ -2670,7 +2586,6 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 {
     bool fatalLog;
     auto mem = new TestLogger;
-    mem.fatalHandler = delegate() { fatalLog = true; };
     auto oldunspecificLogger = sharedLog;
 
     stdThreadLocalLog.logLevel = LogLevel.all;
@@ -3012,6 +2927,7 @@ private void trustedStore(T)(ref shared T dst, ref T src) @trusted
             Tid threadId, SysTime timestamp, Logger logger)
             @safe
         {
+			this.curMsgLogLevel = logLevel;
             () @trusted { assert(thisTid == this.tid); }();
             atomicOp!"+="(logged_count, 1);
         }
