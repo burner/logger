@@ -2084,6 +2084,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     import std.conv : to;
     import std.string : indexOf;
     import std.format : format;
+	import std.exception : assertThrown;
 
     auto oldunspecificLogger = sharedLog;
 
@@ -2136,15 +2137,37 @@ version(unittest) private void testFuncNames(Logger logger) @safe
                                             {
                                                 if (singleMulti == 0)
                                                 {
-                                                    mem.logf(ll2, condValue, "%s",
-                                                        value);
-                                                    lineCall = __LINE__;
+													if (ll2 == LogLevel.fatal)
+													{
+														assertThrown!Exception(
+                                                    	mem.logf(ll2, condValue,
+															 "%s", value)
+														);
+                                                    	lineCall = __LINE__ - 1;
+													}
+													else
+													{
+                                                    	mem.logf(ll2, condValue,
+															 "%s", value);
+                                                    	lineCall = __LINE__;
+													}
                                                 }
                                                 else
                                                 {
-                                                    mem.logf(ll2, condValue,
-                                                        "%d %d", value, value);
-                                                    lineCall = __LINE__;
+													if (ll2 == LogLevel.fatal)
+													{
+														assertThrown(
+                                                    	mem.logf(ll2, condValue,
+                                                    	    "%d %d", value, value)
+														);
+                                                    	lineCall = __LINE__ - 1;
+													}
+													else
+													{
+                                                    	mem.logf(ll2, condValue,
+															 "%s", value);
+                                                    	lineCall = __LINE__;
+													}
                                                 }
                                             }
                                             else
