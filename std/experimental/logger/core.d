@@ -2100,14 +2100,14 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     int value = 0;
     foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
             LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, LogLevel.fatal, LogLevel.off])
+            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
     {
 
         globalLogLevel = gll;
 
         foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                 LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, LogLevel.fatal, LogLevel.off])
+                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
         {
 
             mem.logLevel = ll;
@@ -2123,7 +2123,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
                             foreach (ll2; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                                     LogLevel.info, LogLevel.warning,
                                     LogLevel.error, LogLevel.critical,
-                                    LogLevel.fatal, LogLevel.off])
+                                    /*LogLevel.fatal,*/ LogLevel.off])
                             {
                                 foreach (singleMulti; 0 .. 2)
                                 {
@@ -2368,20 +2368,20 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     int value = 0;
     foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
             LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, LogLevel.fatal, LogLevel.off])
+            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
     {
 
         globalLogLevel = gll;
 
         foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                 LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, LogLevel.fatal, LogLevel.off])
+                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
         {
             mem.logLevel = ll;
 
             foreach (tll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                     LogLevel.info, LogLevel.warning, LogLevel.error,
-                    LogLevel.critical, LogLevel.fatal, LogLevel.off])
+                    LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
             {
                 stdThreadLocalLog.logLevel = tll;
 
@@ -2621,20 +2621,20 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 
     foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
             LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, LogLevel.fatal, LogLevel.off])
+            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
     {
 
         globalLogLevel = gll;
 
         foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                 LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, LogLevel.fatal, LogLevel.off])
+                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
         {
             mem.logLevel = ll;
 
             foreach (tll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                     LogLevel.info, LogLevel.warning, LogLevel.error,
-                    LogLevel.critical, LogLevel.fatal, LogLevel.off])
+                    LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
             {
                 stdThreadLocalLog.logLevel = tll;
 
@@ -2788,6 +2788,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
                     testG = gllOff && llOff && tllOff && tllVSll && tllVSgll &&
                         lVSgll && cond;
 
+					/*
                     mem.fatal(__LINE__); line = __LINE__;
                     assert(test ? mem.line == line : true); line = -1;
                     assert(test ? fatalLog : true);
@@ -2827,6 +2828,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
                     assert(testG ? mem.line == line : true); line = -1;
                     assert(testG ? fatalLog : true);
                     fatalLog = false;
+					*/
                 }
             }
         }
