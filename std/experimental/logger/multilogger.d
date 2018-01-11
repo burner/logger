@@ -1,4 +1,7 @@
-///
+// Written in the D programming language.
+/**
+Source: $(PHOBOSSRC std/experimental/logger/_multilogger.d)
+*/
 module std.experimental.logger.multilogger;
 
 import std.experimental.logger.core;
@@ -24,16 +27,8 @@ be removed.
 */
 class MultiLogger : Logger
 {
-    import std.concurrency : Tid;
-	import std.datetime : SysTime;
-	import std.experimental.logger.core : isLoggingEnabled;
-
-    /** This member holds all $(D Logger)s stored in the $(D MultiLogger).
-
-    When inheriting from $(D MultiLogger) this member can be used to gain
-    access to the stored $(D Logger).
-    */
-    protected MultiLoggerEntry[] logger;
+	import std.concurrency : Tid;
+	import std.datetime.systime : SysTime;
 
     /** A constructor for the $(D MultiLogger) Logger.
 
@@ -50,6 +45,13 @@ class MultiLogger : Logger
     {
         super(lv);
     }
+
+    /** This member holds all $(D Logger)s stored in the $(D MultiLogger).
+
+    When inheriting from $(D MultiLogger) this member can be used to gain
+    access to the stored $(D Logger).
+    */
+    protected MultiLoggerEntry[] logger;
 
     /** This method inserts a new Logger into the $(D MultiLogger).
 
@@ -132,15 +134,15 @@ class MultiLogger : Logger
 
         if (this.logLevel == LogLevel.fatal)
 		{
-			throw new Exception("Fatal Exception was logged");
+			this.executeFatalHandler();
 		}
     }
 }
 
 @safe unittest
 {
-    import std.experimental.logger.nulllogger;
     import std.exception : assertThrown;
+    import std.experimental.logger.nulllogger;
     auto a = new MultiLogger;
     auto n0 = new NullLogger();
     auto n1 = new NullLogger();

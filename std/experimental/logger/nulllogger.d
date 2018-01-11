@@ -1,4 +1,7 @@
-///
+// Written in the D programming language.
+/**
+Source: $(PHOBOSSRC std/experimental/logger/_nulllogger.d)
+*/
 module std.experimental.logger.nulllogger;
 
 import std.experimental.logger.core;
@@ -9,8 +12,8 @@ In case of a log message with $(D LogLevel.fatal) nothing will happen.
 */
 class NullLogger : Logger
 {
-    import std.concurrency : Tid;
-	import std.datetime : SysTime;
+	import std.concurrency : Tid;
+	import std.datetime.systime : SysTime;
     /** The default constructor for the $(D NullLogger).
 
     Independent of the parameter this Logger will never log a message.
@@ -22,6 +25,7 @@ class NullLogger : Logger
     this(const LogLevel lv = LogLevel.all) @safe
     {
         super(lv);
+        this.fatalHandler = delegate() {};
     }
 
     override void beginLogMsg(string file, int line, string funcName,
