@@ -1,4 +1,7 @@
-///
+// Written in the D programming language.
+/**
+Source: $(PHOBOSSRC std/experimental/logger/_core.d)
+*/
 module std.experimental.logger.core;
 
 import core.sync.mutex : Mutex;
@@ -201,8 +204,6 @@ if (args.length != 1)
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-                import std.stdio;
-                writefln("%s %s", __LINE__, ll);
                stdThreadLocalLog.log!(line, file, funcName, prettyFuncName, moduleName)
                 (ll, condition, args);
         }
@@ -218,8 +219,6 @@ void log(T, string moduleName = __MODULE__)(const LogLevel ll,
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-            import std.stdio;
-            writefln("%s %s", __LINE__, ll);
             stdThreadLocalLog.log!(T,moduleName)(ll, condition, arg, line, file, funcName,
                 prettyFuncName);
         }
@@ -249,8 +248,6 @@ if (args.length > 1 && !is(Unqual!(A[0]) : bool))
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-            import std.stdio;
-            writefln("%s %s", __LINE__, ll);
             stdThreadLocalLog.log!(line, file, funcName, prettyFuncName, moduleName)
                 (ll, args);
         }
@@ -266,8 +263,6 @@ void log(T, string moduleName = __MODULE__)(const LogLevel ll, lazy T arg,
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-            import std.stdio;
-            writefln("%s %s", __LINE__, ll);
             stdThreadLocalLog.log!T(ll, arg, line, file, funcName, prettyFuncName,
                 moduleName);
         }
@@ -296,8 +291,6 @@ if (args.length != 1)
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.log!(line, file, funcName, prettyFuncName, moduleName)
             (stdThreadLocalLog.logLevel, condition, args);
     }
@@ -310,8 +303,6 @@ void log(T, string moduleName = __MODULE__)(lazy bool condition, lazy T arg,
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.log!(T,moduleName)(stdThreadLocalLog.logLevel,
             condition, arg, line, file, funcName, prettyFuncName);
     }
@@ -339,8 +330,6 @@ if ((args.length > 1 && !is(Unqual!(A[0]) : bool)
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.log!(line, file, funcName,
            prettyFuncName, moduleName)(stdThreadLocalLog.logLevel, args);
     }
@@ -352,8 +341,6 @@ void log(T)(lazy T arg, int line = __LINE__, string file = __FILE__,
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.log!T(stdThreadLocalLog.logLevel, arg, line, file,
             funcName, prettyFuncName, moduleName);
     }
@@ -386,8 +373,6 @@ void logf(int line = __LINE__, string file = __FILE__,
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-            import std.stdio;
-            writefln("%s %s", __LINE__, ll);
             stdThreadLocalLog.logf!(line, file, funcName, prettyFuncName, moduleName)
                 (ll, condition, msg, args);
         }
@@ -419,8 +404,6 @@ void logf(int line = __LINE__, string file = __FILE__,
     {
         if (ll >= moduleLogLevel!moduleName)
         {
-            import std.stdio;
-            writefln("%s %s", __LINE__, ll);
             stdThreadLocalLog.logf!(line, file, funcName, prettyFuncName, moduleName)
                 (ll, msg, args);
         }
@@ -450,8 +433,6 @@ void logf(int line = __LINE__, string file = __FILE__,
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.logf!(line, file, funcName, prettyFuncName, moduleName)
             (stdThreadLocalLog.logLevel, condition, msg, args);
     }
@@ -478,8 +459,6 @@ void logf(int line = __LINE__, string file = __FILE__,
 {
     static if (isLoggingActive)
     {
-        import std.stdio;
-        writefln("%s %s", __LINE__, "Bad");
         stdThreadLocalLog.logf!(line, file, funcName,prettyFuncName, moduleName)
             (stdThreadLocalLog.logLevel, msg, args);
     }
@@ -777,6 +756,10 @@ abstract class Logger
     this(LogLevel lv) @safe
     {
         this.logLevel_ = lv;
+        this.fatalHandler_ = delegate() {
+            throw new Error("A fatal log message was logged");
+        };
+
         this.mutex = new Mutex();
     }
 
@@ -807,16 +790,6 @@ abstract class Logger
         {
             ... logic here
         }
-
-        void writeLogMsg(ref LogEntry payload)
-        {
-            this.beginLogMsg(payload.file, payload.line, payload.funcName,
-                payload.prettyFuncName, payload.moduleName, payload.logLevel,
-                payload.threadId, payload.timestamp, payload.logger);
-
-            this.logMsgPart(payload.msg);
-            this.finishLogMsg();
-        }
     }
     ----------------
     */
@@ -834,7 +807,7 @@ abstract class Logger
     {
         if (this.curMsgLogLevel == LogLevel.fatal)
         {
-            throw new Exception("Fatal Exception was logged");
+            this.fatalHandler();
         }
     }
 
@@ -863,6 +836,21 @@ abstract class Logger
         synchronized (mutex) this.logLevel_ = lv;
     }
 
+    /** This $(D delegate) is called in case a log message with
+    $(D LogLevel.fatal) gets logged.
+
+    By default an $(D Error) will be thrown.
+    */
+    @property final void delegate() fatalHandler() @safe @nogc
+    {
+        synchronized (mutex) return this.fatalHandler_;
+    }
+
+    /// Ditto
+    @property final void fatalHandler(void delegate() @safe fh) @safe @nogc
+    {
+        synchronized (mutex) this.fatalHandler_ = fh;
+    }
     /** This template provides the log functions for the $(D Logger) $(D class)
     with the $(D LogLevel) encoded in the function name.
 
@@ -1513,6 +1501,7 @@ abstract class Logger
         }
     }
 
+    private void delegate() @safe fatalHandler_;
     private shared LogLevel logLevel_ = LogLevel.info;
     private Mutex mutex;
 
@@ -1791,8 +1780,6 @@ package class TestLogger : Logger
 
     override void finishLogMsg() @safe
     {
-        import std.stdio;
-        writefln("%s", super.curMsgLogLevel);
         if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel)
             && super.curMsgLogLevel == LogLevel.fatal)
         {
@@ -1886,6 +1873,18 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 
 @safe unittest
 {
+    bool errorThrown = false;
+    auto tl = new TestLogger;
+    auto dele = delegate() {
+        errorThrown = true;
+    };
+    tl.fatalHandler = dele;
+    tl.fatal();
+    assert(errorThrown);
+}
+
+@safe unittest
+{
     import std.conv : to;
     import std.exception : assertThrown, assertNotThrown;
     import std.format : format;
@@ -1928,7 +1927,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Exception(l.logf(LogLevel.fatal, msg, "Yet"));
+        assertThrown!Throwable(l.logf(LogLevel.fatal, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -1936,7 +1935,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Exception(l.logf(LogLevel.fatal, true, msg, "Yet"));
+        assertThrown!Throwable(l.logf(LogLevel.fatal, true, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -2005,7 +2004,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 
     msg = "%s Another message";
     () @trusted {
-        assertThrown!Exception(logf(LogLevel.fatal, msg, "Yet"));
+        assertThrown!Throwable(logf(LogLevel.fatal, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -2013,7 +2012,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
     assert(l.logLevel == LogLevel.all);
 
     () @trusted {
-        assertThrown!Exception(logf(LogLevel.fatal, true, msg, "Yet"));
+        assertThrown!Throwable(logf(LogLevel.fatal, true, msg, "Yet"));
     } ();
     lineNumber = __LINE__ - 2;
     assert(l.msg == msg.format("Yet"));
@@ -3145,7 +3144,7 @@ private void trustedStore(T)(ref shared T dst, ref T src) @trusted
 // to shared logger
 @system unittest
 {
-    import std.concurrency, core.atomic, core.thread;
+    import core.atomic, core.thread, std.concurrency;
 
     static shared logged_count = 0;
 
@@ -3280,4 +3279,90 @@ private void trustedStore(T)(ref shared T dst, ref T src) @trusted
     SystemToString sts;
     tl.logf("%s", sts);
     assert(tl.msg == SystemToStringMsg);
+}
+
+@safe unittest
+{
+    import std.format : format;
+
+    ubyte[] data = [0];
+    string s = format("%(%02x%)", data); // format 00
+    assert(s == "00");
+
+    auto tl = new TestLogger();
+
+    tl.infof("%(%02x%)", data);    // infof    000
+
+    size_t i;
+    string fs = tl.msg;
+    for (; i < s.length; ++i)
+    {
+        assert(s[s.length - 1 - i] == fs[fs.length - 1 - i], fs);
+    }
+    assert(fs.length == 2);
+}
+
+// Issue 15954
+@safe unittest
+{
+    import std.conv : to;
+    auto tl = new TestLogger();
+    tl.log("123456789".to!wstring);
+    assert(tl.msg == "123456789");
+}
+
+// Issue 16256
+@safe unittest
+{
+    import std.conv : to;
+    auto tl = new TestLogger();
+    tl.log("123456789"d);
+    assert(tl.msg == "123456789");
+}
+// Issue 15517
+@system unittest
+{
+    import std.file : exists, remove;
+    import std.stdio : File;
+    import std.string : indexOf;
+
+    string fn = "logfile.log";
+    if (exists(fn))
+    {
+        remove(fn);
+    }
+
+    auto oldShared = sharedLog;
+    scope(exit)
+    {
+        sharedLog = oldShared;
+        if (exists(fn))
+        {
+            remove(fn);
+        }
+    }
+
+    auto ts = [ "Test log 1", "Test log 2", "Test log 3"];
+
+    auto fl = new FileLogger(fn);
+    sharedLog = fl;
+    assert(exists(fn));
+
+    foreach (t; ts)
+    {
+        log(t);
+    }
+
+    auto f = File(fn);
+    auto l = f.byLine();
+    assert(!l.empty);
+    size_t idx;
+    foreach (it; l)
+    {
+        assert(it.indexOf(ts[idx]) != -1, it);
+        ++idx;
+    }
+
+    assert(exists(fn));
+    fl.file.close();
 }
