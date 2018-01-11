@@ -807,7 +807,7 @@ abstract class Logger
     {
         if (this.curMsgLogLevel == LogLevel.fatal)
         {
-            this.fatalHandler();
+            this.executeFatalHandler();
         }
     }
 
@@ -841,13 +841,13 @@ abstract class Logger
 
     By default an $(D Error) will be thrown.
     */
-    @property final void delegate() fatalHandler() @safe @nogc
+    final executeFatalHandler() @safe
     {
-        synchronized (mutex) return this.fatalHandler_;
+        synchronized (mutex) this.fatalHandler_();
     }
 
     /// Ditto
-    @property final void fatalHandler(void delegate() @safe fh) @safe @nogc
+    @property final void fatalHandler(void delegate() @safe fh) @safe
     {
         synchronized (mutex) this.fatalHandler_ = fh;
     }
@@ -1632,11 +1632,6 @@ class StdForwardLogger : Logger
     {
 
         import std.stdio;
-        debug {
-            writefln("%s %s %s %s %s", __LINE__, ll, 
-                    super.curMsgLogLevel, this.logLevel,
-                    globalLogLevel);
-        }
         sharedLog.beginLogMsg(file, line, funcName, prettyFuncName,
                 moduleName, ll, threadId, timestamp, logger);
     }
@@ -1754,11 +1749,6 @@ package class TestLogger : Logger
     {
         import std.stdio;
         super.curMsgLogLevel = ll;
-        debug {
-            writefln("%s %s %s %s %s", __LINE__, ll, 
-                    super.curMsgLogLevel, this.logLevel,
-                    globalLogLevel);
-        }
         if (isLoggingEnabled(super.curMsgLogLevel, this.logLevel, globalLogLevel))
         {
             this.line = line;
@@ -1783,7 +1773,7 @@ package class TestLogger : Logger
         if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel)
             && super.curMsgLogLevel == LogLevel.fatal)
         {
-			this.fatalHandler();
+			this.executeFatalHandler();
         }
     }
 }
@@ -1875,7 +1865,7 @@ version(unittest) private void testFuncNames(Logger logger) @safe
 {
     bool errorThrown = false;
     auto tl = new TestLogger;
-    auto dele = delegate() {
+    auto dele = delegate() @safe {
         errorThrown = true;
     };
     tl.fatalHandler = dele;
@@ -2126,7 +2116,7 @@ unittest
     assertThrown!Throwable(mem.fatal("This should throw"));
 }
 
-@safe unittest
+unittest
 {
     import std.exception : assertThrown, assertNotThrown;
     import std.conv : to;
@@ -2181,14 +2171,14 @@ unittest
                                 bool shouldLog = ll2Off && gllOff && llOff
                                     && condFalse && ll2VSgll && ll2VSll;
 
-                                writefln("gll %s, ll %s, cond %s, condValue %s, " ~
-                                    "memOrG %s, prntf %s, ll2 %s, shouldLog %s", 
-                                    gll, ll, cond, condValue, memOrG, prntf,
-                                    ll2, shouldLog
-                                );
+                                //writefln("gll %s, ll %s, cond %s, condValue %s, " ~
+                                //    "memOrG %s, prntf %s, ll2 %s, shouldLog %s", 
+                                //    gll, ll, cond, condValue, memOrG, prntf,
+                                //    ll2, shouldLog
+                                //);
                                 if(ll2 == LogLevel.fatal) {
                                     if(shouldLog) {
-                                        assertThrown!Exception(
+                                        assertThrown!Throwable(
                                         testLogger(mem, cond, condValue, memOrG,
                                                prntf, ll2, value)
                                         );
@@ -2225,21 +2215,17 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
     if(prntf) {
         if(cond) {
             if(memOrG) {
-                writefln("%s", __LINE__);
                 mem.logf(ll2, condValue, "%s", to!string(value));
                 return __LINE__ - 1;
             } else {
-                writefln("%s", __LINE__);
                 logf(ll2, condValue, "%s", to!string(value));
                 return __LINE__ - 1;
             }
         } else {
             if(memOrG) {
-                writefln("%s", __LINE__);
                 mem.logf(ll2, "%s", to!string(value));
                 return __LINE__ - 1;
             } else {
-                writefln("%s", __LINE__);
                 logf(ll2, "%s", to!string(value));
                 return __LINE__ - 1;
             }
@@ -2247,21 +2233,17 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
     } else {
         if(cond) {
             if(memOrG) {
-                writefln("%s", __LINE__);
                 mem.log(ll2, condValue, to!string(value));
                 return __LINE__ - 1;
             } else {
-                writefln("%s", __LINE__);
                 log(ll2, condValue, to!string(value));
                 return __LINE__ - 1;
             }
         } else {
             if(memOrG) {
-                writefln("%s", __LINE__);
                 mem.log(ll2, to!string(value));
                 return __LINE__ - 1;
             } else {
-                writefln("%s", __LINE__);
                 log(ll2, to!string(value));
                 return __LINE__ - 1;
             }
@@ -2270,562 +2252,12 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
     assert(false);
 }
 
-// testing possible log conditions
-/+@safe unittest
-{
-    import std.conv : to;
-    import std.string : indexOf;
-    import std.format : format;
-    import std.exception : assertThrown;
-    import std.stdio;
-
-    auto oldunspecificLogger = sharedLog;
-
-    auto mem = new TestLogger;
-    sharedLog = mem;
-
-    scope(exit)
-    {
-        sharedLog = oldunspecificLogger;
-        globalLogLevel = LogLevel.all;
-    }
-
-    int value = 0;
-    foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-            LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
-    {
-
-        globalLogLevel = gll;
-
-        foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-                LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
-        {
-
-            mem.logLevel = ll;
-
-            foreach (cond; [true, false])
-            {
-                foreach (condValue; [true, false])
-                {
-                    foreach (memOrG; [true, false])
-                    {
-                        foreach (prntf; [true, false])
-                        {
-                            //foreach (ll2; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-                            foreach (ll2; [/*LogLevel.all, LogLevel.trace,*/
-                                    /*LogLevel.info, LogLevel.warning,
-                                    LogLevel.error, LogLevel.critical,*/
-                                    LogLevel.fatal/*, LogLevel.off*/])
-                            {
-                                foreach (singleMulti; 0 .. 2)
-                                {
-                                    int lineCall;
-                                    mem.msg = "-1";
-                                    if (memOrG)
-                                    {
-                                        if (prntf)
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    if (ll2 == LogLevel.fatal)
-                                                    {
-                                                        assertThrown!Exception(
-                                                        mem.logf(ll2, condValue,
-                                                             "%s", value)
-                                                        );
-                                                        lineCall = __LINE__ - 1;
-                                                    }
-                                                    else
-                                                    {
-                                                        mem.logf(ll2, condValue,
-                                                             "%s", value);
-                                                        lineCall = __LINE__;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    if (ll2 == LogLevel.fatal)
-                                                    {
-                                                        assertThrown!Exception(
-                                                        mem.logf(ll2, condValue,
-                                                            "%d %d", value, value)
-                                                        );
-                                                        lineCall = __LINE__ - 1;
-                                                    }
-                                                    else
-                                                    {
-                                                        mem.logf(ll2, condValue,
-                                                             "%s", value);
-                                                        lineCall = __LINE__;
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    mem.logf(ll2, "%s", value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    mem.logf(ll2, "%d %d",
-                                                        value, value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    if (ll2 == LogLevel.fatal)
-                                                    {
-                                                        writeln(__LINE__, ll2);
-                                                        assertThrown!Exception(
-                                                        mem.log(ll2, condValue,
-                                                            to!string(value))
-                                                        );
-                                                        lineCall = __LINE__;
-                                                    } else {
-                                                        mem.log(ll2, condValue,
-                                                            to!string(value));
-                                                        lineCall = __LINE__;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    writeln(__LINE__, ll2);
-                                                    mem.log(ll2, condValue,
-                                                        to!string(value), value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    if (ll2 == LogLevel.fatal)
-                                                    {
-                                                        writeln(__LINE__, ll2);
-                                                        assertThrown!Exception(
-                                                        mem.log(ll2, 
-                                                            to!string(value))
-                                                        );
-                                                        lineCall = __LINE__;
-                                                    } else {
-                                                        mem.log(ll2, condValue,
-                                                            to!string(value));
-                                                        lineCall = __LINE__;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    writeln(__LINE__, ll2);
-                                                    mem.log(ll2,
-                                                        to!string(value),
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (prntf)
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    logf(ll2, condValue, "%s",
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    logf(ll2, condValue,
-                                                        "%s %d", value, value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    logf(ll2, "%s", value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    logf(ll2, "%s %s", value,
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    log(ll2, condValue,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    log(ll2, condValue, value,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    log(ll2, to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    log(ll2, value,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    string valueStr = to!string(value);
-                                    ++value;
-
-                                    bool ll2Off = (ll2 != LogLevel.off);
-                                    bool gllOff = (gll != LogLevel.off);
-                                    bool llOff = (ll != LogLevel.off);
-                                    bool condFalse = (cond ? condValue : true);
-                                    bool ll2VSgll = (ll2 >= gll);
-                                    bool ll2VSll = (ll2 >= ll);
-
-                                    bool shouldLog = ll2Off && gllOff && llOff
-                                        && condFalse && ll2VSgll && ll2VSll;
-
-                                    /*
-                                    writefln(
-                                        "go(%b) ll2o(%b) c(%b) lg(%b) ll(%b) s(%b)"
-                                        , gll != LogLevel.off, ll2 != LogLevel.off,
-                                        cond ? condValue : true,
-                                        ll2 >= gll, ll2 >= ll, shouldLog);
-                                    */
-
-
-                                    if (shouldLog)
-                                    {
-                                        assert(mem.msg.indexOf(valueStr) != -1,
-                                            format(
-                                            "lineCall(%d) ll2Off(%u) gll(%u) ll(%u) ll2(%u) " ~
-                                            "cond(%b) condValue(%b)" ~
-                                            " memOrG(%b) shouldLog(%b) %s == %s" ~
-                                            " %b %b %b %b %b",
-                                            lineCall, ll2Off, gll, ll, ll2, cond,
-                                            condValue, memOrG, shouldLog, mem.msg,
-                                            valueStr, gllOff, llOff, condFalse,
-                                            ll2VSgll, ll2VSll
-                                        ));
-                                    }
-                                    else
-                                    {
-                                        assert(mem.msg.indexOf(valueStr),
-                                            format(
-                                            "lineCall(%d) ll2Off(%u) gll(%u) ll(%u) ll2(%u) " ~
-                                            "cond(%b) condValue(%b)" ~
-                                            " memOrG(%b) shouldLog(%b) %s == %s" ~
-                                            " %b %b %b %b %b",
-                                            lineCall, ll2Off, gll, ll, ll2, cond,
-                                            condValue, memOrG, shouldLog, mem.msg,
-                                            valueStr, gllOff, llOff, condFalse,
-                                            ll2VSgll, ll2VSll
-                                        ));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-+/
-
-// more testing
-/+@safe unittest
-{
-    import std.conv : to;
-    import std.format : format;
-    import std.string : indexOf;
-
-    auto oldunspecificLogger = sharedLog;
-
-    auto mem = new TestLogger;
-    sharedLog = mem;
-
-    scope(exit)
-    {
-        sharedLog = oldunspecificLogger;
-        globalLogLevel = LogLevel.all;
-    }
-
-    int value = 0;
-    foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-            LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
-    {
-
-        globalLogLevel = gll;
-
-        foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-                LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
-        {
-            mem.logLevel = ll;
-
-            foreach (tll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
-                    LogLevel.info, LogLevel.warning, LogLevel.error,
-                    LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
-            {
-                stdThreadLocalLog.logLevel = tll;
-
-                foreach (cond; [true, false])
-                {
-                    foreach (condValue; [true, false])
-                    {
-                        foreach (memOrG; [true, false])
-                        {
-                            foreach (prntf; [true, false])
-                            {
-                                foreach (singleMulti; 0 .. 2)
-                                {
-                                    int lineCall;
-                                    mem.msg = "-1";
-                                    if (memOrG)
-                                    {
-                                        if (prntf)
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    mem.logf(condValue, "%s",
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    mem.logf(condValue,
-                                                        "%d %d", value, value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    mem.logf("%s", value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    mem.logf("%d %d",
-                                                        value, value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    mem.log(condValue,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    mem.log(condValue,
-                                                        to!string(value), value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    mem.log(to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    mem.log(to!string(value),
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (prntf)
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    logf(condValue, "%s", value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    logf(condValue, "%s %d", value,
-                                                        value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    logf("%s", value);
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    logf("%s %s", value, value);
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (cond)
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    log(condValue,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    log(condValue, value,
-                                                        to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (singleMulti == 0)
-                                                {
-                                                    log(to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                                else
-                                                {
-                                                    log(value, to!string(value));
-                                                    lineCall = __LINE__;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    string valueStr = to!string(value);
-                                    ++value;
-
-                                    bool gllOff = (gll != LogLevel.off);
-                                    bool llOff = (ll != LogLevel.off);
-                                    bool tllOff = (tll != LogLevel.off);
-                                    bool llVSgll = (ll >= gll);
-                                    bool tllVSll =
-                                        (stdThreadLocalLog.logLevel >= ll);
-                                    bool condFalse = (cond ? condValue : true);
-
-                                    bool shouldLog = gllOff && llOff
-                                        && (memOrG ? true : tllOff)
-                                        && (memOrG ?
-                                            (ll >= gll) :
-                                            (tll >= gll && tll >= ll))
-                                        && condFalse;
-
-                                    if (shouldLog)
-                                    {
-                                        assert(mem.msg.indexOf(valueStr) != -1,
-                                            format("\ngll(%s) ll(%s) tll(%s) " ~
-                                                "cond(%s) condValue(%s) " ~
-                                                "memOrG(%s) prntf(%s) " ~
-                                                "singleMulti(%s)",
-                                                gll, ll, tll, cond, condValue,
-                                                memOrG, prntf, singleMulti)
-                                            ~ format(" gllOff(%s) llOff(%s) " ~
-                                                "llVSgll(%s) tllVSll(%s) " ~
-                                                "tllOff(%s) condFalse(%s) "
-                                                ~ "shoudlLog(%s)",
-                                                gll != LogLevel.off,
-                                                ll != LogLevel.off, llVSgll,
-                                                tllVSll, tllOff, condFalse,
-                                                shouldLog)
-                                            ~ format("msg(%s) line(%s) " ~
-                                                "lineCall(%s) valueStr(%s)",
-                                                mem.msg, mem.line, lineCall,
-                                                valueStr)
-                                        );
-                                    }
-                                    else
-                                    {
-                                        assert(mem.msg.indexOf(valueStr) == -1,
-                                            format("\ngll(%s) ll(%s) tll(%s) " ~
-                                                "cond(%s) condValue(%s) " ~
-                                                "memOrG(%s) prntf(%s) " ~
-                                                "singleMulti(%s)",
-                                                gll, ll, tll, cond, condValue,
-                                                memOrG, prntf, singleMulti)
-                                            ~ format(" gllOff(%s) llOff(%s) " ~
-                                                "llVSgll(%s) tllVSll(%s) " ~
-                                                "tllOff(%s) condFalse(%s) "
-                                                ~ "shoudlLog(%s)",
-                                                gll != LogLevel.off,
-                                                ll != LogLevel.off, llVSgll,
-                                                tllVSll, tllOff, condFalse,
-                                                shouldLog)
-                                            ~ format("msg(%s) line(%s) " ~
-                                                "lineCall(%s) valueStr(%s)",
-                                                mem.msg, mem.line, lineCall,
-                                                valueStr)
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}+/
-
 // testing more possible log conditions
 @safe unittest
 {
     bool fatalLog;
     auto mem = new TestLogger;
+	mem.fatalHandler = delegate() @safe {};
     auto oldunspecificLogger = sharedLog;
 
     stdThreadLocalLog.logLevel = LogLevel.all;
@@ -2839,20 +2271,20 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
 
     foreach (gll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
             LogLevel.info, LogLevel.warning, LogLevel.error,
-            LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
+            LogLevel.critical, LogLevel.fatal, LogLevel.off])
     {
 
         globalLogLevel = gll;
 
         foreach (ll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                 LogLevel.info, LogLevel.warning, LogLevel.error,
-                LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
+                LogLevel.critical, LogLevel.fatal, LogLevel.off])
         {
             mem.logLevel = ll;
 
             foreach (tll; [cast(LogLevel) LogLevel.all, LogLevel.trace,
                     LogLevel.info, LogLevel.warning, LogLevel.error,
-                    LogLevel.critical, /*LogLevel.fatal,*/ LogLevel.off])
+                    LogLevel.critical, LogLevel.fatal, LogLevel.off])
             {
                 stdThreadLocalLog.logLevel = tll;
 
@@ -3006,8 +2438,7 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
                     testG = gllOff && llOff && tllOff && tllVSll && tllVSgll &&
                         lVSgll && cond;
 
-                    /*
-                    mem.fatal(__LINE__); line = __LINE__;
+                    /*mem.fatal(__LINE__); line = __LINE__;
                     assert(test ? mem.line == line : true); line = -1;
                     assert(test ? fatalLog : true);
                     fatalLog = false;
@@ -3046,7 +2477,7 @@ private int testLogger(Logger mem, bool cond, bool condValue, bool memOrG,
                     assert(testG ? mem.line == line : true); line = -1;
                     assert(testG ? fatalLog : true);
                     fatalLog = false;
-                    */
+					*/
                 }
             }
         }
