@@ -1783,7 +1783,7 @@ package class TestLogger : Logger
         if (isLoggingEnabled(this.curMsgLogLevel, this.logLevel, globalLogLevel)
             && super.curMsgLogLevel == LogLevel.fatal)
         {
-            throw new Exception("Fatal Exception was logged");
+			this.fatalHandler();
         }
     }
 }
