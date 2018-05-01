@@ -1,5 +1,5 @@
-all: std/historical/logger/*.d main.d  
-	dmd -unittest -debug -cov -g std/historical/logger/*.d main.d -oflog -D -w
+all: std/experimental/logger/*.d main.d  
+	dmd -unittest -debug -cov -g std/experimental/logger/*.d main.d -oflog -D -w
 	./log
 
 gdc: std/historical/logger/*.d main.d
